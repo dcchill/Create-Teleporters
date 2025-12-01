@@ -1,0 +1,35 @@
+{
+  "_fv": 79,
+  "_type": "blockstates",
+  "definition": {
+    "block": "BlockTeleporter",
+    "blockstateList": [
+      {
+        "texture": "block_tp_side",
+        "textureTop": "block_tp_side",
+        "textureLeft": "block_tp_side_r",
+        "textureFront": "block_teleporter_top_off",
+        "textureRight": "block_tp_side_r",
+        "textureBack": "newcasing",
+        "particleTexture": "",
+        "renderType": 0,
+        "customModelName": "Normal",
+        "luminance": 0,
+        "boundingBoxes": []
+      },
+      {
+        "texture": "block_tp_side",
+        "textureTop": "block_tp_side",
+        "textureLeft": "block_tp_side_r",
+        "textureFront": "block_teleporter_top_on",
+        "textureRight": "block_tp_side_r",
+        "textureBack": "newcasing",
+        "particleTexture": "",
+        "renderType": 0,
+        "customModelName": "Normal",
+        "luminance": 15,
+        "boundingBoxes": []
+      }
+    ]
+  }
+}

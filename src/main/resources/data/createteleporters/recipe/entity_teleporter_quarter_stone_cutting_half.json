@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "createteleporters:entity_teleporter_quarter"
+  },
+  "result": {
+    "id": "createteleporters:entity_teleporter_slab",
+    "count": 1
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "mappings": {
+    "default": {
+      "map": {
+        "0": "brass_casing_double",
+        "1": "entity_teleporter_top_on",
+        "2": "brass_casing"
+      },
+      "name": "default"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "_fv": 79,
+  "_type": "recipe",
+  "definition": {
+    "recipeType": "Crafting",
+    "recipeRetstackSize": 1,
+    "group": "",
+    "unlockingItems": [],
+    "cookingBookCategory": "MISC",
+    "xpReward": 0.0,
+    "cookingTime": 200,
+    "craftingBookCategory": "MISC",
+    "recipeShapeless": false,
+    "recipeSlots": [
+      {
+        "value": "Blocks.PLANKS#1"
+      },
+      {
+        "value": "CUSTOM:RedstonePearl"
+      },
+      {
+        "value": "Blocks.PLANKS#1"
+      },
+      {
+        "value": "Blocks.PLANKS#1"
+      },
+      {
+        "value": "CUSTOM:QuantumMechanism"
+      },
+      {
+        "value": "Blocks.PLANKS#1"
+      },
+      {
+        "value": "Blocks.PLANKS#1"
+      },
+      {
+        "value": "CUSTOM:RedstonePearl"
+      },
+      {
+        "value": "Blocks.PLANKS#1"
+      }
+    ],
+    "recipeReturnStack": {
+      "value": "CUSTOM:EntityTeleporter"
+    },
+    "name": "item_teleporter_recipe",
+    "namespace": "mod"
+  }
+}

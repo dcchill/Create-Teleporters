@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "createteleporters:block_teleporter",
+    "createteleporters:custom_portal_base"
+  ]
+}

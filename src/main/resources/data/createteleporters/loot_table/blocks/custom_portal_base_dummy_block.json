@@ -1,0 +1,4 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "createteleporters:blocks/custom_portal_base_dummy_block"
+}

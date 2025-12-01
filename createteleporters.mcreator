@@ -1,0 +1,1691 @@
+{
+  "mod_elements": [
+    {
+      "name": "RedstonePearl",
+      "type": "item",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "redstone_pearl",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/createteleporters/models/item/redstone_pearl.json",
+          "src/main/java/net/createteleporters/item/RedstonePearlItem.java"
+        ]
+      }
+    },
+    {
+      "name": "CreateTeleporters",
+      "type": "tab",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "create_teleporters",
+      "metadata": {
+        "files": []
+      }
+    },
+    {
+      "name": "TpLink",
+      "type": "item",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "tp_link",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/item/TpLinkItem.java",
+          "src/main/resources/assets/createteleporters/models/item/tp_link.json"
+        ]
+      },
+      "path": "~/tpLinks"
+    },
+    {
+      "name": "EntityTeleporter",
+      "type": "block",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "teleporter",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/loot_table/blocks/teleporter.json",
+          "src/main/java/net/createteleporters/block/entity/EntityTeleporterBlockEntity.java",
+          "src/main/java/net/createteleporters/block/EntityTeleporterBlock.java",
+          "src/main/resources/assets/createteleporters/models/item/teleporter.json",
+          "src/main/resources/assets/createteleporters/blockstates/teleporter.json",
+          "src/main/resources/assets/createteleporters/models/block/teleporter.json"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "EntityTeleporterBlockstate",
+      "type": "blockstates",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "entity_teleporter_blockstate",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/createteleporters/models/block/entity_teleporter_blockstate_blockstate_0.json",
+          "src/main/resources/assets/createteleporters/models/block/entity_teleporter_blockstate_blockstate_1.json"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "EntityTeleporterGui",
+      "type": "gui",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "entity_teleporter_gui",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/client/gui/EntityTeleporterGuiScreen.java",
+          "src/main/java/net/createteleporters/network/EntityTeleporterGuiButtonMessage.java",
+          "src/main/java/net/createteleporters/world/inventory/EntityTeleporterGuiMenu.java"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "QuantumFluid",
+      "type": "fluid",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "quantum_fluid",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/createteleporters/blockstates/quantum_fluid.json",
+          "src/main/resources/assets/createteleporters/models/block/quantum_fluid.json",
+          "src/main/java/net/createteleporters/item/QuantumFluidItem.java",
+          "src/main/resources/assets/createteleporters/models/item/quantum_fluid_bucket.json",
+          "src/main/java/net/createteleporters/fluid/types/QuantumFluidFluidType.java",
+          "src/main/java/net/createteleporters/block/QuantumFluidBlock.java",
+          "src/main/java/net/createteleporters/fluid/QuantumFluidFluid.java"
+        ]
+      }
+    },
+    {
+      "name": "EntityTeleporterEntityWalksOnTheBlock",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "entity_teleporter_entity_walks_on_the_block",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "blockstate",
+            "type": "blockstate"
+          },
+          {
+            "name": "entity",
+            "type": "entity"
+          },
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/mcreator/createteleporters/procedures/EntityTeleporterEntityWalksOnTheBlockProcedure.java"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "EntityTeleporterOnTickUpdate",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "entity_teleporter_on_tick_update",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "return_type": "string",
+        "files": [
+          "src/main/java/net/createteleporters/procedures/EntityTeleporterOnTickUpdateProcedure.java"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "ProgressBlockstateBlockAdded",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "progress_blockstate_block_added",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/ProgressBlockstateBlockAddedProcedure.java"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "TpLinkRightclicked",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "tp_link_rightclicked",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "entity",
+            "type": "entity"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/TpLinkRightclickedProcedure.java"
+        ]
+      },
+      "path": "~/tpLinks"
+    },
+    {
+      "name": "IncompleteQMechanism",
+      "type": "item",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "incomplete_q_mechanism",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/item/IncompleteQMechanismItem.java",
+          "src/main/resources/assets/createteleporters/models/item/incomplete_q_mechanism.json"
+        ]
+      },
+      "path": "~/quantum_mech"
+    },
+    {
+      "name": "QuantumMechanism",
+      "type": "item",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "quantum_mechanism",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/item/QuantumMechanismItem.java",
+          "src/main/resources/assets/createteleporters/models/item/quantum_mechanism.json"
+        ]
+      },
+      "path": "~/quantum_mech"
+    },
+    {
+      "name": "QuantumMechanismRecipe",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "quantum_mechanism_recipe",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/recipe/quantum_mechanism_recipe.json"
+        ]
+      },
+      "path": "~/recipes"
+    },
+    {
+      "name": "AdvancedPart",
+      "type": "item",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "advanced_part",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/item/AdvancedPartItem.java",
+          "src/main/resources/assets/createteleporters/models/item/advanced_part.json"
+        ]
+      },
+      "path": "~/quantum_mech"
+    },
+    {
+      "name": "IncompleteAdvancedPart",
+      "type": "item",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "incomplete_advanced_part",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/item/IncompleteAdvancedPartItem.java",
+          "src/main/resources/assets/createteleporters/models/item/incomplete_advanced_part.json"
+        ]
+      },
+      "path": "~/quantum_mech"
+    },
+    {
+      "name": "AdvancedPartRecipe",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "advanced_part_recipe",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/recipe/advanced_part_recipe.json"
+        ]
+      },
+      "path": "~/recipes"
+    },
+    {
+      "name": "QuantumFluidRecipe",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "quantum_fluid_recipe",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/recipe/quantum_fluid_recipe.json"
+        ]
+      },
+      "path": "~/recipes"
+    },
+    {
+      "name": "RedstonePearlRecipe",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "redstone_pearl_recipe",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/recipe/redstone_pearl_recipe.json"
+        ]
+      },
+      "path": "~/recipes"
+    },
+    {
+      "name": "EntityTeleporterRecipe",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "entity_teleporter_recipe",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/recipe/entity_teleporter_recipe.json"
+        ]
+      },
+      "path": "~/recipes"
+    },
+    {
+      "name": "TPLinkRecipe",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "tp_link_recipe",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/recipe/tp_link_recipe.json"
+        ]
+      },
+      "path": "~/recipes"
+    },
+    {
+      "name": "ItemTP",
+      "type": "block",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "item_tp",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/block/ItemTPBlock.java",
+          "src/main/resources/data/createteleporters/loot_table/blocks/item_tp.json",
+          "src/main/resources/assets/createteleporters/models/item/item_tp.json",
+          "src/main/java/net/createteleporters/block/entity/ItemTPBlockEntity.java",
+          "src/main/resources/assets/createteleporters/models/block/item_tp.json",
+          "src/main/resources/assets/createteleporters/blockstates/item_tp.json"
+        ]
+      },
+      "path": "~/item_teleporter"
+    },
+    {
+      "name": "ItemTPOnTickUpdate",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "item_tp_on_tick_update",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "blockstate",
+            "type": "blockstate"
+          },
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "return_type": "string",
+        "files": [
+          "src/main/java/net/createteleporters/procedures/ItemTPOnTickUpdateProcedure.java"
+        ]
+      },
+      "path": "~/item_teleporter"
+    },
+    {
+      "name": "ItemTeleporterRecipe",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "item_teleporter_recipe",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/recipe/item_teleporter_recipe.json"
+        ]
+      },
+      "path": "~/recipes"
+    },
+    {
+      "name": "QuantumCasing",
+      "type": "block",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "quantum_casing",
+      "metadata": {
+        "files": [
+          "src/main/java/net/mcreator/createteleporters/block/QuantumCasingBlock.java",
+          "src/main/resources/assets/createteleporters/models/item/quantum_casing.json",
+          "src/main/resources/assets/createteleporters/models/block/quantum_casing.json",
+          "src/main/resources/data/createteleporters/loot_table/blocks/quantum_casing.json",
+          "src/main/resources/assets/createteleporters/blockstates/quantum_casing.json"
+        ]
+      },
+      "path": "~/q_casing"
+    },
+    {
+      "name": "ItemTPBlockstate",
+      "type": "blockstates",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "item_tp_blockstate",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/createteleporters/models/block/item_tp_blockstate_blockstate_2.json",
+          "src/main/resources/assets/createteleporters/models/block/item_tp_blockstate_blockstate_1.json",
+          "src/main/resources/assets/createteleporters/models/block/item_tp_blockstate_blockstate_3.json",
+          "src/main/resources/assets/createteleporters/models/block/item_tp_blockstate_blockstate_0.json"
+        ]
+      },
+      "path": "~/item_teleporter"
+    },
+    {
+      "name": "ItemTPGUiThisGUIIsOpened",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "item_tpg_ui_this_gui_is_opened",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/ItemTPGUiThisGUIIsOpenedProcedure.java"
+        ]
+      },
+      "path": "~/item_teleporter"
+    },
+    {
+      "name": "ItemTPGUiThisGUIIsClosed",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "item_tpg_ui_this_gui_is_closed",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/ItemTPGUiThisGUIIsClosedProcedure.java"
+        ]
+      },
+      "path": "~/item_teleporter"
+    },
+    {
+      "name": "ItemTPBlockstateHandler",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "item_tp_blockstate_handler",
+      "metadata": {
+        "dependencies": [],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/ItemTPBlockstateHandlerProcedure.java"
+        ]
+      },
+      "path": "~/item_teleporter"
+    },
+    {
+      "name": "ItemTPRedstoneOff",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "item_tp_redstone_off",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "blockstate",
+            "type": "blockstate"
+          },
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/ItemTPRedstoneOffProcedure.java"
+        ]
+      },
+      "path": "~/item_teleporter"
+    },
+    {
+      "name": "ItemTPDistCheck",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "item_tp_dist_check",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "return_type": "string",
+        "files": [
+          "src/main/java/net/createteleporters/procedures/ItemTPDistCheckProcedure.java"
+        ]
+      },
+      "path": "~/item_teleporter"
+    },
+    {
+      "name": "CloseGui",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "close_gui",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "entity",
+            "type": "entity"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/CloseGuiProcedure.java"
+        ]
+      }
+    },
+    {
+      "name": "ItemTeleporterGui",
+      "type": "gui",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "item_teleporter_gui",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/network/ItemTeleporterGuiButtonMessage.java",
+          "src/main/java/net/createteleporters/world/inventory/ItemTeleporterGuiMenu.java",
+          "src/main/java/net/createteleporters/client/gui/ItemTeleporterGuiScreen.java"
+        ]
+      },
+      "path": "~/item_teleporter"
+    },
+    {
+      "name": "ADVTplink",
+      "type": "item",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "adv_tplink",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/createteleporters/models/item/adv_tplink.json",
+          "src/main/java/net/createteleporters/item/ADVTplinkItem.java"
+        ]
+      },
+      "path": "~/tpLinks"
+    },
+    {
+      "name": "AdvTpLinkRightclicked",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "adv_tp_link_rightclicked",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "entity",
+            "type": "entity"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/AdvTpLinkRightclickedProcedure.java"
+        ]
+      },
+      "path": "~/tpLinks"
+    },
+    {
+      "name": "AdvTPLinkRecipe",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "adv_tp_link_recipe",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/recipe/adv_tp_link_recipe.json"
+        ]
+      },
+      "path": "~/recipes"
+    },
+    {
+      "name": "CustomTeleporterGui",
+      "type": "gui",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "custom_teleporter_gui",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/world/inventory/CustomTeleporterGuiMenu.java",
+          "src/main/java/net/createteleporters/client/gui/CustomTeleporterGuiScreen.java",
+          "src/main/java/net/createteleporters/network/CustomTeleporterGuiButtonMessage.java"
+        ]
+      },
+      "path": "~/adv_portal"
+    },
+    {
+      "name": "CustomPortalBase",
+      "type": "block",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "custom_portal_base",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/createteleporters/blockstates/custom_portal_base.json",
+          "src/main/resources/assets/createteleporters/models/block/custom_portal_base.json",
+          "src/main/resources/assets/createteleporters/models/item/custom_portal_base.json",
+          "src/main/java/net/createteleporters/block/CustomPortalBaseBlock.java",
+          "src/main/java/net/createteleporters/block/entity/CustomPortalBaseBlockEntity.java",
+          "src/main/resources/data/createteleporters/loot_table/blocks/custom_portal_base.json"
+        ]
+      },
+      "path": "~/adv_portal"
+    },
+    {
+      "name": "CustomPortalBaseBlockAdded",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "custom_portal_base_block_added",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "blockstate",
+            "type": "blockstate"
+          },
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/CustomPortalBaseBlockAddedProcedure.java"
+        ]
+      },
+      "path": "~/adv_portal"
+    },
+    {
+      "name": "PortalBlockChecker",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "portal_block_checker",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/PortalBlockCheckerProcedure.java"
+        ]
+      },
+      "path": "~/adv_portal"
+    },
+    {
+      "name": "CustomPortalBaseOnTickUpdate",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "custom_portal_base_on_tick_update",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "return_type": "string",
+        "files": [
+          "src/main/java/net/createteleporters/procedures/CustomPortalBaseOnTickUpdateProcedure.java"
+        ]
+      },
+      "path": "~/adv_portal"
+    },
+    {
+      "name": "QuantumPortalBlock",
+      "type": "block",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "quantum_portal_block",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/createteleporters/models/block/quantum_portal_block_side_alt.json",
+          "src/main/resources/assets/createteleporters/models/block/quantum_portal_block_noside.json",
+          "src/main/resources/assets/createteleporters/blockstates/quantum_portal_block.json",
+          "src/main/resources/assets/createteleporters/models/block/quantum_portal_block_noside_alt.json",
+          "src/main/resources/assets/createteleporters/models/item/quantum_portal_block.json",
+          "src/main/java/net/createteleporters/block/QuantumPortalBlockBlock.java",
+          "src/main/resources/assets/createteleporters/models/block/quantum_portal_block_side.json",
+          "src/main/resources/data/createteleporters/loot_table/blocks/quantum_portal_block.json",
+          "src/main/resources/assets/createteleporters/models/block/quantum_portal_block_post.json"
+        ]
+      },
+      "path": "~/adv_portal"
+    },
+    {
+      "name": "FluidDisplay",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "fluid_display",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "return_type": "number",
+        "files": [
+          "src/main/java/net/createteleporters/procedures/FluidDisplayProcedure.java"
+        ]
+      }
+    },
+    {
+      "name": "QuantumPortalBlockOnTickUpdate",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "quantum_portal_block_on_tick_update",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/QuantumPortalBlockOnTickUpdateProcedure.java"
+        ]
+      },
+      "path": "~/adv_portal"
+    },
+    {
+      "name": "CustomPortalBaseBlockDestroyedByPlayer",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "custom_portal_base_block_destroyed_by_player",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "blockstate",
+            "type": "blockstate"
+          },
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/CustomPortalBaseBlockDestroyedByPlayerProcedure.java"
+        ]
+      },
+      "path": "~/adv_portal"
+    },
+    {
+      "name": "PocketDimensionRemote",
+      "type": "item",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "pocket_dimension_remote",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/item/PocketDimensionRemoteItem.java",
+          "src/main/resources/assets/createteleporters/models/item/pocket_dimension_remote.json"
+        ]
+      },
+      "path": "~/pocket_dim"
+    },
+    {
+      "name": "PDBiome",
+      "type": "biome",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "pd_biome",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/worldgen/biome/pd_biome.json"
+        ]
+      },
+      "path": "~/pocket_dim"
+    },
+    {
+      "name": "PocketDimension",
+      "type": "dimension",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "pocket_dimension",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/world/dimension/PocketDimensionDimension.java",
+          "src/main/resources/data/createteleporters/dimension/pocket_dimension.json",
+          "src/main/resources/data/createteleporters/dimension_type/pocket_dimension.json"
+        ]
+      },
+      "path": "~/pocket_dim"
+    },
+    {
+      "name": "PocketDimensionRemoteRightclicked",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "pocket_dimension_remote_rightclicked",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "entity",
+            "type": "entity"
+          },
+          {
+            "name": "itemstack",
+            "type": "itemstack"
+          },
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/PocketDimensionRemoteRightclickedProcedure.java"
+        ]
+      },
+      "path": "~/pocket_dim"
+    },
+    {
+      "name": "PocketGen",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "pocket_gen",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "entity",
+            "type": "entity"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/PocketGenProcedure.java"
+        ]
+      },
+      "path": "~/pocket_dim"
+    },
+    {
+      "name": "Pocketdblock",
+      "type": "block",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "pocket_d_block",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/createteleporters/models/item/pocket_d_block.json",
+          "src/main/resources/data/createteleporters/loot_table/blocks/pocket_d_block.json",
+          "src/main/resources/assets/createteleporters/blockstates/pocket_d_block.json",
+          "src/main/resources/assets/createteleporters/models/block/pocket_d_block.json",
+          "src/main/java/net/createteleporters/block/PocketdblockBlock.java"
+        ]
+      },
+      "path": "~/pocket_dim"
+    },
+    {
+      "name": "CTPConfig",
+      "type": "config",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "ctp_config",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/configuration/CTPConfigConfiguration.java"
+        ]
+      }
+    },
+    {
+      "name": "CustomPortalBaseDummyBlock",
+      "type": "block",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "custom_portal_base_dummy_block",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/createteleporters/models/block/custom_portal_base_dummy_block.json",
+          "src/main/resources/data/createteleporters/loot_table/blocks/custom_portal_base_dummy_block.json",
+          "src/main/resources/assets/createteleporters/models/item/custom_portal_base_dummy_block.json",
+          "src/main/java/net/createteleporters/block/CustomPortalBaseDummyBlockBlock.java",
+          "src/main/resources/assets/createteleporters/blockstates/custom_portal_base_dummy_block.json",
+          "src/main/java/net/createteleporters/block/entity/CustomPortalBaseDummyBlockBlockEntity.java"
+        ]
+      },
+      "path": "~/adv_portal"
+    },
+    {
+      "name": "EntityTeleporterSlab",
+      "type": "block",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "entity_teleporter_slab",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/block/EntityTeleporterSlabBlock.java",
+          "src/main/resources/data/createteleporters/loot_table/blocks/entity_teleporter_slab.json",
+          "src/main/java/net/createteleporters/block/entity/EntityTeleporterSlabBlockEntity.java",
+          "src/main/resources/assets/createteleporters/models/block/entity_teleporter_slab.json",
+          "src/main/resources/assets/createteleporters/models/item/entity_teleporter_slab.json",
+          "src/main/resources/assets/createteleporters/blockstates/entity_teleporter_slab.json"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "EntityTeleporterSlabBlockstate",
+      "type": "blockstates",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "entity_teleporter_slab_blockstate",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/createteleporters/models/block/entity_teleporter_slab_blockstate_blockstate_0.json",
+          "src/main/resources/assets/createteleporters/models/block/entity_teleporter_slab_blockstate_blockstate_1.json"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "EntityTeleporterQuarter",
+      "type": "block",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "entity_teleporter_quarter",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/block/EntityTeleporterQuarterBlock.java",
+          "src/main/resources/assets/createteleporters/blockstates/entity_teleporter_quarter.json",
+          "src/main/resources/assets/createteleporters/models/item/entity_teleporter_quarter.json",
+          "src/main/resources/data/createteleporters/loot_table/blocks/entity_teleporter_quarter.json",
+          "src/main/java/net/createteleporters/block/entity/EntityTeleporterQuarterBlockEntity.java",
+          "src/main/resources/assets/createteleporters/models/block/entity_teleporter_quarter.json"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "EntityTeleporterQuarterBlockstate",
+      "type": "blockstates",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "entity_teleporter_quarter_blockstate",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/createteleporters/models/block/entity_teleporter_quarter_blockstate_blockstate_0.json",
+          "src/main/resources/assets/createteleporters/models/block/entity_teleporter_quarter_blockstate_blockstate_1.json"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "EntityTeleporterStoneCuttingHalf",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "entity_teleporter_stone_cutting_half",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/recipe/entity_teleporter_stone_cutting_half.json",
+          "src/main/resources/data/createteleporters/advancement/recipes/entity_teleporter_stone_cutting_half.json"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "EntityTeleporterStoneCuttingQuarter",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "entity_teleporter_stone_cutting_quarter",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/advancement/recipes/entity_teleporter_stone_cutting_quarter.json",
+          "src/main/resources/data/createteleporters/recipe/entity_teleporter_stone_cutting_quarter.json"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "EntityTeleporterHalfStoneCuttingFull",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "entity_teleporter_half_stone_cutting_full",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/recipe/entity_teleporter_half_stone_cutting_full.json",
+          "src/main/resources/data/createteleporters/advancement/recipes/entity_teleporter_half_stone_cutting_full.json"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "EntityTeleporterHalfStoneCuttingQuarter",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "entity_teleporter_half_stone_cutting_quarter",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/recipe/entity_teleporter_half_stone_cutting_quarter.json",
+          "src/main/resources/data/createteleporters/advancement/recipes/entity_teleporter_half_stone_cutting_quarter.json"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "EntityTeleporterQuarterStoneCuttingHalf",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "entity_teleporter_quarter_stone_cutting_half",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/advancement/recipes/entity_teleporter_quarter_stone_cutting_half.json",
+          "src/main/resources/data/createteleporters/recipe/entity_teleporter_quarter_stone_cutting_half.json"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "EntityTeleporterQuarterStoneCuttingFull",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "entity_teleporter_quarter_stone_cutting_full",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/recipe/entity_teleporter_quarter_stone_cutting_full.json",
+          "src/main/resources/data/createteleporters/advancement/recipes/entity_teleporter_quarter_stone_cutting_full.json"
+        ]
+      },
+      "path": "~/entity_teleporter"
+    },
+    {
+      "name": "CustomPortalOnTickUpdate",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "custom_portal_on_tick_update",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/CustomPortalOnTickUpdateProcedure.java"
+        ]
+      }
+    },
+    {
+      "name": "CustomPortal",
+      "type": "block",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "custom_portal",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/block/entity/CustomPortalBlockEntity.java",
+          "src/main/resources/data/createteleporters/loot_table/blocks/custom_portal.json",
+          "src/main/resources/assets/createteleporters/models/block/custom_portal.json",
+          "src/main/java/net/createteleporters/block/CustomPortalBlock.java",
+          "src/main/resources/assets/createteleporters/blockstates/custom_portal.json",
+          "src/main/resources/assets/createteleporters/models/item/custom_portal.json"
+        ]
+      }
+    },
+    {
+      "name": "CustomPortalOn",
+      "type": "block",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "custom_portal_on",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/createteleporters/blockstates/custom_portal_on.json",
+          "src/main/java/net/createteleporters/block/CustomPortalOnBlock.java",
+          "src/main/resources/assets/createteleporters/models/item/custom_portal_on.json",
+          "src/main/resources/data/createteleporters/loot_table/blocks/custom_portal_on.json",
+          "src/main/resources/assets/createteleporters/models/block/custom_portal_on.json",
+          "src/main/java/net/createteleporters/block/entity/CustomPortalOnBlockEntity.java"
+        ]
+      }
+    },
+    {
+      "name": "BlockTeleporter",
+      "type": "block",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "block_teleporter",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/block/entity/BlockTeleporterBlockEntity.java",
+          "src/main/resources/assets/createteleporters/models/block/block_teleporter.json",
+          "src/main/resources/data/createteleporters/loot_table/blocks/block_teleporter.json",
+          "src/main/resources/assets/createteleporters/blockstates/block_teleporter.json",
+          "src/main/java/net/createteleporters/block/BlockTeleporterBlock.java",
+          "src/main/resources/assets/createteleporters/models/item/block_teleporter.json"
+        ]
+      },
+      "path": "~/BlockTeleporter"
+    },
+    {
+      "name": "BlockTeleporterGui",
+      "type": "gui",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "block_teleporter_gui",
+      "metadata": {
+        "files": [
+          "src/main/java/net/createteleporters/world/inventory/BlockTeleporterGuiMenu.java",
+          "src/main/java/net/createteleporters/client/gui/BlockTeleporterGuiScreen.java",
+          "src/main/java/net/createteleporters/network/BlockTeleporterGuiButtonMessage.java"
+        ]
+      },
+      "path": "~/BlockTeleporter"
+    },
+    {
+      "name": "BlockTeleporterBlockstate",
+      "type": "blockstates",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "block_teleporter_blockstate",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/createteleporters/models/block/block_teleporter_blockstate_blockstate_0.json",
+          "src/main/resources/assets/createteleporters/models/block/block_teleporter_blockstate_blockstate_1.json"
+        ]
+      },
+      "path": "~/BlockTeleporter"
+    },
+    {
+      "name": "BlockTeleporterOnTickUpdate",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "block_teleporter_on_tick_update",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "blockstate",
+            "type": "blockstate"
+          },
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/BlockTeleporterOnTickUpdateProcedure.java"
+        ]
+      },
+      "path": "~/BlockTeleporter"
+    },
+    {
+      "name": "HelixSpawn",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "helix_spawn",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "blockstate",
+            "type": "blockstate"
+          },
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/HelixSpawnProcedure.java"
+        ]
+      },
+      "path": "~/BlockTeleporter"
+    },
+    {
+      "name": "BlockTeleporterRedstoneOn",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "block_teleporter_redstone_on",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "blockstate",
+            "type": "blockstate"
+          },
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/BlockTeleporterRedstoneOnProcedure.java"
+        ]
+      },
+      "path": "~/BlockTeleporter"
+    },
+    {
+      "name": "BlockTeleporterRedstoneOff",
+      "type": "procedure",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "block_teleporter_redstone_off",
+      "metadata": {
+        "dependencies": [
+          {
+            "name": "blockstate",
+            "type": "blockstate"
+          },
+          {
+            "name": "x",
+            "type": "number"
+          },
+          {
+            "name": "y",
+            "type": "number"
+          },
+          {
+            "name": "z",
+            "type": "number"
+          },
+          {
+            "name": "world",
+            "type": "world"
+          }
+        ],
+        "files": [
+          "src/main/java/net/createteleporters/procedures/BlockTeleporterRedstoneOffProcedure.java"
+        ]
+      },
+      "path": "~/BlockTeleporter"
+    },
+    {
+      "name": "BlockTeleporterRecipe",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "block_teleporter_recipe",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/createteleporters/recipe/block_teleporter_recipe.json"
+        ]
+      },
+      "path": "~/recipes"
+    }
+  ],
+  "variable_elements": [
+    {
+      "name": "shouldGen",
+      "type": "logic",
+      "scope": "map",
+      "value": "false"
+    }
+  ],
+  "sound_elements": [],
+  "tag_elements": {
+    "BLOCKS:minecraft:replaceable": [
+      "~CUSTOM:QuantumFluid"
+    ],
+    "BLOCKS:create:casing": [
+      "CUSTOM:QuantumCasing"
+    ],
+    "BLOCKS:minecraft:overworld_carver_replaceables": [],
+    "BLOCKS:minecraft:mineable/pickaxe": [
+      "~CUSTOM:BlockTeleporter",
+      "~CUSTOM:CustomPortalBase"
+    ],
+    "BLOCKS:mod:non_teleportable": [
+      "CUSTOM:CustomPortalBase",
+      "CUSTOM:QuantumPortalBlock",
+      "Blocks.AIR",
+      "Blocks.BEDROCK",
+      "CUSTOM:CustomPortalBaseDummyBlock",
+      "Blocks.END_PORTAL",
+      "Blocks.END_PORTAL_FRAME",
+      "Blocks.PORTAL",
+      "Blocks.BARRIER"
+    ]
+  },
+  "tab_element_order": {
+    "CUSTOM:CreateTeleporters": [
+      "RedstonePearl",
+      "QuantumFluid",
+      "AdvancedPart",
+      "QuantumMechanism",
+      "EntityTeleporter",
+      "EntityTeleporterSlab",
+      "EntityTeleporterQuarter",
+      "ItemTP",
+      "TpLink",
+      "QuantumCasing",
+      "CustomPortalBase",
+      "BlockTeleporter",
+      "ADVTplink",
+      "PocketDimensionRemote"
+    ]
+  },
+  "language_map": {
+    "en_us": {
+      "item.create_teleporters.redstone_pearl": "Redstone Pearl",
+      "item_group.create_teleporters.create_teleporters": "Create Teleporters",
+      "item.create_teleporters.tp_link": "Tp Link",
+      "block.create_teleporters.teleporter": "Entity Teleporter",
+      "gui.create_teleporters.entity_teleporter_gui.label_tp_link": "TP Link",
+      "item.create_teleporters.quantum_fluid_bucket": "Telejuice Bucket",
+      "block.create_teleporters.quantum_fluid": "Quantum Fluid",
+      "fluid.create_teleporters.quantum_fluid": "Quantum Fluid",
+      "fluid_type.create_teleporters.quantum_fluid": "Quantum Fluid",
+      "item.create_teleporters.incomplete_q_mechanism": "Incomplete Q Mechanism",
+      "item.create_teleporters.quantum_mechanism": "Quantum Mechanism",
+      "item.createteleporters.redstone_pearl": "Redstone Pearl",
+      "item_group.createteleporters.create_teleporters": "Create Teleporters",
+      "item.createteleporters.tp_link": "Tp Link",
+      "block.createteleporters.teleporter": "Entity Teleporter",
+      "gui.createteleporters.entity_teleporter_gui.label_tp_link": "TP Link",
+      "fluid_type.createteleporters.quantum_fluid": "Quantum Fluid",
+      "item.createteleporters.quantum_fluid_bucket": "Telejuice Bucket",
+      "block.createteleporters.quantum_fluid": "Quantum Fluid",
+      "fluid.createteleporters.quantum_fluid": "Quantum Fluid",
+      "item.createteleporters.incomplete_q_mechanism": "Incomplete Q Mechanism",
+      "item.createteleporters.quantum_mechanism": "Quantum Mechanism",
+      "item.createteleporters.advanced_part": "Advanced Component",
+      "item.createteleporters.incomplete_advanced_part": "Advanced Component",
+      "block.createteleporters.item_tp": "Item Teleporter",
+      "block.createteleporters.quantum_casing": "Quantum Casing",
+      "gui.createteleporters.entity_teleporter_gui.label_entity_teleporter": "Entity Teleporter",
+      "gui.createteleporters.item_teleporter_gui.label_tp_link": "TP Link",
+      "gui.createteleporters.item_teleporter_gui.label_entity_teleporter": "Item Teleporter",
+      "item.createteleporters.adv_tplink": "Advanced Tp Link",
+      "gui.createteleporters.custom_teleporter_gui.label_entity_teleporter": "Quantum Teleporter",
+      "gui.createteleporters.custom_teleporter_gui.label_tp_link": "Advanced TP Link",
+      "block.createteleporters.custom_portal_base": "Custom Portal Base",
+      "block.createteleporters.quantum_portal_block": "Quantum Portal Block",
+      "gui.createteleporters.custom_teleporter_gui.label_proc_entity_teleporter_on_tick_u": "",
+      "item.createteleporters.pocket_dimension_remote": "Pocket Dimension Remote",
+      "biome.createteleporters.pd_biome": "PD Biome",
+      "block.createteleporters.pocket_d_block": "Pocketdblock",
+      "block.createteleporters.custom_portal_base_dummy_block": "Custom Portal Base Dummy Block",
+      "block.createteleporters.entity_teleporter_slab": "Entity Teleporter",
+      "block.createteleporters.entity_teleporter_quarter": "Entity Teleporter",
+      "block.createteleporters.custom_portal": "Custom Portal",
+      "block.createteleporters.custom_portal_on": "Custom Portal On",
+      "item.createteleporters.teleporter": "Entity Teleporter",
+      "item.createteleporters.item_tp": "Item Teleporter",
+      "item.createteleporters.custom_portal_base": "Custom Portal Base",
+      "item.createteleporters.quantum_portal_block": "Quantum Portal Block",
+      "item.createteleporters.pocket_d_block": "Pocketdblock",
+      "item.createteleporters.entity_teleporter_slab": "Entity Teleporter",
+      "item.createteleporters.entity_teleporter_quarter": "Entity Teleporter",
+      "item.createteleporters.custom_portal": "Custom Portal",
+      "item.createteleporters.custom_portal_on": "Custom Portal On",
+      "block.createteleporters.block_teleporter": "Block Teleporter",
+      "gui.createteleporters.block_teleporter_gui.label_entity_teleporter": "Block Teleporter",
+      "gui.createteleporters.block_teleporter_gui.label_tp_link": "Advanced TP Link",
+      "block.createteleporters.block_teleporter.description_0": "§6Redstone Signal To Activate",
+      "block.createteleporters.teleporter.description_0": "§6Stand On To Activate",
+      "block.createteleporters.entity_teleporter_slab.description_0": "§6Stand On To Activate",
+      "block.createteleporters.entity_teleporter_quarter.description_0": "§6Stand On To Activate",
+      "block.createteleporters.item_tp.description_0": "§6Redstone Signal To Activate"
+    }
+  },
+  "metadata": {
+    "files": [
+      "src/main/java/net/createteleporters/CreateteleportersMod.java",
+      "src/main/resources/pack.mcmeta",
+      "src/main/resources/META-INF/neoforge.mods.toml",
+      "src/main/java/net/createteleporters/network/CreateteleportersModVariables.java",
+      "src/main/java/net/createteleporters/init/CreateteleportersModTabs.java",
+      "src/main/java/net/createteleporters/init/CreateteleportersModModels.java",
+      "src/main/java/net/createteleporters/init/CreateteleportersModConfigs.java",
+      "src/main/java/net/createteleporters/init/CreateteleportersModFluids.java",
+      "src/main/java/net/createteleporters/init/CreateteleportersModFluidTypes.java",
+      "src/main/java/net/createteleporters/init/CreateteleportersModMenus.java",
+      "src/main/java/net/createteleporters/init/CreateteleportersModScreens.java",
+      "src/main/java/net/createteleporters/network/MenuStateUpdateMessage.java",
+      "src/main/java/net/createteleporters/init/CreateteleportersModBrewingRecipes.java",
+      "src/main/java/net/createteleporters/init/CreateteleportersModBlocks.java",
+      "src/main/java/net/createteleporters/init/CreateteleportersModBlockEntities.java",
+      "src/main/java/net/createteleporters/init/CreateteleportersModItems.java"
+    ]
+  },
+  "foldersRoot": {
+    "name": "~",
+    "children": [
+      {
+        "name": "entity_teleporter",
+        "children": []
+      },
+      {
+        "name": "quantum_mech",
+        "children": []
+      },
+      {
+        "name": "recipes",
+        "children": []
+      },
+      {
+        "name": "item_teleporter",
+        "children": []
+      },
+      {
+        "name": "adv_portal",
+        "children": []
+      },
+      {
+        "name": "q_casing",
+        "children": []
+      },
+      {
+        "name": "tpLinks",
+        "children": []
+      },
+      {
+        "name": "pocket_dim",
+        "children": []
+      },
+      {
+        "name": "BlockTeleporter",
+        "children": []
+      }
+    ]
+  },
+  "workspaceSettings": {
+    "modid": "createteleporters",
+    "modName": "Create Teleporters Remastered",
+    "version": "1.1.0",
+    "author": "Dcchill",
+    "websiteURL": "https://www.curseforge.com/members/chilllliii/projects",
+    "license": "Not specified",
+    "serverSideOnly": false,
+    "modPicture": "ctp_remastered_logo",
+    "requiredMods": [],
+    "dependencies": [],
+    "dependants": [],
+    "mcreatorDependencies": [
+      "jei"
+    ],
+    "currentGenerator": "neoforge-1.21.1",
+    "credits": "Dcchill",
+    "modElementsPackage": "net.createteleporters"
+  },
+  "mcreatorVersion": 202500228610
+}

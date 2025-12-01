@@ -1,0 +1,9 @@
+{
+  "parent": "block/template_glass_pane_side",
+  "textures": {
+    "particle": "createteleporters:block/p_portal",
+    "edge": "createteleporters:block/p_portal",
+    "pane": "createteleporters:block/p_portal"
+  },
+  "render_type": "translucent"
+}

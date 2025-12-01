@@ -1,0 +1,169 @@
+{
+  "_fv": 79,
+  "_type": "block",
+  "definition": {
+    "texture": "newcasing",
+    "textureTop": "block_teleporter_top_on",
+    "textureLeft": "block_tp_side",
+    "textureFront": "block_tp_side",
+    "textureRight": "block_tp_side",
+    "textureBack": "block_tp_side",
+    "renderType": 10,
+    "customModelName": "Normal",
+    "rotationMode": 4,
+    "enablePitch": false,
+    "emissiveRendering": false,
+    "displayFluidOverlay": false,
+    "animations": [],
+    "itemTexture": "",
+    "particleTexture": "",
+    "blockSetType": "OAK",
+    "tintType": "No tint",
+    "isItemTinted": false,
+    "hasTransparency": false,
+    "connectedSides": false,
+    "transparencyType": "SOLID",
+    "disableOffset": false,
+    "boundingBoxes": [
+      {
+        "mx": 0.0,
+        "my": 0.0,
+        "mz": 0.0,
+        "Mx": 16.0,
+        "My": 16.0,
+        "Mz": 16.0,
+        "subtract": false
+      }
+    ],
+    "customProperties": [],
+    "name": "Block Teleporter",
+    "specialInformation": {
+      "fixedValue": [
+        "§6Redstone Signal To Activate"
+      ]
+    },
+    "hardness": 1.5,
+    "resistance": 19.0,
+    "hasGravity": false,
+    "isWaterloggable": false,
+    "hasBlockItem": true,
+    "maxStackSize": 64,
+    "rarity": "COMMON",
+    "immuneToFire": false,
+    "creativeTabs": [
+      {
+        "value": "CUSTOM:CreateTeleporters"
+      }
+    ],
+    "destroyTool": "pickaxe",
+    "customDrop": {
+      "value": ""
+    },
+    "dropAmount": 1,
+    "useLootTableForDrops": false,
+    "requiresCorrectTool": true,
+    "enchantPowerBonus": 0.0,
+    "plantsGrowOn": false,
+    "canRedstoneConnect": true,
+    "lightOpacity": 15,
+    "tickRate": 1,
+    "tickRandomly": false,
+    "isReplaceable": false,
+    "canProvidePower": false,
+    "emittedRedstonePower": {
+      "fixedValue": 15.0
+    },
+    "colorOnMap": "DEFAULT",
+    "noteBlockInstrument": "harp",
+    "creativePickItem": {
+      "value": ""
+    },
+    "offsetType": "NONE",
+    "aiPathNodeType": "DEFAULT",
+    "ignitedByLava": false,
+    "flammability": 0,
+    "fireSpreadSpeed": 0,
+    "isLadder": false,
+    "slipperiness": 0.6,
+    "speedFactor": 1.0,
+    "jumpFactor": 1.0,
+    "reactionToPushing": "NORMAL",
+    "isNotColidable": false,
+    "isCustomSoundType": false,
+    "soundOnStep": {
+      "value": "AMETHYST_BLOCK"
+    },
+    "breakSound": {
+      "value": ""
+    },
+    "fallSound": {
+      "value": ""
+    },
+    "hitSound": {
+      "value": ""
+    },
+    "placeSound": {
+      "value": ""
+    },
+    "stepSound": {
+      "value": ""
+    },
+    "luminance": 0,
+    "unbreakable": false,
+    "vanillaToolTier": "NONE",
+    "isBonemealable": false,
+    "sensitiveToVibration": false,
+    "vibrationalEvents": [],
+    "vibrationSensitivityRadius": {
+      "fixedValue": 7.0
+    },
+    "hasInventory": true,
+    "guiBoundTo": "BlockTeleporterGui",
+    "openGUIOnRightClick": true,
+    "inventorySize": 1,
+    "inventoryStackSize": 99,
+    "inventoryDropWhenDestroyed": true,
+    "inventoryComparatorPower": true,
+    "inventoryOutSlotIDs": [],
+    "inventoryInSlotIDs": [],
+    "hasEnergyStorage": false,
+    "energyInitial": 0,
+    "energyCapacity": 400000,
+    "energyMaxReceive": 200,
+    "energyMaxExtract": 200,
+    "isFluidTank": true,
+    "fluidCapacity": 8000,
+    "fluidRestrictions": [
+      {
+        "value": "CUSTOM:QuantumFluid"
+      },
+      {
+        "value": "CUSTOM:QuantumFluid:Flowing"
+      }
+    ],
+    "onTickUpdate": {
+      "name": "BlockTeleporterOnTickUpdate"
+    },
+    "onBlockPlayedBy": {
+      "name": "ProgressBlockstateBlockAdded"
+    },
+    "onRedstoneOn": {
+      "name": "BlockTeleporterRedstoneOn"
+    },
+    "onRedstoneOff": {
+      "name": "BlockTeleporterRedstoneOff"
+    },
+    "generateFeature": false,
+    "restrictionBiomes": [],
+    "blocksToReplace": [
+      {
+        "value": "TAG:stone_ore_replaceables"
+      }
+    ],
+    "generationShape": "UNIFORM",
+    "frequencyPerChunks": 10,
+    "frequencyOnChunk": 16,
+    "minGenerateHeight": 0,
+    "maxGenerateHeight": 64
+  }
+}

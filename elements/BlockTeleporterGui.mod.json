@@ -1,0 +1,121 @@
+{
+  "_fv": 79,
+  "_type": "gui",
+  "definition": {
+    "type": 1,
+    "width": 176,
+    "height": 166,
+    "inventoryOffsetX": 0,
+    "inventoryOffsetY": 0,
+    "renderBgLayer": false,
+    "doesPauseGame": false,
+    "components": [
+      {
+        "type": "label",
+        "data": {
+          "name": "label_tp_link",
+          "text": {
+            "fixedValue": "Advanced TP Link"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 171,
+          "y": 57,
+          "locked": false
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "custom_tp_gui.png",
+          "use1Xscale": false,
+          "x": 118,
+          "y": 8,
+          "locked": true
+        }
+      },
+      {
+        "type": "inputslot",
+        "data": {
+          "inputLimit": {
+            "value": "CUSTOM:ADVTplink"
+          },
+          "disablePlacement": {
+            "fixedValue": false
+          },
+          "id": 0,
+          "disablePickup": {
+            "fixedValue": false
+          },
+          "dropItemsWhenNotBound": true,
+          "x": 150,
+          "y": 52,
+          "locked": false
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_check",
+          "image": "check.png",
+          "hoveredImage": "check_hover.png",
+          "onClick": {
+            "name": "CloseGui"
+          },
+          "x": 285,
+          "y": 93,
+          "locked": false
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_entity_teleporter",
+          "text": {
+            "fixedValue": "Block Teleporter"
+          },
+          "color": {
+            "value": -12829636,
+            "falpha": 0.0
+          },
+          "x": 125,
+          "y": 15,
+          "locked": false
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "empty_tank.png",
+          "use1Xscale": false,
+          "x": 58,
+          "y": 15,
+          "locked": true
+        }
+      },
+      {
+        "type": "sprite",
+        "data": {
+          "sprite": "tank_sprite.png",
+          "spritesCount": 18,
+          "spriteIndex": {
+            "fixedValue": 0.0,
+            "name": "FluidDisplay"
+          },
+          "x": 58,
+          "y": 15,
+          "locked": true
+        }
+      }
+    ],
+    "gridSettings": {
+      "sx": 18,
+      "sy": 9,
+      "ox": 13,
+      "oy": 23,
+      "snapOnGrid": false
+    }
+  }
+}

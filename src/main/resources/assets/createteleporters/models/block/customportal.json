@@ -1,0 +1,8 @@
+{
+  "parent": "block/cube_all",
+  "textures": {
+    "all": "createteleporters:block/custom_portal_off_256",
+    "particle": "createteleporters:block/custom_portal_off_256"
+  },
+  "render_type": "solid"
+}

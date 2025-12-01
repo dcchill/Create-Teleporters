@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "da ",
+    " b ",
+    " c "
+  ],
+  "key": {
+    "a": {
+      "item": "createteleporters:redstone_pearl"
+    },
+    "b": {
+      "item": "create:brass_sheet"
+    },
+    "c": {
+      "item": "createteleporters:advanced_part"
+    },
+    "d": {
+      "item": "create:transmitter"
+    }
+  },
+  "result": {
+    "id": "createteleporters:tp_link",
+    "count": 1
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": false,
+  "key": {
+    "A": {
+      "item": "createteleporters:quantum_casing"
+    },
+    "X": {
+      "item": "createteleporters:quantum_mechanism"
+    },
+    "P": {
+      "item": "createteleporters:adv_tplink"
+    },
+    "Z": {
+      "item": "createteleporters:advanced_part"
+    },
+    "S": {
+      "item": "createteleporters:teleporter"
+    }
+  },
+  "pattern": [
+	" AXA ",
+    "AAZAA",
+    "XPSPX",
+    "AAZAA",
+    " AXA "
+  ],
+  "result": {
+    "count": 1,
+    "id": "createteleporters:pocket_dimension_remote"
+  }
+}

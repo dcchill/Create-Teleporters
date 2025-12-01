@@ -1,0 +1,61 @@
+{
+  "_fv": 79,
+  "_type": "blockstates",
+  "definition": {
+    "block": "ItemTP",
+    "blockstateList": [
+      {
+        "texture": "brass_casing",
+        "textureTop": "item_tp_top",
+        "textureLeft": "item_tp_side",
+        "textureFront": "item_tp_side",
+        "textureRight": "item_tp_side",
+        "textureBack": "item_tp_side",
+        "particleTexture": "",
+        "renderType": 0,
+        "customModelName": "Normal",
+        "luminance": 0,
+        "boundingBoxes": []
+      },
+      {
+        "texture": "brass_casing",
+        "textureTop": "item_tp_top_open",
+        "textureLeft": "item_tp_side",
+        "textureFront": "item_tp_side",
+        "textureRight": "item_tp_side",
+        "textureBack": "item_tp_side",
+        "particleTexture": "",
+        "renderType": 0,
+        "customModelName": "Normal",
+        "luminance": 0,
+        "boundingBoxes": []
+      },
+      {
+        "texture": "brass_casing",
+        "textureTop": "item_tp_top",
+        "textureLeft": "item_tp_side_on",
+        "textureFront": "item_tp_side_on",
+        "textureRight": "item_tp_side_on",
+        "textureBack": "item_tp_side_on",
+        "particleTexture": "",
+        "renderType": 0,
+        "customModelName": "Normal",
+        "luminance": 0,
+        "boundingBoxes": []
+      },
+      {
+        "texture": "brass_casing",
+        "textureTop": "item_tp_top_open",
+        "textureLeft": "item_tp_side_on",
+        "textureFront": "item_tp_side_on",
+        "textureRight": "item_tp_side_on",
+        "textureBack": "item_tp_side_on",
+        "particleTexture": "",
+        "renderType": 0,
+        "customModelName": "Normal",
+        "luminance": 0,
+        "boundingBoxes": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "_fv": 79,
+  "_type": "config",
+  "definition": {
+    "file": "createteleportersconfig",
+    "configType": 0,
+    "config": "<xml xmlns=\"https://developers.google.com/blockly/xml\"><block type=\"config_start\" deletable=\"false\" x=\"40\" y=\"40\"><next><block type=\"config_category\"><field name=\"name\">Ranges</field><statement name=\"write\"><block type=\"config_variable\"><field name=\"name\">entity_tp_range</field><field name=\"comment\">Max Range of Entity Teleporter</field><value name=\"value\"><block type=\"config_number_variable\"><field name=\"name\">Entity Teleporter Range</field><field name=\"value\">450</field></block></value><next><block type=\"config_variable\"><field name=\"name\">item_tp_range</field><field name=\"comment\">Max Range of Item Teleporter</field><value name=\"value\"><block type=\"config_number_variable\"><field name=\"name\">Item Teleporter Range</field><field name=\"value\">500</field></block></value></block></next></block></statement></block></next></block></xml>",
+    "defining": false
+  }
+}

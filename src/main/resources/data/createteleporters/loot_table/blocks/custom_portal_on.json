@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "createteleporters:blocks/custom_portal_on",
+  "pools": [
+    {
+      "rolls": 1.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "createteleporters:custom_portal_base"
+        }
+      ]
+    }
+  ]
+}

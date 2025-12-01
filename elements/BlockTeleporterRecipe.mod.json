@@ -1,0 +1,49 @@
+{
+  "_fv": 79,
+  "_type": "recipe",
+  "definition": {
+    "recipeType": "Crafting",
+    "recipeRetstackSize": 1,
+    "group": "",
+    "unlockingItems": [],
+    "cookingBookCategory": "MISC",
+    "xpReward": 0.0,
+    "cookingTime": 200,
+    "craftingBookCategory": "MISC",
+    "recipeShapeless": false,
+    "recipeSlots": [
+      {
+        "value": "CUSTOM:QuantumCasing"
+      },
+      {
+        "value": "CUSTOM:QuantumMechanism"
+      },
+      {
+        "value": "CUSTOM:QuantumCasing"
+      },
+      {
+        "value": "Blocks.DIRT#0"
+      },
+      {
+        "value": "CUSTOM:ItemTP"
+      },
+      {
+        "value": "Blocks.DIRT#0"
+      },
+      {
+        "value": "CUSTOM:QuantumCasing"
+      },
+      {
+        "value": "CUSTOM:AdvancedPart"
+      },
+      {
+        "value": "CUSTOM:QuantumCasing"
+      }
+    ],
+    "recipeReturnStack": {
+      "value": "CUSTOM:BlockTeleporter"
+    },
+    "name": "block_teleporter_recipe",
+    "namespace": "mod"
+  }
+}

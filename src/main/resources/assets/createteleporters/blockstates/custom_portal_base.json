@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "createteleporters:block/custom_portal_base"
+    },
+    "facing=east": {
+      "model": "createteleporters:block/custom_portal_base",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "createteleporters:block/custom_portal_base",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "createteleporters:block/custom_portal_base",
+      "y": 270
+    }
+  }
+}

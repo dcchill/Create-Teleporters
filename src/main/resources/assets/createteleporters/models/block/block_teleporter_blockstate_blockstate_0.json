@@ -1,0 +1,13 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "down": "createteleporters:block/block_tp_side",
+    "up": "createteleporters:block/block_tp_side",
+    "north": "createteleporters:block/block_teleporter_top_off",
+    "east": "createteleporters:block/block_tp_side_r",
+    "south": "createteleporters:block/newcasing",
+    "west": "createteleporters:block/block_tp_side_r",
+    "particle": "createteleporters:block/block_tp_side"
+  },
+  "render_type": "solid"
+}

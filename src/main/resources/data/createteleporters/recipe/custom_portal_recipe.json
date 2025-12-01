@@ -1,0 +1,26 @@
+{
+  "type": "create:mechanical_crafting",
+  "key": {
+    "A": { "item": "create:fluid_tank" },
+    "X": { "item": "createteleporters:quantum_mechanism" },
+    "P": { "item": "createteleporters:redstone_pearl" },
+    "Z": { "item": "createteleporters:quantum_casing" },
+    "S": { "item": "createteleporters:teleporter" },
+    "T": { "item": "create:transmitter" },
+    "E": { "item": "create:electron_tube" }
+  },
+  "pattern": [
+    " ZZZZZ ",
+    "ZTAXATZ",
+    "ZAEPEAZ",
+    "ZXPSPXZ",
+    "ZAEPEAZ",
+    "ZTAXATZ",
+    " ZZZZZ "
+  ],
+  "result": {
+    "count": 1,
+    "id": "createteleporters:custom_portal_base"
+  },
+  "accept_mirrored": false
+}

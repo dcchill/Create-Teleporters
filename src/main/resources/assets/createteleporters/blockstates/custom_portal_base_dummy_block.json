@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "createteleporters:block/custom_portal_base_dummy_block"
+    }
+  }
+}
