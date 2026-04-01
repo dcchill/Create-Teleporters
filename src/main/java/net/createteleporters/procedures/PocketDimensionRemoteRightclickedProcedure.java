@@ -53,6 +53,8 @@ public class PocketDimensionRemoteRightclickedProcedure {
 					final boolean _tagValue = true;
 					CustomData.update(DataComponents.CUSTOM_DATA, itemstack, tag -> tag.putBoolean(_tagName, _tagValue));
 				}
+				// Generate pocket dimension structure immediately
+				PocketGenProcedure.generateStructure(world, entity.getX() * 4 * 16, Math.abs(entity.getY()), entity.getZ() * 4 * 16);
 				CreateteleportersModVariables.MapVariables.get(world).shouldGen = true;
 				CreateteleportersModVariables.MapVariables.get(world).syncData(world);
 			} else {

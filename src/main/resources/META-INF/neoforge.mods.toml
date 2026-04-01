@@ -14,14 +14,10 @@ authors="Dcchill"
 # Start of user code block mod configuration
 # End of user code block mod configuration
 
-
-# Start of user code block custom mixins
-# End of user code block custom mixins
-
 [[dependencies.createteleporters]]
     modId="neoforge"
     type="required"
-    versionRange="[21.1.176,)"
+    versionRange="[21.1.190,)"
     ordering="AFTER"
     side="BOTH"
 
@@ -33,12 +29,6 @@ authors="Dcchill"
     side="BOTH"
 
 
-[[dependencies.createteleporters]]
-    modId="jei"
-    type="optional"
-    versionRange="[0,)"
-    ordering="NONE"
-    side="BOTH"
 
 
 # Start of user code block dependencies configuration

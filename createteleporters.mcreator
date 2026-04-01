@@ -145,7 +145,7 @@
       "name": "EntityTeleporterOnTickUpdate",
       "type": "procedure",
       "compiles": true,
-      "locked_code": false,
+      "locked_code": true,
       "registry_name": "entity_teleporter_on_tick_update",
       "metadata": {
         "dependencies": [
@@ -897,7 +897,7 @@
       "name": "CustomPortalBaseBlockDestroyedByPlayer",
       "type": "procedure",
       "compiles": true,
-      "locked_code": false,
+      "locked_code": true,
       "registry_name": "custom_portal_base_block_destroyed_by_player",
       "metadata": {
         "dependencies": [
@@ -932,7 +932,7 @@
       "name": "PocketDimensionRemote",
       "type": "item",
       "compiles": true,
-      "locked_code": false,
+      "locked_code": true,
       "registry_name": "pocket_dimension_remote",
       "metadata": {
         "files": [
@@ -946,7 +946,7 @@
       "name": "PDBiome",
       "type": "biome",
       "compiles": true,
-      "locked_code": false,
+      "locked_code": true,
       "registry_name": "pd_biome",
       "metadata": {
         "files": [
@@ -974,7 +974,7 @@
       "name": "PocketDimensionRemoteRightclicked",
       "type": "procedure",
       "compiles": true,
-      "locked_code": false,
+      "locked_code": true,
       "registry_name": "pocket_dimension_remote_rightclicked",
       "metadata": {
         "dependencies": [
@@ -1013,7 +1013,7 @@
       "name": "PocketGen",
       "type": "procedure",
       "compiles": true,
-      "locked_code": false,
+      "locked_code": true,
       "registry_name": "pocket_gen",
       "metadata": {
         "dependencies": [
@@ -1231,7 +1231,7 @@
       "name": "CustomPortalOnTickUpdate",
       "type": "procedure",
       "compiles": true,
-      "locked_code": false,
+      "locked_code": true,
       "registry_name": "custom_portal_on_tick_update",
       "metadata": {
         "dependencies": [
@@ -1565,7 +1565,7 @@
       "item.createteleporters.quantum_fluid_bucket": "Telejuice Bucket",
       "block.createteleporters.quantum_fluid": "Quantum Fluid",
       "fluid.createteleporters.quantum_fluid": "Quantum Fluid",
-      "item.createteleporters.incomplete_q_mechanism": "Incomplete Q Mechanism",
+      "item.createteleporters.incomplete_q_mechanism": "Incomplete Quantum Mechanism",
       "item.createteleporters.quantum_mechanism": "Quantum Mechanism",
       "item.createteleporters.advanced_part": "Advanced Component",
       "item.createteleporters.incomplete_advanced_part": "Advanced Component",
@@ -1621,7 +1621,6 @@
       "src/main/java/net/createteleporters/init/CreateteleportersModMenus.java",
       "src/main/java/net/createteleporters/init/CreateteleportersModScreens.java",
       "src/main/java/net/createteleporters/network/MenuStateUpdateMessage.java",
-      "src/main/java/net/createteleporters/init/CreateteleportersModBrewingRecipes.java",
       "src/main/java/net/createteleporters/init/CreateteleportersModBlocks.java",
       "src/main/java/net/createteleporters/init/CreateteleportersModBlockEntities.java",
       "src/main/java/net/createteleporters/init/CreateteleportersModItems.java"
@@ -1680,9 +1679,7 @@
     "requiredMods": [],
     "dependencies": [],
     "dependants": [],
-    "mcreatorDependencies": [
-      "jei"
-    ],
+    "mcreatorDependencies": [],
     "currentGenerator": "neoforge-1.21.1",
     "credits": "Dcchill",
     "modElementsPackage": "net.createteleporters"

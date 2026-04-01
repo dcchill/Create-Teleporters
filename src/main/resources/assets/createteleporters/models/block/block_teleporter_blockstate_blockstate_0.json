@@ -7,7 +7,7 @@
     "east": "createteleporters:block/block_tp_side_r",
     "south": "createteleporters:block/newcasing",
     "west": "createteleporters:block/block_tp_side_r",
-    "particle": "createteleporters:block/block_tp_side"
+    "particle": "createteleporters:block/newcasing"
   },
   "render_type": "solid"
 }

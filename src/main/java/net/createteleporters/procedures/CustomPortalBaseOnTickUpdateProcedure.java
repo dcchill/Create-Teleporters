@@ -28,6 +28,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.scores.Team;
+import net.minecraft.world.scores.Scoreboard;
 
 public class CustomPortalBaseOnTickUpdateProcedure {
 	public static String execute(LevelAccessor world, double x, double y, double z) {
@@ -89,6 +91,16 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					// use the entity's feet (minY of bounding box) to prevent premature triggers
 					double feetY = entityiterator.getBoundingBox().minY;
 					if (feetY + 1e-6 >= (y + 1) && feetY <= (y + 3) + 1e-6) {
+						// Save player's team before teleportation (Bug fix: preserve team assignment)
+						String playerTeamName = null;
+						if (entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+							Scoreboard scoreboard = serverPlayer.getScoreboard();
+							Team playerTeam = scoreboard.getPlayerTeam(serverPlayer.getScoreboardName());
+							if (playerTeam != null) {
+								playerTeamName = playerTeam.getName();
+							}
+						}
+
 						if (world instanceof ServerLevel _level)
 							_level.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
 									("execute in " + targetDim
@@ -107,6 +119,16 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 							if (_ent instanceof LivingEntity _entity) {
 								_entity.yBodyRotO = _entity.getYRot();
 								_entity.yHeadRotO = _entity.getYRot();
+							}
+						}
+
+						// Restore player's team after teleportation (Bug fix: preserve team assignment)
+						if (playerTeamName != null && entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+							Scoreboard scoreboard = serverPlayer.getScoreboard();
+							// Get the team by name and re-add the player
+							net.minecraft.world.scores.PlayerTeam playerTeam = scoreboard.getPlayerTeam(playerTeamName);
+							if (playerTeam != null) {
+								scoreboard.addPlayerToTeam(serverPlayer.getScoreboardName(), playerTeam);
 							}
 						}
 						if (world instanceof ServerLevel _level)

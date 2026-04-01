@@ -31,7 +31,6 @@ import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
-import net.createteleporters.block.BlockTeleporterBlock;
 
 import net.createteleporters.init.CreateteleportersModItems;
 import net.createteleporters.configuration.CTPConfigConfiguration;
@@ -138,6 +137,16 @@ public class EntityTeleporterOnTickUpdateProcedure {
 						{
 							final Vec3 _center = new Vec3(x, (y + 1), z);
 							for (Entity entityiterator : world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(2 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList()) {
+								// Save player's team before teleportation (Bug fix: preserve team assignment)
+								String playerTeamName = null;
+								if (entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+									net.minecraft.world.scores.Scoreboard scoreboard = serverPlayer.getScoreboard();
+									net.minecraft.world.scores.PlayerTeam playerTeam = scoreboard.getPlayerTeam(serverPlayer.getScoreboardName());
+									if (playerTeam != null) {
+										playerTeamName = playerTeam.getName();
+									}
+								}
+
 								{
 									Entity _ent = entityiterator;
 									_ent.teleportTo(((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo")),
@@ -147,6 +156,15 @@ public class EntityTeleporterOnTickUpdateProcedure {
 										_serverPlayer.connection.teleport(((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo")),
 												((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("ypo") + 1),
 												((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo")), _ent.getYRot(), _ent.getXRot());
+								}
+
+								// Restore player's team after teleportation (Bug fix: preserve team assignment)
+								if (playerTeamName != null && entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+									net.minecraft.world.scores.Scoreboard scoreboard = serverPlayer.getScoreboard();
+									net.minecraft.world.scores.PlayerTeam team = scoreboard.getPlayerTeam(playerTeamName);
+									if (team != null) {
+										scoreboard.addPlayerToTeam(serverPlayer.getScoreboardName(), team);
+									}
 								}
 								{
 									Entity _ent = entityiterator;

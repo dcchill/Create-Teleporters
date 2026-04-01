@@ -7,6 +7,7 @@ import net.neoforged.bus.api.Event;
 
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.LevelAccessor;
@@ -37,15 +38,29 @@ public class PocketGenProcedure {
 			return;
 		if (CreateteleportersModVariables.MapVariables.get(world).shouldGen == true) {
 			if ((entity.level().dimension()) == ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("createteleporters:pocket_dimension"))) {
-				if (world instanceof ServerLevel _serverworld) {
-					StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("createteleporters", "pocketdimensionwalls"));
-					if (template != null) {
-						template.placeInWorld(_serverworld, BlockPos.containing(entity.getX() - 7.5, entity.getY() - 3, entity.getZ() - 7.5), BlockPos.containing(entity.getX() - 7.5, entity.getY() - 3, entity.getZ() - 7.5),
-								new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
-					}
-				}
+				// Generate structure at player location
+				generateStructure(world, entity.getX(), entity.getY(), entity.getZ());
+				
 				CreateteleportersModVariables.MapVariables.get(world).shouldGen = false;
 				CreateteleportersModVariables.MapVariables.get(world).syncData(world);
+			}
+		}
+	}
+	
+	/**
+	 * Generate the pocket dimension structure at specified coordinates
+	 */
+	public static void generateStructure(LevelAccessor world, double x, double y, double z) {
+		if (world instanceof ServerLevel _serverworld) {
+			StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("createteleporters", "pocketdimensionwalls"));
+			if (template != null) {
+				// Calculate spawn position - structure spawns centered on player
+				int spawnX = (int) Math.floor(x - 7.5);
+				int spawnY = (int) Math.floor(y - 3);
+				int spawnZ = (int) Math.floor(z - 7.5);
+				
+				template.placeInWorld(_serverworld, new BlockPos(spawnX, spawnY, spawnZ), new BlockPos(spawnX, spawnY, spawnZ),
+						new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
 			}
 		}
 	}
