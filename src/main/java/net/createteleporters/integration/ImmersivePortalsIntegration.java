@@ -94,23 +94,26 @@ public class ImmersivePortalsIntegration {
             
             CommandSourceStack cmdSource = getCommandSource(serverLevel, execX, execY, execZ, portalNormal, x, y, z);
             
+            PortalTargetInfo targetInfo = resolveTargetPortalInfo(serverLevel, targetDim, targetX, targetY, targetZ,
+                rotation, minExtent, maxExtent, portalHeight);
+            double widthScale = targetInfo.interiorWidth / (double) interiorWidth;
+            double heightScale = targetInfo.interiorHeight / (double) interiorHeight;
+            double portalScale = Math.min(widthScale, heightScale);
+
             // Create portal with explicit Euler orientation to avoid block-hit based
             // make_portal rotation ambiguity (which can create flat portals).
             String createCmd = String.format(
-                "portal euler make_portal %.3f %.3f %.3f %.1f %.1f %d %d %.1f {}",
-                portalX, portalY, portalZ, 0.0f, portalNormal.toYRot(), interiorWidth, interiorHeight, 1.0f
+                "portal euler make_portal %.3f %.3f %.3f %.1f %.1f %d %d %.4f {}",
+                portalX, portalY, portalZ, 0.0f, portalNormal.toYRot(), interiorWidth, interiorHeight, portalScale
             );
             
             serverLevel.getServer().getCommands().performPrefixedCommand(cmdSource.withSuppressedOutput(), createCmd);
             CreateteleportersMod.LOGGER.info("Executed: {}", createCmd);
 
-            Vec3 targetCenter = resolveTargetPortalCenter(serverLevel, targetDim, targetX, targetY, targetZ,
-                rotation, minExtent, maxExtent, portalHeight);
-
             // Set destination to the target portal center before making this portal
             // bi-way/bi-faced, so generated reverse portals are centered correctly.
             String destCmd = String.format("portal set_portal_destination %s %.3f %.3f %.3f",
-                targetDim, targetCenter.x, targetCenter.y, targetCenter.z);
+                targetDim, targetInfo.center.x, targetInfo.center.y, targetInfo.center.z);
             executeAsNearestPortal(serverLevel, portalX, portalY, portalZ, destCmd, true);
             CreateteleportersMod.LOGGER.info("Executed: {}", destCmd);
 
@@ -190,7 +193,7 @@ public class ImmersivePortalsIntegration {
         executeAtPosition(level, x, y, z, command, suppress);
     }
 
-    private static Vec3 resolveTargetPortalCenter(ServerLevel sourceLevel, String targetDimId,
+    private static PortalTargetInfo resolveTargetPortalInfo(ServerLevel sourceLevel, String targetDimId,
             double targetBaseX, double targetBaseY, double targetBaseZ,
             String fallbackRotation, int fallbackMinExtent, int fallbackMaxExtent, int fallbackPortalHeight) {
         String rotation = fallbackRotation;
@@ -226,13 +229,16 @@ public class ImmersivePortalsIntegration {
         int baseY = (int) Math.floor(targetBaseY);
         int baseZ = (int) Math.floor(targetBaseZ);
         int interiorHeight = Math.max(1, portalHeight - 1);
+        int interiorWidth = Math.max(1, Math.abs(maxExtent - minExtent) - 1);
         int extentCenter = (minExtent + maxExtent) / 2;
         int portalBottomY = baseY + 1;
         int portalCenterY = portalBottomY + interiorHeight / 2;
 
         if ("north".equals(rotation) || "south".equals(rotation)) {
-            return new Vec3(baseX + extentCenter + 0.5, portalCenterY + 0.5, baseZ + 0.5);
+            return new PortalTargetInfo(new Vec3(baseX + extentCenter + 0.5, portalCenterY + 0.5, baseZ + 0.5), interiorWidth, interiorHeight);
         }
-        return new Vec3(baseX + 0.5, portalCenterY + 0.5, baseZ + extentCenter + 0.5);
+        return new PortalTargetInfo(new Vec3(baseX + 0.5, portalCenterY + 0.5, baseZ + extentCenter + 0.5), interiorWidth, interiorHeight);
     }
+
+    private record PortalTargetInfo(Vec3 center, int interiorWidth, int interiorHeight) {}
 }
