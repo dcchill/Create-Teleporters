@@ -17,6 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
 import net.createteleporters.CreateteleportersMod;
@@ -36,7 +37,7 @@ import net.createmod.catnip.data.Pair;
  */
 public final class CreateTrainPortalIntegration {
 	private static final int SEARCH_RADIUS = 16;
-	
+
 	static {
 		CreateteleportersMod.LOGGER.info("CreateTrainPortalIntegration class loaded!");
 	}
@@ -48,8 +49,9 @@ public final class CreateTrainPortalIntegration {
 		CreateteleportersMod.LOGGER.info("=== REGISTERING TRAIN PORTAL INTEGRATION ===");
 		CreateteleportersMod.LOGGER.info("QUANTUM_PORTAL_BLOCK: {}", CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get());
 		PortalTrackProvider.REGISTRY.register(CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get(), CreateTrainPortalIntegration::findExit);
-		CreateteleportersMod.LOGGER.info("Registered Create train portal provider for quantum portal blocks.");
-		
+		PortalTrackProvider.REGISTRY.register(Blocks.STRUCTURE_VOID, CreateTrainPortalIntegration::findExit);
+		CreateteleportersMod.LOGGER.info("Registered Create train portal provider for quantum portal and structure_void markers.");
+
 		// Log Immersive Portals compatibility status
 		boolean useImmersivePortals = CTPConfigConfiguration.IMMERSIVE_PORTALS_COMPAT.get();
 		boolean ipLoaded = ImmersivePortalsIntegration.isImmersivePortalsLoaded();
@@ -59,17 +61,17 @@ public final class CreateTrainPortalIntegration {
 		} else {
 			CreateteleportersMod.LOGGER.info("Trains will use vanilla quantum portal blocks");
 		}
-		
+
 		CreateteleportersMod.LOGGER.info("=== END REGISTRATION ===");
 	}
 
 	private static PortalTrackProvider.Exit findExit(ServerLevel level, BlockFace entryFace) {
 		CreateteleportersMod.LOGGER.info("=== TRAIN PORTAL TELEPORT ATTEMPT ===");
 		CreateteleportersMod.LOGGER.info("Entry face: {} at {}", entryFace.getFace(), entryFace.getPos());
-		
+
 		BlockPos sourcePortalPos = entryFace.getConnectedPos();
 		CreateteleportersMod.LOGGER.info("Source portal position: {}", sourcePortalPos);
-		
+
 		PortalBaseData sourceBase = findLinkedActivePortalBaseForPortalBlock(level, sourcePortalPos);
 		if (sourceBase == null) {
 			CreateteleportersMod.LOGGER.warn("FAILED: No active portal base found for portal block at {}", sourcePortalPos);
@@ -97,15 +99,15 @@ public final class CreateTrainPortalIntegration {
 			sourceBase.nbt.getDouble("linkedY"),
 			sourceBase.nbt.getDouble("linkedZ")
 		);
-		CreateteleportersMod.LOGGER.info("Target base position: {} (x={}, y={}, z={})", 
-			targetBasePos, 
+		CreateteleportersMod.LOGGER.info("Target base position: {} (x={}, y={}, z={})",
+			targetBasePos,
 			sourceBase.nbt.getDouble("linkedX"),
 			sourceBase.nbt.getDouble("linkedY"),
 			sourceBase.nbt.getDouble("linkedZ"));
-		
+
 		BlockEntity targetBE = targetLevel.getBlockEntity(targetBasePos);
-		CreateteleportersMod.LOGGER.info("Target block entity exists: {}, type: {}", 
-			targetBE != null, 
+		CreateteleportersMod.LOGGER.info("Target block entity exists: {}, type: {}",
+			targetBE != null,
 			targetBE != null ? targetBE.getClass().getSimpleName() : "null");
 		if (targetBE == null) {
 			CreateteleportersMod.LOGGER.warn("FAILED: No block entity at target base position {}", targetBasePos);
@@ -126,26 +128,26 @@ public final class CreateTrainPortalIntegration {
 		int localHorizontalOffset = getLocalHorizontalOffset(sourceBase.basePos, sourcePortalPos, sourceRotation);
 		int localY = sourcePortalPos.getY() - sourceBase.basePos.getY();
 		CreateteleportersMod.LOGGER.info("Local offset - horizontal: {}, y: {}", localHorizontalOffset, localY);
-		
+
 		BlockPos targetPortalPos = toPortalPos(targetBasePos, targetRotation, localHorizontalOffset, localY);
 		CreateteleportersMod.LOGGER.info("Calculated target portal position: {}", targetPortalPos);
-		
+
 		// Verify the target portal block exists
 		BlockState targetPortalState = targetLevel.getBlockState(targetPortalPos);
-		boolean isPortalBlock = targetPortalState.is(CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get());
-		CreateteleportersMod.LOGGER.info("Target portal block check - position: {}, is portal: {}, block: {}", 
+		boolean isPortalBlock = isPortalMarker(targetPortalState);
+		CreateteleportersMod.LOGGER.info("Target portal block check - position: {}, is marker: {}, block: {}",
 			targetPortalPos, isPortalBlock, targetPortalState.getBlock());
-		
+
 		if (!isPortalBlock) {
 			BlockPos mirroredTargetPos = toPortalPos(targetBasePos, targetRotation, -localHorizontalOffset, localY);
 			CreateteleportersMod.LOGGER.info("Trying mirrored position: {}", mirroredTargetPos);
 			BlockState mirroredState = targetLevel.getBlockState(mirroredTargetPos);
-			boolean isMirroredPortal = mirroredState.is(CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get());
-			CreateteleportersMod.LOGGER.info("Mirrored portal block check - is portal: {}, block: {}", 
+			boolean isMirroredPortal = isPortalMarker(mirroredState);
+			CreateteleportersMod.LOGGER.info("Mirrored portal block check - is marker: {}, block: {}",
 				isMirroredPortal, mirroredState.getBlock());
-			
+
 			if (!isMirroredPortal) {
-				CreateteleportersMod.LOGGER.warn("FAILED: No portal block found at calculated target position {} or mirrored position {}", 
+				CreateteleportersMod.LOGGER.warn("FAILED: No portal block found at calculated target position {} or mirrored position {}",
 					targetPortalPos, mirroredTargetPos);
 				return null;
 			}
@@ -155,12 +157,12 @@ public final class CreateTrainPortalIntegration {
 
 		Direction sourceNormal = rotationToNormal(sourceRotation);
 		Direction targetNormal = rotationToNormal(targetRotation);
-		
+
 		// Determine which side the train entered from
 		boolean enteredFromBackSide = entryFace.getFace() == sourceNormal;
-		CreateteleportersMod.LOGGER.info("Entry analysis - face: {}, sourceNormal: {}, enteredFromBackSide: {}", 
+		CreateteleportersMod.LOGGER.info("Entry analysis - face: {}, sourceNormal: {}, enteredFromBackSide: {}",
 			entryFace.getFace(), sourceNormal, enteredFromBackSide);
-		
+
 		// Exit from the corresponding side of the target portal
 		Direction exitDirection = enteredFromBackSide ? targetNormal.getOpposite() : targetNormal;
 		CreateteleportersMod.LOGGER.info("Target normal: {}, exit direction: {}", targetNormal, exitDirection);
@@ -172,19 +174,19 @@ public final class CreateTrainPortalIntegration {
 			CreateteleportersMod.LOGGER.warn("FAILED: No valid exit track found for portal at {}", targetPortalPos);
 			return null;
 		}
-		
+
 		// The face should point FROM the track TOWARD the portal
 		Direction trackFace = exitDirection.getOpposite();
-		CreateteleportersMod.LOGGER.info("SUCCESS: Train teleporting from {} to {} (track at {}, face {})", 
+		CreateteleportersMod.LOGGER.info("SUCCESS: Train teleporting from {} to {} (track at {}, face {})",
 			sourcePortalPos, targetPortalPos, exitTrackPos, trackFace);
 		CreateteleportersMod.LOGGER.info("=== END TELEPORT ATTEMPT ===");
-		
+
 		return new PortalTrackProvider.Exit(targetLevel, new BlockFace(exitTrackPos, trackFace));
 	}
 
 	private static BlockPos resolveTrackSide(ServerLevel level, BlockPos portalPos, Direction preferredDirection) {
 		CreateteleportersMod.LOGGER.info("Resolving track side - portal: {}, preferred direction: {}", portalPos, preferredDirection);
-		
+
 		// Try the preferred side first
 		BlockPos preferredTrack = portalPos.relative(preferredDirection);
 		CreateteleportersMod.LOGGER.info("Checking preferred track at: {}", preferredTrack);
@@ -192,7 +194,7 @@ public final class CreateTrainPortalIntegration {
 			CreateteleportersMod.LOGGER.info("Found usable track on preferred side");
 			return preferredTrack;
 		}
-		
+
 		// Try the opposite side
 		Direction oppositeDirection = preferredDirection.getOpposite();
 		BlockPos oppositeTrack = portalPos.relative(oppositeDirection);
@@ -201,7 +203,7 @@ public final class CreateTrainPortalIntegration {
 			CreateteleportersMod.LOGGER.info("Found usable track on opposite side");
 			return oppositeTrack;
 		}
-		
+
 		// No valid track found
 		CreateteleportersMod.LOGGER.warn("No usable track found on either side");
 		return null;
@@ -209,11 +211,11 @@ public final class CreateTrainPortalIntegration {
 
 	private static boolean isUsableExitTrack(ServerLevel level, BlockPos trackPos, Direction travelDirection) {
 		CreateteleportersMod.LOGGER.info("  Checking track usability at {} with travel direction {}", trackPos, travelDirection);
-		
+
 		BlockState blockState = level.getBlockState(trackPos);
-		CreateteleportersMod.LOGGER.info("  Block at position: {}, is ITrackBlock: {}", 
+		CreateteleportersMod.LOGGER.info("  Block at position: {}, is ITrackBlock: {}",
 			blockState.getBlock(), blockState.getBlock() instanceof ITrackBlock);
-		
+
 		if (!(blockState.getBlock() instanceof ITrackBlock track)) {
 			CreateteleportersMod.LOGGER.info("  Not a track block, rejecting");
 			return false;
@@ -222,33 +224,33 @@ public final class CreateTrainPortalIntegration {
 		// Get the direction vector the train will be traveling
 		Vec3 lookAngle = Vec3.atLowerCornerOf(travelDirection.getNormal());
 		CreateteleportersMod.LOGGER.info("  Look angle for track axis: {}", lookAngle);
-		
+
 		// Find the nearest track axis
 		Pair<Vec3, AxisDirection> nearestTrackAxis = track.getNearestTrackAxis(level, trackPos, blockState, lookAngle);
 		CreateteleportersMod.LOGGER.info("  Nearest track axis result: {}", nearestTrackAxis);
-		
+
 		if (nearestTrackAxis == null) {
 			CreateteleportersMod.LOGGER.info("  No track axis found, rejecting");
 			return false;
 		}
-		
-		CreateteleportersMod.LOGGER.info("  Track axis - position: {}, direction: {}", 
+
+		CreateteleportersMod.LOGGER.info("  Track axis - position: {}, direction: {}",
 			nearestTrackAxis.getFirst(), nearestTrackAxis.getSecond());
-		
+
 		// Verify the track has valid graph connectivity
 		TrackGraphLocation graphLocation = TrackGraphHelper.getGraphLocationAt(
-			level, 
-			trackPos, 
-			nearestTrackAxis.getSecond(), 
+			level,
+			trackPos,
+			nearestTrackAxis.getSecond(),
 			nearestTrackAxis.getFirst()
 		);
-		
+
 		boolean hasGraph = graphLocation != null;
 		CreateteleportersMod.LOGGER.info("  Track graph location exists: {}", hasGraph);
 		if (hasGraph) {
 			CreateteleportersMod.LOGGER.info("  Graph location details: {}", graphLocation);
 		}
-		
+
 		return hasGraph;
 	}
 
@@ -260,7 +262,7 @@ public final class CreateTrainPortalIntegration {
 		int bestDistance = Integer.MAX_VALUE;
 		int basesFound = 0;
 		int linkedActiveBases = 0;
-		
+
 		for (BlockPos cursor : BlockPos.betweenClosed(min, max)) {
 			if (!level.getBlockState(cursor).is(CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get())) {
 				continue;
@@ -276,17 +278,17 @@ public final class CreateTrainPortalIntegration {
 			boolean isInterior = isPortalInteriorBlock(cursor, portalPos, nbt);
 			boolean isLinked = nbt.getBoolean("isLinked");
 			boolean isActive = nbt.getBoolean("portalActive");
-			
-			CreateteleportersMod.LOGGER.info("  Found base at {} - isInterior: {}, isLinked: {}, isActive: {}", 
+
+			CreateteleportersMod.LOGGER.info("  Found base at {} - isInterior: {}, isLinked: {}, isActive: {}",
 				cursor, isInterior, isLinked, isActive);
-			
+
 			if (!isInterior) {
 				continue;
 			}
 			if (!isLinked || !isActive) {
 				continue;
 			}
-			
+
 			linkedActiveBases++;
 			int distance = cursor.distManhattan(portalPos);
 			if (distance < bestDistance) {
@@ -294,8 +296,8 @@ public final class CreateTrainPortalIntegration {
 				best = new PortalBaseData(cursor.immutable(), nbt);
 			}
 		}
-		
-		CreateteleportersMod.LOGGER.info("Search complete - bases found: {}, linked+active: {}, best distance: {}", 
+
+		CreateteleportersMod.LOGGER.info("Search complete - bases found: {}, linked+active: {}, best distance: {}",
 			basesFound, linkedActiveBases, bestDistance == Integer.MAX_VALUE ? "none" : bestDistance);
 		return best;
 	}
@@ -350,6 +352,10 @@ public final class CreateTrainPortalIntegration {
 			case "south" -> Direction.SOUTH;
 			default -> Direction.NORTH;
 		};
+	}
+
+	private static boolean isPortalMarker(BlockState state) {
+		return state.is(CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get()) || state.is(Blocks.STRUCTURE_VOID);
 	}
 
 	private record PortalBaseData(BlockPos basePos, CompoundTag nbt) {
