@@ -1,6 +1,7 @@
 package net.createteleporters.integration;
 
 import com.simibubi.create.api.contraption.train.PortalTrackProvider;
+import com.simibubi.create.content.trains.track.ITrackBlock;
 
 import net.createmod.catnip.math.BlockFace;
 
@@ -38,8 +39,8 @@ public final class CreateTrainPortalIntegration {
 
 	private static PortalTrackProvider.Exit findExit(ServerLevel level, BlockFace entryFace) {
 		BlockPos sourcePortalPos = entryFace.getConnectedPos();
-		PortalBaseData sourceBase = findPortalBaseForPortalBlock(level, sourcePortalPos);
-		if (sourceBase == null || !sourceBase.nbt.getBoolean("isLinked") || !sourceBase.nbt.getBoolean("portalActive")) {
+		PortalBaseData sourceBase = findLinkedActivePortalBaseForPortalBlock(level, sourcePortalPos);
+		if (sourceBase == null) {
 			return null;
 		}
 
@@ -75,20 +76,42 @@ public final class CreateTrainPortalIntegration {
 		int localY = sourcePortalPos.getY() - sourceBase.basePos.getY();
 		BlockPos targetPortalPos = toPortalPos(targetBasePos, targetRotation, localHorizontalOffset, localY);
 		if (!targetLevel.getBlockState(targetPortalPos).is(CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get())) {
-			return null;
+			BlockPos mirroredTargetPos = toPortalPos(targetBasePos, targetRotation, -localHorizontalOffset, localY);
+			if (!targetLevel.getBlockState(mirroredTargetPos).is(CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get())) {
+				return null;
+			}
+			targetPortalPos = mirroredTargetPos;
 		}
 
 		Direction sourceNormal = rotationToNormal(sourceRotation);
-		Direction exitDirection = rotationToNormal(targetRotation);
-		boolean enteredFromPositiveSide = entryFace.getFace() == sourceNormal.getOpposite();
-		Direction targetOffset = enteredFromPositiveSide ? exitDirection : exitDirection.getOpposite();
+		Direction targetNormal = rotationToNormal(targetRotation);
+		boolean enteredFromBackSide = entryFace.getFace() == sourceNormal;
+		Direction preferredOffset = enteredFromBackSide ? targetNormal.getOpposite() : targetNormal;
 
+		Direction targetOffset = resolveTrackSide(targetLevel, targetPortalPos, preferredOffset);
 		return new PortalTrackProvider.Exit(targetLevel, new BlockFace(targetPortalPos.relative(targetOffset), targetOffset.getOpposite()));
 	}
 
-	private static PortalBaseData findPortalBaseForPortalBlock(ServerLevel level, BlockPos portalPos) {
+	private static Direction resolveTrackSide(ServerLevel level, BlockPos portalPos, Direction preferredOffset) {
+		if (isTrack(level, portalPos.relative(preferredOffset))) {
+			return preferredOffset;
+		}
+		Direction opposite = preferredOffset.getOpposite();
+		if (isTrack(level, portalPos.relative(opposite))) {
+			return opposite;
+		}
+		return preferredOffset;
+	}
+
+	private static boolean isTrack(ServerLevel level, BlockPos pos) {
+		return level.getBlockState(pos).getBlock() instanceof ITrackBlock;
+	}
+
+	private static PortalBaseData findLinkedActivePortalBaseForPortalBlock(ServerLevel level, BlockPos portalPos) {
 		BlockPos min = portalPos.offset(-SEARCH_RADIUS, -SEARCH_RADIUS, -SEARCH_RADIUS);
 		BlockPos max = portalPos.offset(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS);
+		PortalBaseData best = null;
+		int bestDistance = Integer.MAX_VALUE;
 		for (BlockPos cursor : BlockPos.betweenClosed(min, max)) {
 			if (!level.getBlockState(cursor).is(CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get())) {
 				continue;
@@ -100,11 +123,20 @@ public final class CreateTrainPortalIntegration {
 			}
 
 			CompoundTag nbt = be.getPersistentData();
-			if (isPortalInteriorBlock(cursor, portalPos, nbt)) {
-				return new PortalBaseData(cursor.immutable(), nbt);
+			if (!isPortalInteriorBlock(cursor, portalPos, nbt)) {
+				continue;
+			}
+			if (!nbt.getBoolean("isLinked") || !nbt.getBoolean("portalActive")) {
+				continue;
+			}
+
+			int distance = cursor.distManhattan(portalPos);
+			if (distance < bestDistance) {
+				bestDistance = distance;
+				best = new PortalBaseData(cursor.immutable(), nbt);
 			}
 		}
-		return null;
+		return best;
 	}
 
 	private static boolean isPortalInteriorBlock(BlockPos basePos, BlockPos portalPos, CompoundTag nbt) {
@@ -130,17 +162,24 @@ public final class CreateTrainPortalIntegration {
 	}
 
 	private static int getLocalHorizontalOffset(BlockPos basePos, BlockPos portalPos, String rotation) {
-		if ("east".equals(rotation) || "west".equals(rotation)) {
-			return portalPos.getZ() - basePos.getZ();
-		}
-		return portalPos.getX() - basePos.getX();
+		BlockPos horizontalDirection = horizontalDirection(rotation);
+		int dx = portalPos.getX() - basePos.getX();
+		int dz = portalPos.getZ() - basePos.getZ();
+		return dx * horizontalDirection.getX() + dz * horizontalDirection.getZ();
 	}
 
 	private static BlockPos toPortalPos(BlockPos basePos, String rotation, int horizontalOffset, int localY) {
-		if ("east".equals(rotation) || "west".equals(rotation)) {
-			return basePos.offset(0, localY, horizontalOffset);
-		}
-		return basePos.offset(horizontalOffset, localY, 0);
+		BlockPos horizontalDirection = horizontalDirection(rotation);
+		return basePos.offset(horizontalDirection.getX() * horizontalOffset, localY, horizontalDirection.getZ() * horizontalOffset);
+	}
+
+	private static BlockPos horizontalDirection(String rotation) {
+		return switch (rotation) {
+			case "south" -> new BlockPos(-1, 0, 0);
+			case "east" -> new BlockPos(0, 0, 1);
+			case "west" -> new BlockPos(0, 0, -1);
+			default -> new BlockPos(1, 0, 0);
+		};
 	}
 
 	private static Direction rotationToNormal(String rotation) {
