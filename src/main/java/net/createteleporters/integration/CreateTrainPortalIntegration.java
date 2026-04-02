@@ -1,21 +1,27 @@
 package net.createteleporters.integration;
 
 import com.simibubi.create.api.contraption.train.PortalTrackProvider;
+import com.simibubi.create.content.trains.graph.TrackGraphHelper;
+import com.simibubi.create.content.trains.graph.TrackGraphLocation;
 import com.simibubi.create.content.trains.track.ITrackBlock;
 
 import net.createmod.catnip.math.BlockFace;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.AxisDirection;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 import net.createteleporters.CreateteleportersMod;
 import net.createteleporters.init.CreateteleportersModBlocks;
+import net.createmod.catnip.data.Pair;
 
 /**
  * Registers custom portal support for Create train portal tracks.
@@ -39,8 +45,8 @@ public final class CreateTrainPortalIntegration {
 
 	private static PortalTrackProvider.Exit findExit(ServerLevel level, BlockFace entryFace) {
 		BlockPos sourcePortalPos = entryFace.getConnectedPos();
-		PortalBaseData sourceBase = findPortalBaseForPortalBlock(level, sourcePortalPos);
-		if (sourceBase == null || !sourceBase.nbt.getBoolean("isLinked") || !sourceBase.nbt.getBoolean("portalActive")) {
+		PortalBaseData sourceBase = findLinkedActivePortalBaseForPortalBlock(level, sourcePortalPos);
+		if (sourceBase == null) {
 			return null;
 		}
 
@@ -93,23 +99,36 @@ public final class CreateTrainPortalIntegration {
 	}
 
 	private static Direction resolveTrackSide(ServerLevel level, BlockPos portalPos, Direction preferredOffset) {
-		if (isTrack(level, portalPos.relative(preferredOffset))) {
+		if (isUsableExitTrack(level, portalPos, preferredOffset)) {
 			return preferredOffset;
 		}
 		Direction opposite = preferredOffset.getOpposite();
-		if (isTrack(level, portalPos.relative(opposite))) {
+		if (isUsableExitTrack(level, portalPos, opposite)) {
 			return opposite;
 		}
 		return preferredOffset;
 	}
 
-	private static boolean isTrack(ServerLevel level, BlockPos pos) {
-		return level.getBlockState(pos).getBlock() instanceof ITrackBlock;
+	private static boolean isUsableExitTrack(ServerLevel level, BlockPos portalPos, Direction offset) {
+		BlockPos trackPos = portalPos.relative(offset);
+		BlockState blockState = level.getBlockState(trackPos);
+		if (!(blockState.getBlock() instanceof ITrackBlock track)) {
+			return false;
+		}
+
+		Direction travelFace = offset.getOpposite();
+		Vec3 lookAngle = Vec3.atLowerCornerOf(travelFace.getNormal());
+		Pair<Vec3, AxisDirection> nearestTrackAxis = track.getNearestTrackAxis(level, trackPos, blockState, lookAngle);
+		TrackGraphLocation graphLocation =
+			TrackGraphHelper.getGraphLocationAt(level, trackPos, nearestTrackAxis.getSecond(), nearestTrackAxis.getFirst());
+		return graphLocation != null;
 	}
 
-	private static PortalBaseData findPortalBaseForPortalBlock(ServerLevel level, BlockPos portalPos) {
+	private static PortalBaseData findLinkedActivePortalBaseForPortalBlock(ServerLevel level, BlockPos portalPos) {
 		BlockPos min = portalPos.offset(-SEARCH_RADIUS, -SEARCH_RADIUS, -SEARCH_RADIUS);
 		BlockPos max = portalPos.offset(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS);
+		PortalBaseData best = null;
+		int bestDistance = Integer.MAX_VALUE;
 		for (BlockPos cursor : BlockPos.betweenClosed(min, max)) {
 			if (!level.getBlockState(cursor).is(CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get())) {
 				continue;
@@ -121,11 +140,20 @@ public final class CreateTrainPortalIntegration {
 			}
 
 			CompoundTag nbt = be.getPersistentData();
-			if (isPortalInteriorBlock(cursor, portalPos, nbt)) {
-				return new PortalBaseData(cursor.immutable(), nbt);
+			if (!isPortalInteriorBlock(cursor, portalPos, nbt)) {
+				continue;
+			}
+			if (!nbt.getBoolean("isLinked") || !nbt.getBoolean("portalActive")) {
+				continue;
+			}
+
+			int distance = cursor.distManhattan(portalPos);
+			if (distance < bestDistance) {
+				bestDistance = distance;
+				best = new PortalBaseData(cursor.immutable(), nbt);
 			}
 		}
-		return null;
+		return best;
 	}
 
 	private static boolean isPortalInteriorBlock(BlockPos basePos, BlockPos portalPos, CompoundTag nbt) {
