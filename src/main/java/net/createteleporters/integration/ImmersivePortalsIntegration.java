@@ -51,6 +51,7 @@ public class ImmersivePortalsIntegration {
         
         int interiorWidth = Math.abs(maxExtent - minExtent) - 1;
         int interiorHeight = portalHeight - 1;
+        int sourceSquareSize = Math.max(1, Math.min(interiorWidth, interiorHeight));
         
         if (interiorWidth < 1 || interiorHeight < 1) {
             CreateteleportersMod.LOGGER.warn("Portal too small: {}x{}", interiorWidth, interiorHeight);
@@ -80,8 +81,8 @@ public class ImmersivePortalsIntegration {
         
         try {
             CreateteleportersMod.LOGGER.info("=== CREATING IP PORTAL ===");
-            CreateteleportersMod.LOGGER.info("Base: ({},{},{}) | Portal: ({},{},{}) | Size: {}x{}", 
-                x, y, z, portalX, portalY, portalZ, interiorWidth, interiorHeight);
+            CreateteleportersMod.LOGGER.info("Base: ({},{},{}) | Portal: ({},{},{}) | Frame size: {}x{} | Square size: {}", 
+                x, y, z, portalX, portalY, portalZ, interiorWidth, interiorHeight, sourceSquareSize);
             CreateteleportersMod.LOGGER.info("Target: {} ({},{},{})", targetDim, targetX, targetY, targetZ);
             CreateteleportersMod.LOGGER.info("Rotation: {}, Normal: {} (yaw={})", rotation, portalNormal, portalNormal.toYRot());
             
@@ -96,14 +97,14 @@ public class ImmersivePortalsIntegration {
             
             PortalTargetInfo targetInfo = resolveTargetPortalInfo(serverLevel, targetDim, targetX, targetY, targetZ,
                 rotation, minExtent, maxExtent, portalHeight);
-            double heightScale = targetInfo.interiorHeight / (double) interiorHeight;
-            double portalScale = Math.max(0.1, heightScale);
+            double squareScale = targetInfo.squareSize / (double) sourceSquareSize;
+            double portalScale = Math.max(0.1, squareScale);
 
             // Create portal with explicit Euler orientation to avoid block-hit based
             // make_portal rotation ambiguity (which can create flat portals).
             String createCmd = String.format(
                 "portal euler make_portal %.3f %.3f %.3f %.1f %.1f %d %d %.4f {}",
-                portalX, portalY, portalZ, 0.0f, portalNormal.toYRot(), interiorWidth, interiorHeight, portalScale
+                portalX, portalY, portalZ, 0.0f, portalNormal.toYRot(), sourceSquareSize, sourceSquareSize, portalScale
             );
             
             serverLevel.getServer().getCommands().performPrefixedCommand(cmdSource.withSuppressedOutput(), createCmd);
@@ -229,15 +230,16 @@ public class ImmersivePortalsIntegration {
         int baseZ = (int) Math.floor(targetBaseZ);
         int interiorHeight = Math.max(1, portalHeight - 1);
         int interiorWidth = Math.max(1, Math.abs(maxExtent - minExtent) - 1);
+        int squareSize = Math.max(1, Math.min(interiorWidth, interiorHeight));
         int extentCenter = (minExtent + maxExtent) / 2;
         int portalBottomY = baseY + 1;
         int portalCenterY = portalBottomY + interiorHeight / 2;
 
         if ("north".equals(rotation) || "south".equals(rotation)) {
-            return new PortalTargetInfo(new Vec3(baseX + extentCenter + 0.5, portalCenterY + 0.5, baseZ + 0.5), interiorWidth, interiorHeight);
+            return new PortalTargetInfo(new Vec3(baseX + extentCenter + 0.5, portalCenterY + 0.5, baseZ + 0.5), squareSize);
         }
-        return new PortalTargetInfo(new Vec3(baseX + 0.5, portalCenterY + 0.5, baseZ + extentCenter + 0.5), interiorWidth, interiorHeight);
+        return new PortalTargetInfo(new Vec3(baseX + 0.5, portalCenterY + 0.5, baseZ + extentCenter + 0.5), squareSize);
     }
 
-    private record PortalTargetInfo(Vec3 center, int interiorWidth, int interiorHeight) {}
+    private record PortalTargetInfo(Vec3 center, int squareSize) {}
 }
