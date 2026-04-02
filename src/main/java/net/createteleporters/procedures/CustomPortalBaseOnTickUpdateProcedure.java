@@ -33,38 +33,55 @@ import net.minecraft.world.scores.Scoreboard;
 
 public class CustomPortalBaseOnTickUpdateProcedure {
 	public static String execute(LevelAccessor world, double x, double y, double z) {
-		double maxDist = 0;
-		double dist = 0;
-		boolean facingX = false;
-		PortalBlockCheckerProcedure.execute(world, x, y, z);
+		// Use scalable portal checker instead of fixed size
+		ScalablePortalCheckerProcedure.execute(world, x, y, z);
+		
 		if (getBlockNBTLogic(world, BlockPos.containing(x, y, z), "portalActive")) {
 			if (4 <= getFluidTankLevel(world, BlockPos.containing(x, y, z), 1, null)) {
-				if ((getBlockNBTString(world, BlockPos.containing(x, y, z), "rotation")).equals("east") || (getBlockNBTString(world, BlockPos.containing(x, y, z), "rotation")).equals("west")) {
+				// Get portal dimensions from NBT
+				int portalWidth = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalWidth");
+				int portalHeight = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalHeight");
+				int minExtent = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalMinExtent");
+				int maxExtent = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalMaxExtent");
+				String rotation = getBlockNBTString(world, BlockPos.containing(x, y, z), "rotation");
+
+				// Fill portal interior only (not the frame)
+				// minExtent/maxExtent include the frame, so we add/subtract 1 to get interior
+				int interiorMin = minExtent + 1;
+				int interiorMax = maxExtent - 1;
+				int fillHeight = portalHeight - 1;
+
+				// Fill portal based on stored dimensions (interior only, not the frame)
+				if ("east".equals(rotation) || "west".equals(rotation)) {
+					// Horizontal axis is Z, X stays same as base
+					// fill x1 y1 z1 x2 y2 z2
 					if (world instanceof ServerLevel _level)
-						_level.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
-								"fill ~ ~1 ~-1 ~ ~3 ~1 createteleporters:quantum_portal_block");
-				} else if ((getBlockNBTString(world, BlockPos.containing(x, y, z), "rotation")).equals("north") || (getBlockNBTString(world, BlockPos.containing(x, y, z), "rotation")).equals("south")) {
+						_level.getServer().getCommands().performPrefixedCommand(
+							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
+							"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax + " createteleporters:quantum_portal_block");
+				} else if ("north".equals(rotation) || "south".equals(rotation)) {
+					// Horizontal axis is X, Z stays same as base
 					if (world instanceof ServerLevel _level)
-						_level.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
-								"fill ~-1 ~1 ~ ~1 ~3 ~ createteleporters:quantum_portal_block");
+						_level.getServer().getCommands().performPrefixedCommand(
+							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
+							"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight + " ~ createteleporters:quantum_portal_block");
 				}
+				
+				// Drain fluid
 				if (world instanceof ILevelExtension _ext) {
 					IFluidHandler _fluidHandler = _ext.getCapability(Capabilities.FluidHandler.BLOCK, BlockPos.containing(x, y, z), null);
 					if (_fluidHandler != null)
 						_fluidHandler.drain(4, IFluidHandler.FluidAction.EXECUTE);
 				}
 
-				// ---------- unified, corrected AABB + feet check (keeps your NBT handling) ----------
-				String rotation = getBlockNBTString(world, BlockPos.containing(x, y, z), "rotation");
-
-				// Build an AABB that matches the blocks placed by your fill commands:
-				// east/west: portal column at x..x+1, spans z-1..z+1
-				// north/south: portal column at z..z+1, spans x-1..x+1
+				// Build AABB based on portal interior extents
 				AABB portalArea;
+				int portalInnerHeight = portalHeight - 1;
+
 				if ("east".equals(rotation) || "west".equals(rotation)) {
-					portalArea = new AABB(x, y + 1, z - 1, x + 1, y + 3, z + 1);
+					portalArea = new AABB(x, y + 1, z + interiorMin, x + 1, y + portalInnerHeight + 1, z + interiorMax + 1);
 				} else {
-					portalArea = new AABB(x - 1, y + 1, z, x + 1, y + 3, z + 1);
+					portalArea = new AABB(x + interiorMin, y + 1, z, x + interiorMax + 1, y + portalInnerHeight + 1, z + 1);
 				}
 
 				// tiny epsilon to avoid strict boundary misses
@@ -78,19 +95,59 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					Math.max(portalArea.minZ, portalArea.maxZ) + EPS
 				);
 
-				// Cache your inventory item's custom data tag (keeps your existing tag usage)
-				ItemStack invStack = (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy());
-				CompoundTag cd = invStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-				String targetDim = cd.getString("dimension");
-				double tx = cd.getDouble("xpo");
-				double ty = cd.getDouble("ypo");
-				double tz = cd.getDouble("zpo");
-				double yaw = cd.getDouble("yawpo");
+				// Get teleportation target - prefer linked portal coordinates over item data
+				String targetDim;
+				double tx, ty, tz, yaw;
+
+				// Check if this portal is linked to another portal
+				BlockEntity linkedBE = world.getBlockEntity(BlockPos.containing(x, y, z));
+				boolean isLinked = linkedBE != null && linkedBE.getPersistentData().getBoolean("isLinked");
+
+				if (isLinked) {
+					// Check if either portal has the Advanced TP Link in its inventory
+					boolean hasTpLink = hasAdvancedTpLink(world, BlockPos.containing(x, y, z)) ||
+									   hasAdvancedTpLinkAtLinkedPortal(world, linkedBE);
+					
+					if (!hasTpLink) {
+						return "Missing Advanced TP Link"; // Require TP Link for linked portals
+					}
+					
+					// Use linked portal coordinates
+					tx = linkedBE.getPersistentData().getDouble("linkedX");
+					ty = linkedBE.getPersistentData().getDouble("linkedY");
+					tz = linkedBE.getPersistentData().getDouble("linkedZ");
+					targetDim = linkedBE.getPersistentData().getString("linkedDim");
+					yaw = linkedBE.getPersistentData().getDouble("linkedYaw");
+				} else {
+					// Fall back to item data (for backwards compatibility)
+					ItemStack invStack = (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy());
+					CompoundTag cd = invStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+					targetDim = cd.getString("dimension");
+					tx = cd.getDouble("xpo");
+					ty = cd.getDouble("ypo");
+					tz = cd.getDouble("zpo");
+					yaw = cd.getDouble("yawpo");
+				}
 
 				for (Entity entityiterator : world.getEntities(null, portalArea)) {
+					// Decrement teleportation cooldown if present
+					CompoundTag entityData = entityiterator.getPersistentData();
+					if (entityData.contains("PortalTeleportCooldown")) {
+						int cooldown = entityData.getInt("PortalTeleportCooldown");
+						if (cooldown > 0) {
+							entityData.putInt("PortalTeleportCooldown", cooldown - 1);
+						}
+					}
+
+					// Check if entity has teleportation cooldown (prevents infinite loops)
+					if (entityData.contains("PortalTeleportCooldown") && 
+						entityData.getInt("PortalTeleportCooldown") > 0) {
+						continue; // Skip this entity, still on cooldown
+					}
+
 					// use the entity's feet (minY of bounding box) to prevent premature triggers
 					double feetY = entityiterator.getBoundingBox().minY;
-					if (feetY + 1e-6 >= (y + 1) && feetY <= (y + 3) + 1e-6) {
+					if (feetY + 1e-6 >= (y + 1) && feetY <= (y + portalInnerHeight + 1) + 1e-6) {
 						// Save player's team before teleportation (Bug fix: preserve team assignment)
 						String playerTeamName = null;
 						if (entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
@@ -104,7 +161,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 						if (world instanceof ServerLevel _level)
 							_level.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
 									("execute in " + targetDim
-											+ ("run tp " + entityiterator.getStringUUID() + " "
+											+ (" run tp " + entityiterator.getStringUUID() + " "
 													+ tx + " "
 													+ (ty + 1) + " "
 													+ tz)));
@@ -121,6 +178,9 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 								_entity.yHeadRotO = _entity.getYRot();
 							}
 						}
+
+						// Set teleportation cooldown (20 ticks = 1 second)
+						entityiterator.getPersistentData().putInt("PortalTeleportCooldown", 20);
 
 						// Restore player's team after teleportation (Bug fix: preserve team assignment)
 						if (playerTeamName != null && entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
@@ -151,7 +211,6 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 						}
 					}
 				}
-				// ------------------------------------------------------------------------------------
 
 				return "Portal Ready";
 			} else {
@@ -167,14 +226,45 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				return "No Telefluid";
 			}
 		} else {
-			if ((getBlockNBTString(world, BlockPos.containing(x, y, z), "rotation")).equals("east") || (getBlockNBTString(world, BlockPos.containing(x, y, z), "rotation")).equals("west")) {
-				if (world instanceof ServerLevel _level)
-					_level.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
+			// Clear portal blocks when frame is invalid
+			String rotation = getBlockNBTString(world, BlockPos.containing(x, y, z), "rotation");
+			int portalWidth = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalWidth");
+			int portalHeight = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalHeight");
+			int minExtent = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalMinExtent");
+			int maxExtent = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalMaxExtent");
+
+			if (portalWidth > 0 && portalHeight > 0) {
+				// Use interior dimensions (not the frame)
+				int interiorMin = minExtent + 1;
+				int interiorMax = maxExtent - 1;
+				int fillHeight = portalHeight - 1;
+
+				if ("east".equals(rotation) || "west".equals(rotation)) {
+					// Horizontal axis is Z, X stays same as base
+					if (world instanceof ServerLevel _level)
+						_level.getServer().getCommands().performPrefixedCommand(
+							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
+							"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax + " air replace createteleporters:quantum_portal_block");
+				} else if ("north".equals(rotation) || "south".equals(rotation)) {
+					// Horizontal axis is X, Z stays same as base
+					if (world instanceof ServerLevel _level)
+						_level.getServer().getCommands().performPrefixedCommand(
+							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
+							"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight + " ~ air replace createteleporters:quantum_portal_block");
+				}
+			} else {
+				// Fallback to old 5x5 clearing
+				if ("east".equals(rotation) || "west".equals(rotation)) {
+					if (world instanceof ServerLevel _level)
+						_level.getServer().getCommands().performPrefixedCommand(
+							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
 							"fill ~ ~1 ~-1 ~ ~3 ~1 air replace createteleporters:quantum_portal_block");
-			} else if ((getBlockNBTString(world, BlockPos.containing(x, y, z), "rotation")).equals("north") || (getBlockNBTString(world, BlockPos.containing(x, y, z), "rotation")).equals("south")) {
-				if (world instanceof ServerLevel _level)
-					_level.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
+				} else if ("north".equals(rotation) || "south".equals(rotation)) {
+					if (world instanceof ServerLevel _level)
+						_level.getServer().getCommands().performPrefixedCommand(
+							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
 							"fill ~-1 ~1 ~ ~1 ~3 ~ air replace createteleporters:quantum_portal_block");
+				}
 			}
 		}
 		return "Portal Frame Incorrect";
@@ -188,8 +278,8 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 	}
 
 	private static int getFluidTankLevel(LevelAccessor level, BlockPos pos, int tank, Direction direction) {
-		if (level instanceof ILevelExtension levelExtension) {
-			IFluidHandler fluidHandler = levelExtension.getCapability(Capabilities.FluidHandler.BLOCK, pos, direction);
+		if (level instanceof ILevelExtension ext) {
+			IFluidHandler fluidHandler = ext.getCapability(Capabilities.FluidHandler.BLOCK, pos, direction);
 			if (fluidHandler != null)
 				return fluidHandler.getFluidInTank(tank).getAmount();
 		}
@@ -202,6 +292,13 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 			return blockEntity.getPersistentData().getString(tag);
 		return "";
 	}
+	
+	private static int getBlockNBTInt(LevelAccessor world, BlockPos pos, String tag) {
+		BlockEntity blockEntity = world.getBlockEntity(pos);
+		if (blockEntity != null)
+			return blockEntity.getPersistentData().getInt(tag);
+		return 0;
+	}
 
 	private static ItemStack itemFromBlockInventory(LevelAccessor world, BlockPos pos, int slot) {
 		if (world instanceof ILevelExtension ext) {
@@ -210,5 +307,23 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				return itemHandler.getStackInSlot(slot);
 		}
 		return ItemStack.EMPTY;
+	}
+	
+	/**
+	 * Checks if this portal has an Advanced TP Link in its inventory.
+	 */
+	private static boolean hasAdvancedTpLink(LevelAccessor world, BlockPos pos) {
+		ItemStack stack = itemFromBlockInventory(world, pos, 0);
+		return !stack.isEmpty() && stack.getItem() instanceof net.createteleporters.item.ADVTplinkItem;
+	}
+	
+	/**
+	 * Checks if the linked portal has an Advanced TP Link in its inventory.
+	 */
+	private static boolean hasAdvancedTpLinkAtLinkedPortal(LevelAccessor world, BlockEntity linkedBE) {
+		int linkedX = linkedBE.getPersistentData().getInt("linkedX");
+		int linkedY = linkedBE.getPersistentData().getInt("linkedY");
+		int linkedZ = linkedBE.getPersistentData().getInt("linkedZ");
+		return hasAdvancedTpLink(world, new BlockPos(linkedX, linkedY, linkedZ));
 	}
 }

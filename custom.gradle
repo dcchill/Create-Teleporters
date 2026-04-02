@@ -1,0 +1,16 @@
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+
+    maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/" }
+    maven { url = "https://maven.createmod.net" }
+}
+
+dependencies {
+    compileOnly name: "create-1.21.1-6.0.6"
+    runtimeOnly name: "create-1.21.1-6.0.6"
+
+    compileOnly "net.createmod.ponder:Ponder-NeoForge-1.21.1:1.0.56"
+    runtimeOnly "net.createmod.ponder:Ponder-NeoForge-1.21.1:1.0.56"
+}

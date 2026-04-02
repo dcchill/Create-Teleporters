@@ -34,10 +34,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 
 import net.createteleporters.world.inventory.CustomTeleporterGuiMenu;
-import net.createteleporters.procedures.PortalBlockCheckerProcedure;
+import net.createteleporters.procedures.ScalablePortalCheckerProcedure;
 import net.createteleporters.procedures.CustomPortalBaseOnTickUpdateProcedure;
 import net.createteleporters.procedures.CustomPortalBaseBlockDestroyedByPlayerProcedure;
 import net.createteleporters.procedures.CustomPortalBaseBlockAddedProcedure;
+import net.createteleporters.procedures.BindCustomPortalProcedure;
 import net.createteleporters.block.entity.CustomPortalBaseBlockEntity;
 
 import io.netty.buffer.Unpooled;
@@ -104,9 +105,8 @@ public class CustomPortalBaseBlock extends Block implements EntityBlock {
 	@Override
 	public void neighborChanged(BlockState blockstate, Level world, BlockPos pos, Block neighborBlock, BlockPos fromPos, boolean moving) {
 		super.neighborChanged(blockstate, world, pos, neighborBlock, fromPos, moving);
-		if (world.getBestNeighborSignal(pos) > 0) {
-			PortalBlockCheckerProcedure.execute(world, pos.getX(), pos.getY(), pos.getZ());
-		}
+		// Always check portal frame when neighbors change (no redstone required)
+		ScalablePortalCheckerProcedure.execute(world, pos.getX(), pos.getY(), pos.getZ());
 	}
 
 	@Override
@@ -126,6 +126,13 @@ public class CustomPortalBaseBlock extends Block implements EntityBlock {
 	@Override
 	public InteractionResult useWithoutItem(BlockState blockstate, Level world, BlockPos pos, Player entity, BlockHitResult hit) {
 		super.useWithoutItem(blockstate, world, pos, entity, hit);
+		
+		// Try to bind portals if player is holding Advanced TP Link
+		InteractionResult bindResult = BindCustomPortalProcedure.execute(world, pos.getX(), pos.getY(), pos.getZ(), entity, entity.getUsedItemHand());
+		if (bindResult.consumesAction()) {
+			return bindResult;
+		}
+		
 		if (entity instanceof ServerPlayer player) {
 			player.openMenu(new MenuProvider() {
 				@Override

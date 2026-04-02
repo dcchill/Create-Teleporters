@@ -698,7 +698,7 @@
       "name": "CustomPortalBase",
       "type": "block",
       "compiles": true,
-      "locked_code": false,
+      "locked_code": true,
       "registry_name": "custom_portal_base",
       "metadata": {
         "files": [
@@ -814,7 +814,7 @@
       "name": "QuantumPortalBlock",
       "type": "block",
       "compiles": true,
-      "locked_code": false,
+      "locked_code": true,
       "registry_name": "quantum_portal_block",
       "metadata": {
         "files": [
@@ -866,7 +866,7 @@
       "name": "QuantumPortalBlockOnTickUpdate",
       "type": "procedure",
       "compiles": true,
-      "locked_code": false,
+      "locked_code": true,
       "registry_name": "quantum_portal_block_on_tick_update",
       "metadata": {
         "dependencies": [
@@ -1577,7 +1577,7 @@
       "item.createteleporters.adv_tplink": "Advanced Tp Link",
       "gui.createteleporters.custom_teleporter_gui.label_entity_teleporter": "Quantum Teleporter",
       "gui.createteleporters.custom_teleporter_gui.label_tp_link": "Advanced TP Link",
-      "block.createteleporters.custom_portal_base": "Custom Portal Base",
+      "block.createteleporters.custom_portal_base": "Custom Portal Controller",
       "block.createteleporters.quantum_portal_block": "Quantum Portal Block",
       "gui.createteleporters.custom_teleporter_gui.label_proc_entity_teleporter_on_tick_u": "",
       "item.createteleporters.pocket_dimension_remote": "Pocket Dimension Remote",
@@ -1590,7 +1590,7 @@
       "block.createteleporters.custom_portal_on": "Custom Portal On",
       "item.createteleporters.teleporter": "Entity Teleporter",
       "item.createteleporters.item_tp": "Item Teleporter",
-      "item.createteleporters.custom_portal_base": "Custom Portal Base",
+      "item.createteleporters.custom_portal_base": "Custom Portal Controller",
       "item.createteleporters.quantum_portal_block": "Quantum Portal Block",
       "item.createteleporters.pocket_d_block": "Pocketdblock",
       "item.createteleporters.entity_teleporter_slab": "Entity Teleporter",
@@ -1670,7 +1670,7 @@
   "workspaceSettings": {
     "modid": "createteleporters",
     "modName": "Create Teleporters Remastered",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "author": "Dcchill",
     "websiteURL": "https://www.curseforge.com/members/chilllliii/projects",
     "license": "Not specified",

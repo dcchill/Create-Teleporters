@@ -8,6 +8,8 @@ base.archivesName = "modid"
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
+apply from: "custom.gradle"
+
 neoForge {
     version = "21.1.190"
 

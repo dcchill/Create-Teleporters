@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(gradlew.bat *)",
-      "Bash(del *)"
+      "Bash(del *)",
+      "Bash(.\\gradlew.bat *)",
+      "Bash(rmdir *)",
+      "Bash(mkdir *)"
     ]
   },
   "$version": 3
