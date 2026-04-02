@@ -84,6 +84,10 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 						}
 					}
 				} else {
+					// Config may have been turned off while IP portals were active.
+					// Remove existing IP portals and switch back to quantum portal blocks.
+					removeTrackedImmersivePortal(world, x, y, z);
+
 					// Use vanilla quantum portal blocks
 					// Fill portal interior only (not the frame)
 					if ("east".equals(rotation) || "west".equals(rotation)) {
@@ -287,15 +291,12 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 			
 			if (useImmersivePortals && ImmersivePortalsIntegration.isImmersivePortalsLoaded()) {
 				// Remove Immersive Portals portal
-				if (getBlockNBTLogic(world, BlockPos.containing(x, y, z), "immersivePortalCreated")) {
-					ImmersivePortalsIntegration.removeImmersivePortal(world, x, y, z);
-					BlockEntity be = world.getBlockEntity(BlockPos.containing(x, y, z));
-					if (be != null) {
-						be.getPersistentData().putBoolean("immersivePortalCreated", false);
-					}
-				}
+				removeTrackedImmersivePortal(world, x, y, z);
 				clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
 			} else if (portalWidth > 0 && portalHeight > 0) {
+				// If compatibility was disabled, ensure old IP portals are removed.
+				removeTrackedImmersivePortal(world, x, y, z);
+
 				// Use interior dimensions (not the frame)
 				int interiorMin = minExtent + 1;
 				int interiorMax = maxExtent - 1;
@@ -372,6 +373,19 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, level, 4, "",
 							Component.literal(""), level.getServer(), null).withSuppressedOutput(),
 					"fill ~-1 ~1 ~ ~1 ~3 ~ air replace createteleporters:quantum_portal_block");
+		}
+	}
+
+	private static void removeTrackedImmersivePortal(LevelAccessor world, double x, double y, double z) {
+		BlockPos basePos = BlockPos.containing(x, y, z);
+		if (!getBlockNBTLogic(world, basePos, "immersivePortalCreated")) {
+			return;
+		}
+
+		ImmersivePortalsIntegration.removeImmersivePortal(world, x, y, z);
+		BlockEntity be = world.getBlockEntity(basePos);
+		if (be != null) {
+			be.getPersistentData().putBoolean("immersivePortalCreated", false);
 		}
 	}
 
