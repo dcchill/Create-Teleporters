@@ -1,6 +1,7 @@
 package net.createteleporters.integration;
 
 import com.simibubi.create.api.contraption.train.PortalTrackProvider;
+import com.simibubi.create.content.trains.track.ITrackBlock;
 
 import net.createmod.catnip.math.BlockFace;
 
@@ -79,11 +80,27 @@ public final class CreateTrainPortalIntegration {
 		}
 
 		Direction sourceNormal = rotationToNormal(sourceRotation);
-		Direction exitDirection = rotationToNormal(targetRotation);
-		boolean enteredFromPositiveSide = entryFace.getFace() == sourceNormal.getOpposite();
-		Direction targetOffset = enteredFromPositiveSide ? exitDirection : exitDirection.getOpposite();
+		Direction targetNormal = rotationToNormal(targetRotation);
+		boolean enteredFromBackSide = entryFace.getFace() == sourceNormal;
+		Direction preferredOffset = enteredFromBackSide ? targetNormal.getOpposite() : targetNormal;
 
+		Direction targetOffset = resolveTrackSide(targetLevel, targetPortalPos, preferredOffset);
 		return new PortalTrackProvider.Exit(targetLevel, new BlockFace(targetPortalPos.relative(targetOffset), targetOffset.getOpposite()));
+	}
+
+	private static Direction resolveTrackSide(ServerLevel level, BlockPos portalPos, Direction preferredOffset) {
+		if (isTrack(level, portalPos.relative(preferredOffset))) {
+			return preferredOffset;
+		}
+		Direction opposite = preferredOffset.getOpposite();
+		if (isTrack(level, portalPos.relative(opposite))) {
+			return opposite;
+		}
+		return preferredOffset;
+	}
+
+	private static boolean isTrack(ServerLevel level, BlockPos pos) {
+		return level.getBlockState(pos).getBlock() instanceof ITrackBlock;
 	}
 
 	private static PortalBaseData findPortalBaseForPortalBlock(ServerLevel level, BlockPos portalPos) {
