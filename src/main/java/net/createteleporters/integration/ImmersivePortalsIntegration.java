@@ -148,12 +148,13 @@ public class ImmersivePortalsIntegration {
     }
     
     private static Direction getPortalNormal(String rotation) {
-        // The direction you walk THROUGH the portal
+        // Block "rotation" stores the frame-facing direction.
+        // The portal normal for command placement needs the opposite direction.
         return switch (rotation) {
-            case "north" -> Direction.NORTH;  // Walk north through it
-            case "south" -> Direction.SOUTH;  // Walk south through it
-            case "east" -> Direction.EAST;
-            case "west" -> Direction.WEST;
+            case "north" -> Direction.SOUTH;
+            case "south" -> Direction.NORTH;
+            case "east" -> Direction.WEST;
+            case "west" -> Direction.EAST;
             default -> Direction.NORTH;
         };
     }
@@ -165,11 +166,11 @@ public class ImmersivePortalsIntegration {
         if (playerEntity instanceof net.minecraft.server.level.ServerPlayer player) {
             return player.createCommandSourceStack()
                 .withPosition(new Vec3(px, py, pz))
-                .withRotation(new net.minecraft.world.phys.Vec2(0, facing.toYRot()));
+                .withRotation(new net.minecraft.world.phys.Vec2(facing.toYRot(), 0));
         }
         
         return new CommandSourceStack(CommandSource.NULL, new Vec3(px, py, pz),
-            new net.minecraft.world.phys.Vec2(0, facing.toYRot()),
+            new net.minecraft.world.phys.Vec2(facing.toYRot(), 0),
             level, 4, "", Component.literal(""), level.getServer(), null);
     }
     
