@@ -76,7 +76,11 @@ public final class CreateTrainPortalIntegration {
 		int localY = sourcePortalPos.getY() - sourceBase.basePos.getY();
 		BlockPos targetPortalPos = toPortalPos(targetBasePos, targetRotation, localHorizontalOffset, localY);
 		if (!targetLevel.getBlockState(targetPortalPos).is(CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get())) {
-			return null;
+			BlockPos mirroredTargetPos = toPortalPos(targetBasePos, targetRotation, -localHorizontalOffset, localY);
+			if (!targetLevel.getBlockState(mirroredTargetPos).is(CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get())) {
+				return null;
+			}
+			targetPortalPos = mirroredTargetPos;
 		}
 
 		Direction sourceNormal = rotationToNormal(sourceRotation);
@@ -147,17 +151,24 @@ public final class CreateTrainPortalIntegration {
 	}
 
 	private static int getLocalHorizontalOffset(BlockPos basePos, BlockPos portalPos, String rotation) {
-		if ("east".equals(rotation) || "west".equals(rotation)) {
-			return portalPos.getZ() - basePos.getZ();
-		}
-		return portalPos.getX() - basePos.getX();
+		BlockPos horizontalDirection = horizontalDirection(rotation);
+		int dx = portalPos.getX() - basePos.getX();
+		int dz = portalPos.getZ() - basePos.getZ();
+		return dx * horizontalDirection.getX() + dz * horizontalDirection.getZ();
 	}
 
 	private static BlockPos toPortalPos(BlockPos basePos, String rotation, int horizontalOffset, int localY) {
-		if ("east".equals(rotation) || "west".equals(rotation)) {
-			return basePos.offset(0, localY, horizontalOffset);
-		}
-		return basePos.offset(horizontalOffset, localY, 0);
+		BlockPos horizontalDirection = horizontalDirection(rotation);
+		return basePos.offset(horizontalDirection.getX() * horizontalOffset, localY, horizontalDirection.getZ() * horizontalOffset);
+	}
+
+	private static BlockPos horizontalDirection(String rotation) {
+		return switch (rotation) {
+			case "south" -> new BlockPos(-1, 0, 0);
+			case "east" -> new BlockPos(0, 0, 1);
+			case "west" -> new BlockPos(0, 0, -1);
+			default -> new BlockPos(1, 0, 0);
+		};
 	}
 
 	private static Direction rotationToNormal(String rotation) {
