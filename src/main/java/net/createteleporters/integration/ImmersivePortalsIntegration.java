@@ -166,7 +166,7 @@ public class ImmersivePortalsIntegration {
     private static CommandSourceStack getCommandSource(ServerLevel level, double px, double py, double pz, 
             Direction facing, double refX, double refY, double refZ) {
         return new CommandSourceStack(CommandSource.NULL, new Vec3(px, py, pz),
-            new net.minecraft.world.phys.Vec2(0, facing.toYRot()),
+            new net.minecraft.world.phys.Vec2(facing.toYRot(), 0),
             level, 4, "", Component.literal(""), level.getServer(), null);
     }
     
