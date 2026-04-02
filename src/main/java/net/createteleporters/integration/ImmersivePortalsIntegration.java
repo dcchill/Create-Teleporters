@@ -79,11 +79,12 @@ public class ImmersivePortalsIntegration {
             CreateteleportersMod.LOGGER.info("Target: {} ({},{},{})", targetDim, targetX, targetY, targetZ);
             CreateteleportersMod.LOGGER.info("Rotation: {}, Normal: {} (yaw={})", rotation, portalNormal, portalNormal.toYRot());
             
-            // Executor stands 1 block behind portal, facing the portal normal
-            // make_portal creates portal 1 block in front of executor, facing executor
-            double execX = portalX - portalNormal.getStepX();
+            // make_portal creates the portal one block in front of the executor and the
+            // created portal faces the executor. To make the portal face portalNormal,
+            // the executor must stand on the opposite side.
+            double execX = portalX + portalNormal.getStepX();
             double execY = portalY;
-            double execZ = portalZ - portalNormal.getStepZ();
+            double execZ = portalZ + portalNormal.getStepZ();
             
             CommandSourceStack cmdSource = getCommandSource(serverLevel, execX, execY, execZ, portalNormal, x, y, z);
             
@@ -94,11 +95,17 @@ public class ImmersivePortalsIntegration {
             
             serverLevel.getServer().getCommands().performPrefixedCommand(cmdSource.withSuppressedOutput(), createCmd);
             CreateteleportersMod.LOGGER.info("Executed: {}", createCmd);
+
+            // Make the portal bi-way and bi-faced (4 connected portal entities total)
+            // so both sides in both dimensions work automatically.
+            String completeCmd = "portal complete_bi_way_bi_faced_portal";
+            executeAsNearestPortal(serverLevel, portalX, portalY, portalZ, completeCmd, true);
+            CreateteleportersMod.LOGGER.info("Executed: {}", completeCmd);
             
             // Set destination explicitly
             String destCmd = String.format("portal set_portal_destination %s %d %d %d",
                 targetDim, (int) Math.floor(targetX), (int) Math.floor(targetY), (int) Math.floor(targetZ));
-            executeAtPosition(serverLevel, portalX, portalY, portalZ, destCmd, true);
+            executeAsNearestPortal(serverLevel, portalX, portalY, portalZ, destCmd, true);
             
             CreateteleportersMod.LOGGER.info("=== PORTAL CREATED ===");
             return true;
@@ -115,7 +122,7 @@ public class ImmersivePortalsIntegration {
         }
         
         try {
-            executeAtPosition(serverLevel, x + 0.5, y + 1.5, z + 0.5, "portal delete_portal", true);
+            executeAsNearestPortal(serverLevel, x + 0.5, y + 1.5, z + 0.5, "portal eradicate_portal_cluster", true);
             CreateteleportersMod.LOGGER.info("Removed IP portal");
             return true;
         } catch (Exception e) {
@@ -175,5 +182,14 @@ public class ImmersivePortalsIntegration {
         }
         
         level.getServer().getCommands().performPrefixedCommand(cmdSource, command);
+    }
+
+    private static void executeAsNearestPortal(ServerLevel level, double x, double y, double z,
+            String portalCommand, boolean suppress) {
+        String command = String.format(
+            "execute positioned %.3f %.3f %.3f as @e[type=immersive_portals:portal,sort=nearest,limit=1,distance=..3] run %s",
+            x, y, z, portalCommand
+        );
+        executeAtPosition(level, x, y, z, command, suppress);
     }
 }
