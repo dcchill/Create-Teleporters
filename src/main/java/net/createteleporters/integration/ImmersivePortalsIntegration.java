@@ -122,6 +122,12 @@ public class ImmersivePortalsIntegration {
             String completeCmd = "portal complete_bi_way_bi_faced_portal";
             executeAsNearestPortal(serverLevel, portalX, portalY, portalZ, completeCmd, true);
             CreateteleportersMod.LOGGER.info("Executed: {}", completeCmd);
+
+            // Keep all nearby IP portal entities static so the portal cluster is immovable.
+            String lockPortalMotionCmd =
+                "execute as @e[type=immersive_portals:portal,distance=..6] run data merge entity @s {NoGravity:1b,Motion:[0.0d,0.0d,0.0d]}";
+            executeAtPosition(serverLevel, portalX, portalY, portalZ, lockPortalMotionCmd, true);
+            CreateteleportersMod.LOGGER.info("Executed: {}", lockPortalMotionCmd);
             
             CreateteleportersMod.LOGGER.info("=== PORTAL CREATED ===");
             return true;

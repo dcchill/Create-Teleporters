@@ -60,6 +60,18 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					// Use Immersive Portals integration - NO quantum portal blocks
 					// IP handles the portal rendering and teleportation automatically
 					clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
+					// Ambient particles while immersive portals are enabled.
+					if (world instanceof ServerLevel _level) {
+						double particleX = ("north".equals(rotation) || "south".equals(rotation))
+								? x + (minExtent + maxExtent) / 2.0 + 0.5
+								: x + 0.5;
+						double particleY = y + (fillHeight / 2.0) + 1.0;
+						double particleZ = ("north".equals(rotation) || "south".equals(rotation))
+								? z + 0.5
+								: z + (minExtent + maxExtent) / 2.0 + 0.5;
+						_level.sendParticles(ParticleTypes.PORTAL, particleX, particleY, particleZ, 3, 0.35,
+								Math.max(0.2, fillHeight * 0.15), 0.35, 0.01);
+					}
 
 					BlockEntity be = world.getBlockEntity(BlockPos.containing(x, y, z));
 					String targetDim = be != null ? be.getPersistentData().getString("linkedDim") : "minecraft:overworld";
