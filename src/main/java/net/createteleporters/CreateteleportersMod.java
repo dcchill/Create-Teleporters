@@ -11,9 +11,9 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.capabilities.EntityCapability;
 import net.neoforged.fml.util.thread.SidedThreadGroups;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.ModList;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.bus.api.IEventBus;
 
@@ -27,6 +27,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.createteleporters.network.CreateteleportersModVariables;
+import net.createteleporters.integration.CreateTrainPortalIntegration;
 import net.createteleporters.init.CreateteleportersModTabs;
 import net.createteleporters.init.CreateteleportersModMenus;
 import net.createteleporters.init.CreateteleportersModItems;
@@ -34,7 +35,6 @@ import net.createteleporters.init.CreateteleportersModFluids;
 import net.createteleporters.init.CreateteleportersModFluidTypes;
 import net.createteleporters.init.CreateteleportersModBlocks;
 import net.createteleporters.init.CreateteleportersModBlockEntities;
-import net.createteleporters.integration.CreateTrainPortalIntegration;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.Map;
@@ -50,23 +50,20 @@ public class CreateteleportersMod {
 
 	public CreateteleportersMod(IEventBus modEventBus) {
 		// Start of user code block mod constructor
-		// End of user code block mod constructor
 		NeoForge.EVENT_BUS.register(this);
 		modEventBus.addListener(this::registerNetworking);
 		modEventBus.addListener(this::commonSetup);
-
+		// End of user code block mod constructor
+		NeoForge.EVENT_BUS.register(this);
+		modEventBus.addListener(this::registerNetworking);
 		CreateteleportersModBlocks.REGISTRY.register(modEventBus);
 		CreateteleportersModBlockEntities.REGISTRY.register(modEventBus);
 		CreateteleportersModItems.REGISTRY.register(modEventBus);
-
 		CreateteleportersModTabs.REGISTRY.register(modEventBus);
 		CreateteleportersModVariables.ATTACHMENT_TYPES.register(modEventBus);
-
 		CreateteleportersModMenus.REGISTRY.register(modEventBus);
-
 		CreateteleportersModFluids.REGISTRY.register(modEventBus);
 		CreateteleportersModFluidTypes.REGISTRY.register(modEventBus);
-
 		// Start of user code block mod init
 		// End of user code block mod init
 	}
@@ -79,6 +76,7 @@ public class CreateteleportersMod {
 			}
 		});
 	}
+
 	// End of user code block mod methods
 	private static boolean networkingRegistered = false;
 	private static final Map<CustomPacketPayload.Type<?>, NetworkMessage<?>> MESSAGES = new HashMap<>();
