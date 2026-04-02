@@ -94,10 +94,12 @@ public class ImmersivePortalsIntegration {
             
             CommandSourceStack cmdSource = getCommandSource(serverLevel, execX, execY, execZ, portalNormal, x, y, z);
             
-            // Create portal - destination is the OTHER portal's base position
-            String createCmd = String.format("portal make_portal %d %d %s %d %d %d",
-                interiorWidth, interiorHeight, targetDim,
-                (int) Math.floor(targetX), (int) Math.floor(targetY), (int) Math.floor(targetZ));
+            // Create portal with explicit Euler orientation to avoid block-hit based
+            // make_portal rotation ambiguity (which can create flat portals).
+            String createCmd = String.format(
+                "portal euler make_portal %.3f %.3f %.3f %.1f %.1f %d %d %.1f {}",
+                portalX, portalY, portalZ, 0.0f, portalNormal.toYRot(), interiorWidth, interiorHeight, 1.0f
+            );
             
             serverLevel.getServer().getCommands().performPrefixedCommand(cmdSource.withSuppressedOutput(), createCmd);
             CreateteleportersMod.LOGGER.info("Executed: {}", createCmd);
