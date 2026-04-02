@@ -1582,7 +1582,7 @@
       "gui.createteleporters.custom_teleporter_gui.label_proc_entity_teleporter_on_tick_u": "",
       "item.createteleporters.pocket_dimension_remote": "Pocket Dimension Remote",
       "biome.createteleporters.pd_biome": "PD Biome",
-      "block.createteleporters.pocket_d_block": "Pocketdblock",
+      "block.createteleporters.pocket_d_block": "Pocket Dimension Block",
       "block.createteleporters.custom_portal_base_dummy_block": "Custom Portal Base Dummy Block",
       "block.createteleporters.entity_teleporter_slab": "Entity Teleporter",
       "block.createteleporters.entity_teleporter_quarter": "Entity Teleporter",
