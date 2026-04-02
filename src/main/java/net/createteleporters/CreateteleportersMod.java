@@ -92,9 +92,12 @@ public class CreateteleportersMod {
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	private void registerNetworking(final RegisterPayloadHandlersEvent event) {
+		if (networkingRegistered)
+			return;
+		networkingRegistered = true;
+
 		final PayloadRegistrar registrar = event.registrar(MODID);
 		MESSAGES.forEach((id, networkMessage) -> registrar.playBidirectional(id, ((NetworkMessage) networkMessage).reader(), ((NetworkMessage) networkMessage).handler()));
-		networkingRegistered = true;
 	}
 
 	private static final Collection<Tuple<Runnable, Integer>> workQueue = new ConcurrentLinkedQueue<>();
