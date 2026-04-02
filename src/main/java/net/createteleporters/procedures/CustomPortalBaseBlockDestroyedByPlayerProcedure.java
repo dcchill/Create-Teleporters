@@ -5,9 +5,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 
+import net.createteleporters.configuration.CTPConfigConfiguration;
+import net.createteleporters.integration.ImmersivePortalsIntegration;
 import net.createteleporters.init.CreateteleportersModBlocks;
 
 public class CustomPortalBaseBlockDestroyedByPlayerProcedure {
@@ -33,6 +37,32 @@ public class CustomPortalBaseBlockDestroyedByPlayerProcedure {
 				nbt.putBoolean("portalActive", false);
 				if (world instanceof Level _level)
 					_level.sendBlockUpdated(basePos, world.getBlockState(basePos), world.getBlockState(basePos), 3);
+			}
+		}
+
+		// If using Immersive Portals, remove this portal and the linked portal cluster.
+		if (CTPConfigConfiguration.IMMERSIVE_PORTALS_COMPAT.get()
+				&& ImmersivePortalsIntegration.isImmersivePortalsLoaded()
+				&& world instanceof ServerLevel sourceLevel) {
+			ImmersivePortalsIntegration.removeImmersivePortal(world, x, y, z);
+
+			if (blockEntity != null) {
+				CompoundTag nbt = blockEntity.getPersistentData();
+				if (nbt.getBoolean("isLinked")) {
+					String linkedDimId = nbt.getString("linkedDim");
+					ResourceLocation linkedDimLoc = ResourceLocation.tryParse(linkedDimId);
+					if (linkedDimLoc != null) {
+						ResourceKey<net.minecraft.world.level.Level> linkedDimKey = ResourceKey
+								.create(net.minecraft.core.registries.Registries.DIMENSION, linkedDimLoc);
+						ServerLevel linkedLevel = sourceLevel.getServer().getLevel(linkedDimKey);
+						if (linkedLevel != null) {
+							double linkedX = nbt.getDouble("linkedX");
+							double linkedY = nbt.getDouble("linkedY");
+							double linkedZ = nbt.getDouble("linkedZ");
+							ImmersivePortalsIntegration.removeImmersivePortal(linkedLevel, linkedX, linkedY, linkedZ);
+						}
+					}
+				}
 			}
 		}
 		
