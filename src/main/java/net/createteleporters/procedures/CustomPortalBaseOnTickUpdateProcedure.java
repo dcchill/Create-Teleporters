@@ -59,6 +59,8 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				if (useImmersivePortals && ImmersivePortalsIntegration.isImmersivePortalsLoaded()) {
 					// Use Immersive Portals integration - NO quantum portal blocks
 					// IP handles the portal rendering and teleportation automatically
+					clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
+
 					BlockEntity be = world.getBlockEntity(BlockPos.containing(x, y, z));
 					String targetDim = be != null ? be.getPersistentData().getString("linkedDim") : "minecraft:overworld";
 					double tx = be != null ? be.getPersistentData().getDouble("linkedX") : x;
@@ -292,6 +294,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 						be.getPersistentData().putBoolean("immersivePortalCreated", false);
 					}
 				}
+				clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
 			} else if (portalWidth > 0 && portalHeight > 0) {
 				// Use interior dimensions (not the frame)
 				int interiorMin = minExtent + 1;
@@ -327,6 +330,49 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 			}
 		}
 		return "Portal Frame Incorrect";
+	}
+
+	private static void clearQuantumPortalBlocks(LevelAccessor world, double x, double y, double z, String rotation,
+			int portalWidth, int portalHeight, int minExtent, int maxExtent) {
+		if (!(world instanceof ServerLevel level)) {
+			return;
+		}
+
+		if (portalWidth > 0 && portalHeight > 0) {
+			int interiorMin = minExtent + 1;
+			int interiorMax = maxExtent - 1;
+			int fillHeight = portalHeight - 1;
+
+			if ("east".equals(rotation) || "west".equals(rotation)) {
+				level.getServer().getCommands().performPrefixedCommand(
+						new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, level, 4, "",
+								Component.literal(""), level.getServer(), null).withSuppressedOutput(),
+						"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax
+								+ " air replace createteleporters:quantum_portal_block");
+				return;
+			}
+
+			if ("north".equals(rotation) || "south".equals(rotation)) {
+				level.getServer().getCommands().performPrefixedCommand(
+						new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, level, 4, "",
+								Component.literal(""), level.getServer(), null).withSuppressedOutput(),
+						"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight
+								+ " ~ air replace createteleporters:quantum_portal_block");
+				return;
+			}
+		}
+
+		if ("east".equals(rotation) || "west".equals(rotation)) {
+			level.getServer().getCommands().performPrefixedCommand(
+					new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, level, 4, "",
+							Component.literal(""), level.getServer(), null).withSuppressedOutput(),
+					"fill ~ ~1 ~-1 ~ ~3 ~1 air replace createteleporters:quantum_portal_block");
+		} else if ("north".equals(rotation) || "south".equals(rotation)) {
+			level.getServer().getCommands().performPrefixedCommand(
+					new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, level, 4, "",
+							Component.literal(""), level.getServer(), null).withSuppressedOutput(),
+					"fill ~-1 ~1 ~ ~1 ~3 ~ air replace createteleporters:quantum_portal_block");
+		}
 	}
 
 	private static boolean getBlockNBTLogic(LevelAccessor world, BlockPos pos, String tag) {
