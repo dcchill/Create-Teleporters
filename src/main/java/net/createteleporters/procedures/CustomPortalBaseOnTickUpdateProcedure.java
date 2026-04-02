@@ -57,9 +57,20 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				int fillHeight = portalHeight - 1;
 
 				if (useImmersivePortals && ImmersivePortalsIntegration.isImmersivePortalsLoaded()) {
-					// Use Immersive Portals integration - NO quantum portal blocks
-					// IP handles the portal rendering and teleportation automatically
-					clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
+					// Place structure_void markers for Create trains while in IP mode.
+					// This keeps train portal detection without relying on quantum portal
+					// blocks or changing their collision behavior.
+					if ("east".equals(rotation) || "west".equals(rotation)) {
+						if (world instanceof ServerLevel _level)
+							_level.getServer().getCommands().performPrefixedCommand(
+								new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
+								"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax + " minecraft:structure_void");
+					} else if ("north".equals(rotation) || "south".equals(rotation)) {
+						if (world instanceof ServerLevel _level)
+							_level.getServer().getCommands().performPrefixedCommand(
+								new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
+								"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight + " ~ minecraft:structure_void");
+					}
 
 					BlockEntity be = world.getBlockEntity(BlockPos.containing(x, y, z));
 					String targetDim = be != null ? be.getPersistentData().getString("linkedDim") : "minecraft:overworld";
@@ -308,12 +319,20 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 						_level.getServer().getCommands().performPrefixedCommand(
 							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
 							"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax + " air replace createteleporters:quantum_portal_block");
+					if (world instanceof ServerLevel _level)
+						_level.getServer().getCommands().performPrefixedCommand(
+							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
+							"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax + " air replace minecraft:structure_void");
 				} else if ("north".equals(rotation) || "south".equals(rotation)) {
 					// Horizontal axis is X, Z stays same as base
 					if (world instanceof ServerLevel _level)
 						_level.getServer().getCommands().performPrefixedCommand(
 							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
 							"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight + " ~ air replace createteleporters:quantum_portal_block");
+					if (world instanceof ServerLevel _level)
+						_level.getServer().getCommands().performPrefixedCommand(
+							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
+							"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight + " ~ air replace minecraft:structure_void");
 				}
 			} else {
 				// Fallback to old 5x5 clearing
@@ -322,11 +341,19 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 						_level.getServer().getCommands().performPrefixedCommand(
 							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
 							"fill ~ ~1 ~-1 ~ ~3 ~1 air replace createteleporters:quantum_portal_block");
+					if (world instanceof ServerLevel _level)
+						_level.getServer().getCommands().performPrefixedCommand(
+							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
+							"fill ~ ~1 ~-1 ~ ~3 ~1 air replace minecraft:structure_void");
 				} else if ("north".equals(rotation) || "south".equals(rotation)) {
 					if (world instanceof ServerLevel _level)
 						_level.getServer().getCommands().performPrefixedCommand(
 							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
 							"fill ~-1 ~1 ~ ~1 ~3 ~ air replace createteleporters:quantum_portal_block");
+					if (world instanceof ServerLevel _level)
+						_level.getServer().getCommands().performPrefixedCommand(
+							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
+							"fill ~-1 ~1 ~ ~1 ~3 ~ air replace minecraft:structure_void");
 				}
 			}
 		}
@@ -350,6 +377,11 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 								Component.literal(""), level.getServer(), null).withSuppressedOutput(),
 						"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax
 								+ " air replace createteleporters:quantum_portal_block");
+				level.getServer().getCommands().performPrefixedCommand(
+						new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, level, 4, "",
+								Component.literal(""), level.getServer(), null).withSuppressedOutput(),
+						"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax
+								+ " air replace minecraft:structure_void");
 				return;
 			}
 
@@ -359,6 +391,11 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 								Component.literal(""), level.getServer(), null).withSuppressedOutput(),
 						"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight
 								+ " ~ air replace createteleporters:quantum_portal_block");
+				level.getServer().getCommands().performPrefixedCommand(
+						new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, level, 4, "",
+								Component.literal(""), level.getServer(), null).withSuppressedOutput(),
+						"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight
+								+ " ~ air replace minecraft:structure_void");
 				return;
 			}
 		}
@@ -368,11 +405,19 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, level, 4, "",
 							Component.literal(""), level.getServer(), null).withSuppressedOutput(),
 					"fill ~ ~1 ~-1 ~ ~3 ~1 air replace createteleporters:quantum_portal_block");
+			level.getServer().getCommands().performPrefixedCommand(
+					new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, level, 4, "",
+							Component.literal(""), level.getServer(), null).withSuppressedOutput(),
+					"fill ~ ~1 ~-1 ~ ~3 ~1 air replace minecraft:structure_void");
 		} else if ("north".equals(rotation) || "south".equals(rotation)) {
 			level.getServer().getCommands().performPrefixedCommand(
 					new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, level, 4, "",
 							Component.literal(""), level.getServer(), null).withSuppressedOutput(),
 					"fill ~-1 ~1 ~ ~1 ~3 ~ air replace createteleporters:quantum_portal_block");
+			level.getServer().getCommands().performPrefixedCommand(
+					new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, level, 4, "",
+							Component.literal(""), level.getServer(), null).withSuppressedOutput(),
+					"fill ~-1 ~1 ~ ~1 ~3 ~ air replace minecraft:structure_void");
 		}
 	}
 
