@@ -6,9 +6,9 @@ plugins {
 version = '1.0'
 base.archivesName = "modid"
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
-
 apply from: "custom.gradle"
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 neoForge {
     version = "21.1.190"
