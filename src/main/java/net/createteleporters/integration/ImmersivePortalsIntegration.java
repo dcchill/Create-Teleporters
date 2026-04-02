@@ -163,14 +163,6 @@ public class ImmersivePortalsIntegration {
     
     private static CommandSourceStack getCommandSource(ServerLevel level, double px, double py, double pz, 
             Direction facing, double refX, double refY, double refZ) {
-        net.minecraft.world.entity.player.Player playerEntity = level.getNearestPlayer(refX, refY, refZ, 64, false);
-        
-        if (playerEntity instanceof net.minecraft.server.level.ServerPlayer player) {
-            return player.createCommandSourceStack()
-                .withPosition(new Vec3(px, py, pz))
-                .withRotation(new net.minecraft.world.phys.Vec2(facing.toYRot(), 0));
-        }
-        
         return new CommandSourceStack(CommandSource.NULL, new Vec3(px, py, pz),
             new net.minecraft.world.phys.Vec2(facing.toYRot(), 0),
             level, 4, "", Component.literal(""), level.getServer(), null);
@@ -178,18 +170,9 @@ public class ImmersivePortalsIntegration {
     
     private static void executeAtPosition(ServerLevel level, double x, double y, double z, 
             String command, boolean suppress) {
-        net.minecraft.world.entity.player.Player playerEntity = level.getNearestPlayer(x, y, z, 64, false);
-        
-        CommandSourceStack cmdSource;
-        if (playerEntity instanceof net.minecraft.server.level.ServerPlayer player) {
-            cmdSource = player.createCommandSourceStack()
-                .withPosition(new Vec3(x, y, z))
-                .withRotation(new net.minecraft.world.phys.Vec2(0, 0));
-        } else {
-            cmdSource = new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z),
-                new net.minecraft.world.phys.Vec2(0, 0), level, 4, "", Component.literal(""),
-                level.getServer(), null);
-        }
+        CommandSourceStack cmdSource = new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z),
+            new net.minecraft.world.phys.Vec2(0, 0), level, 4, "", Component.literal(""),
+            level.getServer(), null);
         
         if (suppress) {
             cmdSource = cmdSource.withSuppressedOutput();
