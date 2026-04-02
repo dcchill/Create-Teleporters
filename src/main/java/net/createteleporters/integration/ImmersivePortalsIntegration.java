@@ -96,9 +96,8 @@ public class ImmersivePortalsIntegration {
             
             PortalTargetInfo targetInfo = resolveTargetPortalInfo(serverLevel, targetDim, targetX, targetY, targetZ,
                 rotation, minExtent, maxExtent, portalHeight);
-            double widthScale = targetInfo.interiorWidth / (double) interiorWidth;
             double heightScale = targetInfo.interiorHeight / (double) interiorHeight;
-            double portalScale = Math.min(widthScale, heightScale);
+            double portalScale = Math.max(0.1, heightScale);
 
             // Create portal with explicit Euler orientation to avoid block-hit based
             // make_portal rotation ambiguity (which can create flat portals).
