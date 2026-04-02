@@ -1,10 +1,16 @@
 package net.createteleporters.integration;
 
 import net.createteleporters.CreateteleportersMod;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.CommandSource;
@@ -79,26 +85,40 @@ public class ImmersivePortalsIntegration {
             CreateteleportersMod.LOGGER.info("Target: {} ({},{},{})", targetDim, targetX, targetY, targetZ);
             CreateteleportersMod.LOGGER.info("Rotation: {}, Normal: {} (yaw={})", rotation, portalNormal, portalNormal.toYRot());
             
-            // Executor stands 1 block behind portal, facing the portal normal
-            // make_portal creates portal 1 block in front of executor, facing executor
-            double execX = portalX - portalNormal.getStepX();
+            // make_portal creates the portal one block in front of the executor and the
+            // created portal faces the executor. To make the portal face portalNormal,
+            // the executor must stand on the opposite side.
+            double execX = portalX + portalNormal.getStepX();
             double execY = portalY;
-            double execZ = portalZ - portalNormal.getStepZ();
+            double execZ = portalZ + portalNormal.getStepZ();
             
             CommandSourceStack cmdSource = getCommandSource(serverLevel, execX, execY, execZ, portalNormal, x, y, z);
             
-            // Create portal - destination is the OTHER portal's base position
-            String createCmd = String.format("portal make_portal %d %d %s %d %d %d",
-                interiorWidth, interiorHeight, targetDim,
-                (int) Math.floor(targetX), (int) Math.floor(targetY), (int) Math.floor(targetZ));
+            // Create portal with explicit Euler orientation to avoid block-hit based
+            // make_portal rotation ambiguity (which can create flat portals).
+            String createCmd = String.format(
+                "portal euler make_portal %.3f %.3f %.3f %.1f %.1f %d %d %.1f {}",
+                portalX, portalY, portalZ, 0.0f, portalNormal.toYRot(), interiorWidth, interiorHeight, 1.0f
+            );
             
             serverLevel.getServer().getCommands().performPrefixedCommand(cmdSource.withSuppressedOutput(), createCmd);
             CreateteleportersMod.LOGGER.info("Executed: {}", createCmd);
-            
-            // Set destination explicitly
-            String destCmd = String.format("portal set_portal_destination %s %d %d %d",
-                targetDim, (int) Math.floor(targetX), (int) Math.floor(targetY), (int) Math.floor(targetZ));
-            executeAtPosition(serverLevel, portalX, portalY, portalZ, destCmd, true);
+
+            Vec3 targetCenter = resolveTargetPortalCenter(serverLevel, targetDim, targetX, targetY, targetZ,
+                rotation, minExtent, maxExtent, portalHeight);
+
+            // Set destination to the target portal center before making this portal
+            // bi-way/bi-faced, so generated reverse portals are centered correctly.
+            String destCmd = String.format("portal set_portal_destination %s %.3f %.3f %.3f",
+                targetDim, targetCenter.x, targetCenter.y, targetCenter.z);
+            executeAsNearestPortal(serverLevel, portalX, portalY, portalZ, destCmd, true);
+            CreateteleportersMod.LOGGER.info("Executed: {}", destCmd);
+
+            // Make the portal bi-way and bi-faced (4 connected portal entities total)
+            // so both sides in both dimensions work automatically.
+            String completeCmd = "portal complete_bi_way_bi_faced_portal";
+            executeAsNearestPortal(serverLevel, portalX, portalY, portalZ, completeCmd, true);
+            CreateteleportersMod.LOGGER.info("Executed: {}", completeCmd);
             
             CreateteleportersMod.LOGGER.info("=== PORTAL CREATED ===");
             return true;
@@ -115,7 +135,7 @@ public class ImmersivePortalsIntegration {
         }
         
         try {
-            executeAtPosition(serverLevel, x + 0.5, y + 1.5, z + 0.5, "portal delete_portal", true);
+            executeAsNearestPortal(serverLevel, x + 0.5, y + 1.5, z + 0.5, "portal eradicate_portal_cluster", true);
             CreateteleportersMod.LOGGER.info("Removed IP portal");
             return true;
         } catch (Exception e) {
@@ -130,26 +150,19 @@ public class ImmersivePortalsIntegration {
     }
     
     private static Direction getPortalNormal(String rotation) {
-        // The direction you walk THROUGH the portal
+        // Block "rotation" stores the frame-facing direction.
+        // The portal normal for command placement needs the opposite direction.
         return switch (rotation) {
-            case "north" -> Direction.NORTH;  // Walk north through it
-            case "south" -> Direction.SOUTH;  // Walk south through it
-            case "east" -> Direction.EAST;
-            case "west" -> Direction.WEST;
+            case "north" -> Direction.SOUTH;
+            case "south" -> Direction.NORTH;
+            case "east" -> Direction.WEST;
+            case "west" -> Direction.EAST;
             default -> Direction.NORTH;
         };
     }
     
     private static CommandSourceStack getCommandSource(ServerLevel level, double px, double py, double pz, 
             Direction facing, double refX, double refY, double refZ) {
-        net.minecraft.world.entity.player.Player playerEntity = level.getNearestPlayer(refX, refY, refZ, 64, false);
-        
-        if (playerEntity instanceof net.minecraft.server.level.ServerPlayer player) {
-            return player.createCommandSourceStack()
-                .withPosition(new Vec3(px, py, pz))
-                .withRotation(new net.minecraft.world.phys.Vec2(0, facing.toYRot()));
-        }
-        
         return new CommandSourceStack(CommandSource.NULL, new Vec3(px, py, pz),
             new net.minecraft.world.phys.Vec2(0, facing.toYRot()),
             level, 4, "", Component.literal(""), level.getServer(), null);
@@ -157,23 +170,69 @@ public class ImmersivePortalsIntegration {
     
     private static void executeAtPosition(ServerLevel level, double x, double y, double z, 
             String command, boolean suppress) {
-        net.minecraft.world.entity.player.Player playerEntity = level.getNearestPlayer(x, y, z, 64, false);
-        
-        CommandSourceStack cmdSource;
-        if (playerEntity instanceof net.minecraft.server.level.ServerPlayer player) {
-            cmdSource = player.createCommandSourceStack()
-                .withPosition(new Vec3(x, y, z))
-                .withRotation(new net.minecraft.world.phys.Vec2(0, 0));
-        } else {
-            cmdSource = new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z),
-                new net.minecraft.world.phys.Vec2(0, 0), level, 4, "", Component.literal(""),
-                level.getServer(), null);
-        }
+        CommandSourceStack cmdSource = new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z),
+            new net.minecraft.world.phys.Vec2(0, 0), level, 4, "", Component.literal(""),
+            level.getServer(), null);
         
         if (suppress) {
             cmdSource = cmdSource.withSuppressedOutput();
         }
         
         level.getServer().getCommands().performPrefixedCommand(cmdSource, command);
+    }
+
+    private static void executeAsNearestPortal(ServerLevel level, double x, double y, double z,
+            String portalCommand, boolean suppress) {
+        String command = String.format(
+            "execute positioned %.3f %.3f %.3f as @e[type=immersive_portals:portal,sort=nearest,limit=1,distance=..3] run %s",
+            x, y, z, portalCommand
+        );
+        executeAtPosition(level, x, y, z, command, suppress);
+    }
+
+    private static Vec3 resolveTargetPortalCenter(ServerLevel sourceLevel, String targetDimId,
+            double targetBaseX, double targetBaseY, double targetBaseZ,
+            String fallbackRotation, int fallbackMinExtent, int fallbackMaxExtent, int fallbackPortalHeight) {
+        String rotation = fallbackRotation;
+        int minExtent = fallbackMinExtent;
+        int maxExtent = fallbackMaxExtent;
+        int portalHeight = fallbackPortalHeight;
+
+        ResourceLocation dimLocation = ResourceLocation.tryParse(targetDimId);
+        if (dimLocation != null) {
+            ResourceKey<Level> dimKey = ResourceKey.create(Registries.DIMENSION, dimLocation);
+            ServerLevel targetLevel = sourceLevel.getServer().getLevel(dimKey);
+            if (targetLevel != null) {
+                BlockEntity targetBe = targetLevel.getBlockEntity(BlockPos.containing(targetBaseX, targetBaseY, targetBaseZ));
+                if (targetBe != null) {
+                    var nbt = targetBe.getPersistentData();
+                    if (nbt.contains("rotation")) {
+                        rotation = nbt.getString("rotation");
+                    }
+                    if (nbt.contains("portalMinExtent")) {
+                        minExtent = nbt.getInt("portalMinExtent");
+                    }
+                    if (nbt.contains("portalMaxExtent")) {
+                        maxExtent = nbt.getInt("portalMaxExtent");
+                    }
+                    if (nbt.contains("portalHeight")) {
+                        portalHeight = nbt.getInt("portalHeight");
+                    }
+                }
+            }
+        }
+
+        int baseX = (int) Math.floor(targetBaseX);
+        int baseY = (int) Math.floor(targetBaseY);
+        int baseZ = (int) Math.floor(targetBaseZ);
+        int interiorHeight = Math.max(1, portalHeight - 1);
+        int extentCenter = (minExtent + maxExtent) / 2;
+        int portalBottomY = baseY + 1;
+        int portalCenterY = portalBottomY + interiorHeight / 2;
+
+        if ("north".equals(rotation) || "south".equals(rotation)) {
+            return new Vec3(baseX + extentCenter + 0.5, portalCenterY + 0.5, baseZ + 0.5);
+        }
+        return new Vec3(baseX + 0.5, portalCenterY + 0.5, baseZ + extentCenter + 0.5);
     }
 }
