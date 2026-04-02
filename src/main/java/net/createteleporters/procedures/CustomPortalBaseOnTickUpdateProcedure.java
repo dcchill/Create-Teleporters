@@ -31,11 +31,14 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.scores.Team;
 import net.minecraft.world.scores.Scoreboard;
 
+import net.createteleporters.configuration.CTPConfigConfiguration;
+import net.createteleporters.integration.ImmersivePortalsIntegration;
+
 public class CustomPortalBaseOnTickUpdateProcedure {
 	public static String execute(LevelAccessor world, double x, double y, double z) {
 		// Use scalable portal checker instead of fixed size
 		ScalablePortalCheckerProcedure.execute(world, x, y, z);
-		
+
 		if (getBlockNBTLogic(world, BlockPos.containing(x, y, z), "portalActive")) {
 			if (4 <= getFluidTankLevel(world, BlockPos.containing(x, y, z), 1, null)) {
 				// Get portal dimensions from NBT
@@ -45,26 +48,53 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				int maxExtent = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalMaxExtent");
 				String rotation = getBlockNBTString(world, BlockPos.containing(x, y, z), "rotation");
 
-				// Fill portal interior only (not the frame)
-				// minExtent/maxExtent include the frame, so we add/subtract 1 to get interior
+				// Check if Immersive Portals compatibility is enabled
+				boolean useImmersivePortals = CTPConfigConfiguration.IMMERSIVE_PORTALS_COMPAT.get();
+				
+				// Calculate interior dimensions (needed for both IP and vanilla)
 				int interiorMin = minExtent + 1;
 				int interiorMax = maxExtent - 1;
 				int fillHeight = portalHeight - 1;
 
-				// Fill portal based on stored dimensions (interior only, not the frame)
-				if ("east".equals(rotation) || "west".equals(rotation)) {
-					// Horizontal axis is Z, X stays same as base
-					// fill x1 y1 z1 x2 y2 z2
-					if (world instanceof ServerLevel _level)
-						_level.getServer().getCommands().performPrefixedCommand(
-							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
-							"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax + " createteleporters:quantum_portal_block");
-				} else if ("north".equals(rotation) || "south".equals(rotation)) {
-					// Horizontal axis is X, Z stays same as base
-					if (world instanceof ServerLevel _level)
-						_level.getServer().getCommands().performPrefixedCommand(
-							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
-							"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight + " ~ createteleporters:quantum_portal_block");
+				if (useImmersivePortals && ImmersivePortalsIntegration.isImmersivePortalsLoaded()) {
+					// Use Immersive Portals integration - NO quantum portal blocks
+					// IP handles the portal rendering and teleportation automatically
+					BlockEntity be = world.getBlockEntity(BlockPos.containing(x, y, z));
+					String targetDim = be != null ? be.getPersistentData().getString("linkedDim") : "minecraft:overworld";
+					double tx = be != null ? be.getPersistentData().getDouble("linkedX") : x;
+					double ty = be != null ? be.getPersistentData().getDouble("linkedY") : y;
+					double tz = be != null ? be.getPersistentData().getDouble("linkedZ") : z;
+
+					// Create Immersive Portals portal (only needs to be done once)
+					// But verify it actually exists first
+					boolean needsCreation = !getBlockNBTLogic(world, BlockPos.containing(x, y, z), "immersivePortalCreated");
+					
+					if (needsCreation) {
+						net.createteleporters.CreateteleportersMod.LOGGER.info("Creating new IP portal...");
+						boolean created = ImmersivePortalsIntegration.createImmersivePortal(
+							world, x, y, z, rotation,
+							portalWidth, portalHeight, minExtent, maxExtent,
+							targetDim, tx, ty, tz
+						);
+						net.createteleporters.CreateteleportersMod.LOGGER.info("IP portal creation result: {}", created);
+						if (created && be != null) {
+							be.getPersistentData().putBoolean("immersivePortalCreated", true);
+						}
+					}
+				} else {
+					// Use vanilla quantum portal blocks
+					// Fill portal interior only (not the frame)
+					if ("east".equals(rotation) || "west".equals(rotation)) {
+						if (world instanceof ServerLevel _level)
+							_level.getServer().getCommands().performPrefixedCommand(
+								new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
+								"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax + " createteleporters:quantum_portal_block");
+					} else if ("north".equals(rotation) || "south".equals(rotation)) {
+						if (world instanceof ServerLevel _level)
+							_level.getServer().getCommands().performPrefixedCommand(
+								new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
+								"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight + " ~ createteleporters:quantum_portal_block");
+					}
 				}
 				
 				// Drain fluid
@@ -107,11 +137,11 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					// Check if either portal has the Advanced TP Link in its inventory
 					boolean hasTpLink = hasAdvancedTpLink(world, BlockPos.containing(x, y, z)) ||
 									   hasAdvancedTpLinkAtLinkedPortal(world, linkedBE);
-					
+
 					if (!hasTpLink) {
 						return "Missing Advanced TP Link"; // Require TP Link for linked portals
 					}
-					
+
 					// Use linked portal coordinates
 					tx = linkedBE.getPersistentData().getDouble("linkedX");
 					ty = linkedBE.getPersistentData().getDouble("linkedY");
@@ -129,6 +159,23 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					yaw = cd.getDouble("yawpo");
 				}
 
+				// Check if using Immersive Portals - if so, skip vanilla teleportation
+				// IP handles teleportation automatically when entities walk through portal entity
+				if (useImmersivePortals) {
+					// IP handles teleportation - just maintain cooldown to prevent loops
+					for (Entity entityiterator : world.getEntities(null, portalArea)) {
+						CompoundTag entityData = entityiterator.getPersistentData();
+						if (entityData.contains("PortalTeleportCooldown")) {
+							int cooldown = entityData.getInt("PortalTeleportCooldown");
+							if (cooldown > 0) {
+								entityData.putInt("PortalTeleportCooldown", cooldown - 1);
+							}
+						}
+					}
+					return "Portal Ready (IP)";
+				}
+
+				// Vanilla teleportation (original code)
 				for (Entity entityiterator : world.getEntities(null, portalArea)) {
 					// Decrement teleportation cooldown if present
 					CompoundTag entityData = entityiterator.getPersistentData();
@@ -233,7 +280,19 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 			int minExtent = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalMinExtent");
 			int maxExtent = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalMaxExtent");
 
-			if (portalWidth > 0 && portalHeight > 0) {
+			// Check if Immersive Portals compatibility is enabled
+			boolean useImmersivePortals = CTPConfigConfiguration.IMMERSIVE_PORTALS_COMPAT.get();
+			
+			if (useImmersivePortals && ImmersivePortalsIntegration.isImmersivePortalsLoaded()) {
+				// Remove Immersive Portals portal
+				if (getBlockNBTLogic(world, BlockPos.containing(x, y, z), "immersivePortalCreated")) {
+					ImmersivePortalsIntegration.removeImmersivePortal(world, x, y, z);
+					BlockEntity be = world.getBlockEntity(BlockPos.containing(x, y, z));
+					if (be != null) {
+						be.getPersistentData().putBoolean("immersivePortalCreated", false);
+					}
+				}
+			} else if (portalWidth > 0 && portalHeight > 0) {
 				// Use interior dimensions (not the frame)
 				int interiorMin = minExtent + 1;
 				int interiorMax = maxExtent - 1;

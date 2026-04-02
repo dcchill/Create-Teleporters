@@ -36,8 +36,8 @@ public class ScalablePortalCheckerProcedure {
 			return;
 		}
 
-		// Check if we have enough fluid (8000 mB)
-		if (8000 != drainTankSimulate(world, BlockPos.containing(x, y, z), 8000, null)) {
+		// Check if we have enough fluid (at least 8000 mB)
+		if (8000 > drainTankSimulate(world, BlockPos.containing(x, y, z), 8000, null)) {
 			setPortalActive(world, BlockPos.containing(x, y, z), false);
 			return;
 		}

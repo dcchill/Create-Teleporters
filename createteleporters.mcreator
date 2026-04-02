@@ -1053,7 +1053,7 @@
       "name": "CTPConfig",
       "type": "config",
       "compiles": true,
-      "locked_code": false,
+      "locked_code": true,
       "registry_name": "ctp_config",
       "metadata": {
         "files": [
