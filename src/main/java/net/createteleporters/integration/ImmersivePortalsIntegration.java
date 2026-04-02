@@ -1,10 +1,16 @@
 package net.createteleporters.integration;
 
 import net.createteleporters.CreateteleportersMod;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.CommandSource;
@@ -96,16 +102,21 @@ public class ImmersivePortalsIntegration {
             serverLevel.getServer().getCommands().performPrefixedCommand(cmdSource.withSuppressedOutput(), createCmd);
             CreateteleportersMod.LOGGER.info("Executed: {}", createCmd);
 
+            Vec3 targetCenter = resolveTargetPortalCenter(serverLevel, targetDim, targetX, targetY, targetZ,
+                rotation, minExtent, maxExtent, portalHeight);
+
+            // Set destination to the target portal center before making this portal
+            // bi-way/bi-faced, so generated reverse portals are centered correctly.
+            String destCmd = String.format("portal set_portal_destination %s %.3f %.3f %.3f",
+                targetDim, targetCenter.x, targetCenter.y, targetCenter.z);
+            executeAsNearestPortal(serverLevel, portalX, portalY, portalZ, destCmd, true);
+            CreateteleportersMod.LOGGER.info("Executed: {}", destCmd);
+
             // Make the portal bi-way and bi-faced (4 connected portal entities total)
             // so both sides in both dimensions work automatically.
             String completeCmd = "portal complete_bi_way_bi_faced_portal";
             executeAsNearestPortal(serverLevel, portalX, portalY, portalZ, completeCmd, true);
             CreateteleportersMod.LOGGER.info("Executed: {}", completeCmd);
-            
-            // Set destination explicitly
-            String destCmd = String.format("portal set_portal_destination %s %d %d %d",
-                targetDim, (int) Math.floor(targetX), (int) Math.floor(targetY), (int) Math.floor(targetZ));
-            executeAsNearestPortal(serverLevel, portalX, portalY, portalZ, destCmd, true);
             
             CreateteleportersMod.LOGGER.info("=== PORTAL CREATED ===");
             return true;
@@ -191,5 +202,51 @@ public class ImmersivePortalsIntegration {
             x, y, z, portalCommand
         );
         executeAtPosition(level, x, y, z, command, suppress);
+    }
+
+    private static Vec3 resolveTargetPortalCenter(ServerLevel sourceLevel, String targetDimId,
+            double targetBaseX, double targetBaseY, double targetBaseZ,
+            String fallbackRotation, int fallbackMinExtent, int fallbackMaxExtent, int fallbackPortalHeight) {
+        String rotation = fallbackRotation;
+        int minExtent = fallbackMinExtent;
+        int maxExtent = fallbackMaxExtent;
+        int portalHeight = fallbackPortalHeight;
+
+        ResourceLocation dimLocation = ResourceLocation.tryParse(targetDimId);
+        if (dimLocation != null) {
+            ResourceKey<Level> dimKey = ResourceKey.create(Registries.DIMENSION, dimLocation);
+            ServerLevel targetLevel = sourceLevel.getServer().getLevel(dimKey);
+            if (targetLevel != null) {
+                BlockEntity targetBe = targetLevel.getBlockEntity(BlockPos.containing(targetBaseX, targetBaseY, targetBaseZ));
+                if (targetBe != null) {
+                    var nbt = targetBe.getPersistentData();
+                    if (nbt.contains("rotation")) {
+                        rotation = nbt.getString("rotation");
+                    }
+                    if (nbt.contains("portalMinExtent")) {
+                        minExtent = nbt.getInt("portalMinExtent");
+                    }
+                    if (nbt.contains("portalMaxExtent")) {
+                        maxExtent = nbt.getInt("portalMaxExtent");
+                    }
+                    if (nbt.contains("portalHeight")) {
+                        portalHeight = nbt.getInt("portalHeight");
+                    }
+                }
+            }
+        }
+
+        int baseX = (int) Math.floor(targetBaseX);
+        int baseY = (int) Math.floor(targetBaseY);
+        int baseZ = (int) Math.floor(targetBaseZ);
+        int interiorHeight = Math.max(1, portalHeight - 1);
+        int extentCenter = (minExtent + maxExtent) / 2;
+        int portalBottomY = baseY + 1;
+        int portalCenterY = portalBottomY + interiorHeight / 2;
+
+        if ("north".equals(rotation) || "south".equals(rotation)) {
+            return new Vec3(baseX + extentCenter + 0.5, portalCenterY + 0.5, baseZ + 0.5);
+        }
+        return new Vec3(baseX + 0.5, portalCenterY + 0.5, baseZ + extentCenter + 0.5);
     }
 }
