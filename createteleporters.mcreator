@@ -1604,7 +1604,13 @@
       "block.createteleporters.teleporter.description_0": "§6Stand On To Activate",
       "block.createteleporters.entity_teleporter_slab.description_0": "§6Stand On To Activate",
       "block.createteleporters.entity_teleporter_quarter.description_0": "§6Stand On To Activate",
-      "block.createteleporters.item_tp.description_0": "§6Redstone Signal To Activate"
+      "block.createteleporters.item_tp.description_0": "§6Redstone Signal To Activate",
+      "ponder.createteleporters.c_portal_1.1": "The Custom Portal Controller is the heart of your teleportation        system.\\nPlace this block adjacent to where you want your portal frame to appear.\\nIt will manage the activation        and linking of your custom portals.",
+      "ponder.createteleporters.c_portal_1.2": "Right-Click with an Advanced TP Link to pair with another portal.  \\nCustom Portals do not support coordinate-based teleportation.",
+      "ponder.createteleporters.c_portal_2.1": "Portal Frames are built out of Quantum Casings and must be built in a perfect square; no rectangles.\\nBut, they can be built in different sizes.",
+      "ponder.createteleporters.c_portal_2.2": "Make sure nothing is inside the portal\u0027s frame.",
+      "ponder.createteleporters.c_portal_3.1": "To power the portal, pump Telejuice into the center of the base block./nMake sure you put the linked Advanced TP Link into at least one of the portals slot.",
+      "ponder.createteleporters.c_portal_3.2": "It will light automatically once it detects the shape and bound portals are both valid."
     }
   },
   "metadata": {

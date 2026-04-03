@@ -6,7 +6,9 @@
       "Bash(.\\gradlew.bat *)",
       "Bash(rmdir *)",
       "Bash(mkdir *)",
-      "Bash(findstr *)"
+      "Bash(findstr *)",
+      "WebSearch",
+      "WebFetch(github.com)"
     ]
   },
   "$version": 3
