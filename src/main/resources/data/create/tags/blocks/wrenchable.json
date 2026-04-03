@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "createteleporters:item_tp",
+    "createteleporters:block_teleporter"
+  ]
+}

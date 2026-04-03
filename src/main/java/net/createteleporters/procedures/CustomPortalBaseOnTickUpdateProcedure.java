@@ -272,6 +272,31 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 						// Set teleportation cooldown (20 ticks = 1 second)
 						entityiterator.getPersistentData().putInt("PortalTeleportCooldown", 20);
 
+						// === ENHANCED TELEPORTATION EFFECTS ===
+						// Dramatic burst at source
+						if (world instanceof ServerLevel _level) {
+							_level.sendParticles(ParticleTypes.END_ROD, x + 0.5, y + 1, z + 0.5, 30, 0.6, 0.6, 0.6, 0.15);
+							_level.sendParticles(ParticleTypes.POOF, x + 0.5, y + 1, z + 0.5, 20, 0.4, 0.4, 0.4, 0.1);
+							_level.sendParticles(ParticleTypes.GLOW, x + 0.5, y + 1, z + 0.5, 15, 0.8, 0.8, 0.8, 0.08);
+						}
+						
+						// Dramatic burst at destination
+						if (world instanceof ServerLevel _level) {
+							_level.sendParticles(ParticleTypes.END_ROD, tx + 0.5, ty + 1, tz + 0.5, 30, 0.6, 0.6, 0.6, 0.15);
+							_level.sendParticles(ParticleTypes.POOF, tx + 0.5, ty + 1, tz + 0.5, 20, 0.4, 0.4, 0.4, 0.1);
+							_level.sendParticles(ParticleTypes.GLOW, tx + 0.5, ty + 1, tz + 0.5, 15, 0.8, 0.8, 0.8, 0.08);
+						}
+						
+						// Apply disorientation effect to players
+						if (entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+							// Brief nausea (swirl effect) for 2 seconds
+							serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+								net.minecraft.world.effect.MobEffects.CONFUSION, 40, 0, false, false));
+							// Very brief blindness for dramatic "re-materializing" effect
+							serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+								net.minecraft.world.effect.MobEffects.BLINDNESS, 8, 0, false, false));
+						}
+						
 						// Restore player's team after teleportation (Bug fix: preserve team assignment)
 						if (playerTeamName != null && entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
 							Scoreboard scoreboard = serverPlayer.getScoreboard();
@@ -281,6 +306,8 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 								scoreboard.addPlayerToTeam(serverPlayer.getScoreboardName(), playerTeam);
 							}
 						}
+						
+						// Original particle effects (keeping for compatibility)
 						if (world instanceof ServerLevel _level)
 							_level.sendParticles(ParticleTypes.END_ROD, x, (y + 1), z, 20, 1.5, 1.5, 1.5, 0.1);
 						if (world instanceof ServerLevel _level)

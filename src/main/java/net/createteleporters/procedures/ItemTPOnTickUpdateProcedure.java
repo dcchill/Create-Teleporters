@@ -19,12 +19,16 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 
 import net.createteleporters.configuration.CTPConfigConfiguration;
 import net.createteleporters.CreateteleportersMod;
+
+import org.joml.Vector3f;
 
 public class ItemTPOnTickUpdateProcedure {
 	public static String execute(LevelAccessor world, double x, double y, double z, BlockState blockstate) {
@@ -47,12 +51,40 @@ public class ItemTPOnTickUpdateProcedure {
 		}
 		FluidIntake = itemFromBlockInventory(world, BlockPos.containing(x, y, z), 1).getCount() * 1.5625;
 		if (getFluidTankLevel(world, BlockPos.containing(x, y, z), 1, null) >= FluidIntake && dist <= maxDist && !(Blocks.AIR.asItem() == (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 1).copy()).getItem())) {
-			if (world instanceof ServerLevel _level)
-				_level.sendParticles(ParticleTypes.END_ROD, x, y, z, 4, 1, 1, 1, 0.01);
-			if (world instanceof ServerLevel _level)
-				_level.sendParticles(ParticleTypes.END_ROD, ((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo")),
-						((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("ypo") + 0.25),
-						((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo")), 4, 0.1, 0.1, 0.1, 0);
+			// Get destination coordinates (floor + 0.5 to center on block)
+			double destX = Math.floor((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo")) + 0.5;
+			double destY = Math.floor((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("ypo")) + 0.5;
+			double destZ = Math.floor((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo")) + 0.5;
+			
+			// Color-changing burst particles (yellow theme)
+			ParticleOptions burstParticle = new DustParticleOptions(new Vector3f(1.0f, 0.9f, 0.3f), 2.0f);
+			ParticleOptions flashParticle = new DustParticleOptions(new Vector3f(1.0f, 1.0f, 0.8f), 1.5f);
+			
+			// Source location effects
+			if (world instanceof ServerLevel _level) {
+				// Burst at source (centered on block, raised Y)
+				double srcX = Math.floor(x) + 0.5;
+				double srcY = Math.floor(y) + 1.0;
+				double srcZ = Math.floor(z) + 0.5;
+				for (int i = 0; i < 20; i++) {
+					double spread = 0.5;
+					_level.sendParticles(burstParticle, srcX + (Math.random() - 0.5) * spread, srcY + (Math.random() - 0.5) * spread, srcZ + (Math.random() - 0.5) * spread, 1, 0, 0, 0, 0.15);
+				}
+			}
+
+			// Destination location effects
+			if (world instanceof ServerLevel _level) {
+				// Burst at destination (centered on block, raised Y)
+				for (int i = 0; i < 20; i++) {
+					double spread = 0.5;
+					_level.sendParticles(burstParticle, destX + (Math.random() - 0.5) * spread, destY + 0.5 + (Math.random() - 0.5) * spread, destZ + (Math.random() - 0.5) * spread, 1, 0, 0, 0, 0.15);
+				}
+				// Flash effect
+				for (int i = 0; i < 10; i++) {
+					double spread = 0.8;
+					_level.sendParticles(flashParticle, destX + (Math.random() - 0.5) * spread, destY + 0.5 + (Math.random() - 0.5) * spread, destZ + (Math.random() - 0.5) * spread, 1, 0, 0, 0, 0.1);
+				}
+			}
 			if (world instanceof Level _level) {
 				if (!_level.isClientSide()) {
 					_level.playSound(null, BlockPos.containing(x, y, z), net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5);

@@ -101,38 +101,46 @@ public class EntityTeleporterOnTickUpdateProcedure {
 						_blockEntity.getPersistentData().putDouble("progress", (getBlockNBTNumber(world, BlockPos.containing(x, y, z), "progress") + 1));
 					if (world instanceof Level _level)
 						_level.sendBlockUpdated(_bp, _bs, _bs, 3);
-				} // === CONFIG ===
-				double height = 2.0;
-				double radius = 0.75;
-				int turns = 4;
-				double speed = 0.015;
-				// Redstone particle needs a color (R, G, B) and scale
-				float r = 0.9f;
-				float g = 0.1f;
-				float b = 0.1f;
-				float scale = 1.0f;
-				// Construct the dust particle options
-				ParticleOptions particle = new DustParticleOptions(new Vector3f(r, g, b), scale);
-				// === ONLY RUN ON SERVER ===
+				} // Enhanced charging effect with color progression
 				if (world instanceof ServerLevel level) {
-					long gameTime = level.getGameTime();
-					double time = (gameTime % (int) (height / speed)) * speed;
-					double centerX = x + 0.5;
-					double centerY = y + 1;
-					double centerZ = z + 0.5;
-					// base angle for the first helix
-					double angle1 = (time / height) * turns * 2 * Math.PI;
-					double px1 = centerX + Math.cos(angle1) * radius;
-					double py1 = centerY + time;
-					double pz1 = centerZ + Math.sin(angle1) * radius;
-					// second helix is 180° offset (Math.PI)
-					double angle2 = angle1 + Math.PI;
-					double px2 = centerX + Math.cos(angle2) * radius;
-					double py2 = centerY + time;
-					double pz2 = centerZ + Math.sin(angle2) * radius;
-					// spawn both helices
-					level.sendParticles(particle, px1, py1, pz1, 1, 0, 0, 0, 0);
-					level.sendParticles(particle, px2, py2, pz2, 1, 0, 0, 0, 0);
+					double progress = getBlockNBTNumber(world, BlockPos.containing(x, y, z), "progress");
+					double progressPercent = progress / 50.0; // 0 to 1
+					// Spawn increasing ring of particles that changes color
+					int ringParticles = (int) (8 + progressPercent * 16); // 8 to 24 particles
+					double ringRadius = 0.5 + progressPercent * 0.5; // Expanding radius
+					double ringY = y + 1.2 + progressPercent * 0.8; // Rising ring (starts higher)
+
+					// Color transitions: red -> yellow
+					float cr, cg, cb;
+					cr = 1.0f; // Red stays full
+					cg = (float) progressPercent; // Green increases from 0 to 1
+					cb = 0.1f; // Blue stays minimal
+
+					ParticleOptions ringParticle = new DustParticleOptions(new Vector3f(cr, cg, cb), 1.5f);
+					for (int i = 0; i < ringParticles; i++) {
+						double angle = (i * 2 * Math.PI) / ringParticles;
+						double px = x + 0.5 + Math.cos(angle) * ringRadius;
+						double pz = z + 0.5 + Math.sin(angle) * ringRadius;
+						level.sendParticles(ringParticle, px, ringY, pz, 1, 0, 0, 0, 0);
+					}
+					
+					// Sparks above destination coordinates
+					double destX = (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy())
+							.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo");
+					double destY = (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy())
+							.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("ypo");
+					double destZ = (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy())
+							.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo");
+					
+					// Spark intensity increases with progress
+					int sparkCount = (int) (2 + progressPercent * 6); // 2 to 8 sparks per tick
+					for (int i = 0; i < sparkCount; i++) {
+						double sparkX = destX + 0.5 + (level.random.nextDouble() - 0.5) * 0.6;
+						double sparkY = destY + 1.0 + level.random.nextDouble() * 0.5;
+						double sparkZ = destZ + 0.5 + (level.random.nextDouble() - 0.5) * 0.6;
+						// Sparks use the same color as the charging ring
+						level.sendParticles(ringParticle, sparkX, sparkY, sparkZ, 1, 0, 0, 0, 0);
+					}
 				}
 				if (getBlockNBTNumber(world, BlockPos.containing(x, y, z), "progress") >= 50) {
 					if (dist <= maxDist) {
@@ -172,12 +180,17 @@ public class EntityTeleporterOnTickUpdateProcedure {
 										ResourceKey<Level> destinationKey = ResourceKey.create(Registries.DIMENSION, ResourceLocation.tryParse(targetDimName));
 										ServerLevel destinationLevel = serverPlayer.server.getLevel(destinationKey);
 										if (destinationLevel != null) {
+											// Screen shake effect before teleport
 											serverPlayer.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, 0));
 											serverPlayer.teleportTo(destinationLevel, targetX, targetY, targetZ, targetYaw, serverPlayer.getXRot());
 											serverPlayer.connection.send(new ClientboundPlayerAbilitiesPacket(serverPlayer.getAbilities()));
 											for (MobEffectInstance effect : serverPlayer.getActiveEffects())
 												serverPlayer.connection.send(new ClientboundUpdateMobEffectPacket(serverPlayer.getId(), effect, false));
 											serverPlayer.connection.send(new ClientboundLevelEventPacket(1032, BlockPos.ZERO, 0, false));
+											// Brief disorientation effect (nausea for 1 second)
+											serverPlayer.addEffect(new MobEffectInstance(net.minecraft.world.effect.MobEffects.CONFUSION, 40, 0, false, false));
+											// Brief blindness for dramatic effect (0.5 seconds)
+											serverPlayer.addEffect(new MobEffectInstance(net.minecraft.world.effect.MobEffects.BLINDNESS, 10, 0, false, false));
 										} else {
 											serverPlayer.teleportTo(targetX, targetY, targetZ);
 										}
@@ -188,8 +201,13 @@ public class EntityTeleporterOnTickUpdateProcedure {
 									// Same-dimension teleportation for non-players or when no dimension specified
 									Entity _ent = entityiterator;
 									_ent.teleportTo(targetX, targetY, targetZ);
-									if (_ent instanceof ServerPlayer _serverPlayer)
+									if (_ent instanceof ServerPlayer _serverPlayer) {
 										_serverPlayer.connection.teleport(targetX, targetY, targetZ, _ent.getYRot(), _ent.getXRot());
+										// Brief disorientation effect (nausea for 1 second)
+										_serverPlayer.addEffect(new MobEffectInstance(net.minecraft.world.effect.MobEffects.CONFUSION, 40, 0, false, false));
+										// Brief blindness for dramatic effect (0.5 seconds)
+										_serverPlayer.addEffect(new MobEffectInstance(net.minecraft.world.effect.MobEffects.BLINDNESS, 10, 0, false, false));
+									}
 								}
 
 								// Restore player's team after teleportation (Bug fix: preserve team assignment)
@@ -215,12 +233,53 @@ public class EntityTeleporterOnTickUpdateProcedure {
 								}
 							}
 						}
-						if (world instanceof ServerLevel _level)
-							_level.sendParticles(ParticleTypes.END_ROD, x, y, z, 20, 1.5, 1.5, 1.5, 0.1);
-						if (world instanceof ServerLevel _level)
-							_level.sendParticles(ParticleTypes.END_ROD, ((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo")),
-									((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("ypo")),
-									((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo")), 20, 1.5, 1.5, 1.5, 0.1);
+						// === DRAMATIC TELEPORTATION BURST EFFECTS ===
+						double targetX = ((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo"));
+						double targetY = ((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("ypo"));
+						double targetZ = ((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo"));
+
+						// Color-changing burst particles (yellow to white flash)
+						ParticleOptions burstParticle = new DustParticleOptions(new Vector3f(1.0f, 0.9f, 0.3f), 2.0f);
+						ParticleOptions flashParticle = new DustParticleOptions(new Vector3f(1.0f, 1.0f, 0.8f), 1.5f);
+						
+						// Source location effects
+						if (world instanceof ServerLevel _level) {
+							// Massive color-changing burst at source
+							for (int i = 0; i < 40; i++) {
+								double spread = 0.8;
+								_level.sendParticles(burstParticle, x + 0.5 + (Math.random() - 0.5) * spread, y + 1 + (Math.random() - 0.5) * spread, z + 0.5 + (Math.random() - 0.5) * spread, 1, 0, 0, 0, 0.2);
+							}
+							// Lightning-like flash with POOF
+							_level.sendParticles(ParticleTypes.POOF, x + 0.5, y + 1, z + 0.5, 30, 0.5, 0.5, 0.5, 0.15);
+							// Expanding sphere effect with GLOW particles
+							_level.sendParticles(ParticleTypes.GLOW, x + 0.5, y + 1, z + 0.5, 25, 1.0, 1.0, 1.0, 0.1);
+							// Reversal portal particles (going down)
+							_level.sendParticles(ParticleTypes.REVERSE_PORTAL, x + 0.5, y + 0.5, z + 0.5, 20, 0.6, 0.3, 0.6, 0.1);
+						}
+
+						// Destination location effects
+						if (world instanceof ServerLevel _level) {
+							// Massive color-changing burst at destination
+							for (int i = 0; i < 40; i++) {
+								double spread = 0.8;
+								_level.sendParticles(burstParticle, targetX + 0.5 + (Math.random() - 0.5) * spread, targetY + 1 + (Math.random() - 0.5) * spread, targetZ + 0.5 + (Math.random() - 0.5) * spread, 1, 0, 0, 0, 0.2);
+							}
+							// Lightning-like flash with POOF
+							_level.sendParticles(ParticleTypes.POOF, targetX + 0.5, targetY + 1, targetZ + 0.5, 30, 0.5, 0.5, 0.5, 0.15);
+							// Expanding sphere effect with GLOW particles
+							_level.sendParticles(ParticleTypes.GLOW, targetX + 0.5, targetY + 1, targetZ + 0.5, 25, 1.0, 1.0, 1.0, 0.1);
+							// Portal arrival effect
+							_level.sendParticles(ParticleTypes.REVERSE_PORTAL, targetX + 0.5, targetY + 0.5, targetZ + 0.5, 20, 0.6, 0.3, 0.6, 0.1);
+						}
+
+						// Flash effect at both locations
+						if (world instanceof ServerLevel _level) {
+							for (int i = 0; i < 20; i++) {
+								double spread = 1.2;
+								_level.sendParticles(flashParticle, x + 0.5 + (Math.random() - 0.5) * spread, y + 1 + (Math.random() - 0.5) * spread, z + 0.5 + (Math.random() - 0.5) * spread, 1, 0, 0, 0, 0.15);
+								_level.sendParticles(flashParticle, targetX + 0.5 + (Math.random() - 0.5) * spread, targetY + 1 + (Math.random() - 0.5) * spread, targetZ + 0.5 + (Math.random() - 0.5) * spread, 1, 0, 0, 0, 0.15);
+							}
+						}
 						if (world instanceof Level _level) {
 							if (!_level.isClientSide()) {
 								_level.playSound(null, BlockPos.containing(x, y, z), net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
