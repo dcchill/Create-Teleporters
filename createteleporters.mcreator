@@ -1613,7 +1613,18 @@
       "createteleporters.ponder.c_portal_3.text_2": "It will light automatically once it detects the shape and bound portals are both valid.",
       "createteleporters.ponder.c_portal_1.header": "Building The Portal",
       "createteleporters.ponder.c_portal_2.header": "Preparing The Portal",
-      "createteleporters.ponder.c_portal_3.header": "Powering The Portal"
+      "createteleporters.ponder.c_portal_3.header": "Powering The Portal",
+      "block.createteleporters.shift_for_info": "Hold [Shift] for Summary",
+      "block.createteleporters.teleporter.description_1": "Hold [Shift] for Summary",
+      "block.createteleporters.teleporter.description_2": "Fill with Telejuice to teleport to a paired destination.",
+      "block.createteleporters.item_tp.description_1": "Hold [Shift] for Summary",
+      "block.createteleporters.item_tp.description_2": "Fill with Telejuice to teleport items to a paired destination.  Start the teleport by powering with a redstone signal.",
+      "block.createteleporters.custom_portal_base.description_1": "Hold [Shift] for Summary",
+      "block.createteleporters.custom_portal_base.description_2": "Teleport with infinite range and between dimensions.",
+      "block.createteleporters.quantum_casing.description_1": "Hold [Shift] for Summary",
+      "block.createteleporters.quantum_casing.description_2": "Used to build the frame of the Custom Portal.",
+      "block.createteleporters.block_teleporter.description_1": "Hold [Shift] for Summary",
+      "block.createteleporters.block_teleporter.description_2": "Fill with Telejuice to teleport a block to a paired destination.  Start the teleport by powering with a redstone signal."
     }
   },
   "metadata": {

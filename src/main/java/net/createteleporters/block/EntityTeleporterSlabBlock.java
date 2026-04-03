@@ -35,6 +35,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.core.BlockPos;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.ChatFormatting;
 
 import net.createteleporters.world.inventory.EntityTeleporterGuiMenu;
 import net.createteleporters.procedures.ProgressBlockstateBlockAddedProcedure;
@@ -64,7 +66,15 @@ public class EntityTeleporterSlabBlock extends Block implements EntityBlock {
 	@OnlyIn(Dist.CLIENT)
 	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, context, list, flag);
-		list.add(Component.translatable("block.createteleporters.entity_teleporter_slab.description_0"));
+
+		if (Screen.hasShiftDown()) {
+			list.add(Component.translatable("block.createteleporters.teleporter.description_1").withStyle(ChatFormatting.WHITE));
+			list.add(Component.translatable("block.createteleporters.teleporter.description_2").withStyle(ChatFormatting.GOLD));
+		} else {
+			list.add(Component.translatable("block.createteleporters.shift_for_info",
+					Component.translatable("key.keyboard.left.shift").withStyle(ChatFormatting.YELLOW))
+					.withStyle(ChatFormatting.GRAY));
+		}
 	}
 
 	@Override
