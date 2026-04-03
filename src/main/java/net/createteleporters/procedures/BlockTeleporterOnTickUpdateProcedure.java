@@ -1,5 +1,8 @@
 package net.createteleporters.procedures;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.common.extensions.ILevelExtension;
@@ -34,6 +37,8 @@ import net.minecraft.commands.CommandSource;
 import net.createteleporters.init.CreateteleportersModItems;
 
 public class BlockTeleporterOnTickUpdateProcedure {
+	private static final Logger LOGGER = LogManager.getLogger(BlockTeleporterOnTickUpdateProcedure.class);
+	
 	public static void execute(LevelAccessor world, double x, double y, double z, BlockState blockstate) {
 		double maxDist = 0;
 		double dist = 0;
@@ -70,6 +75,7 @@ public class BlockTeleporterOnTickUpdateProcedure {
 							try {
 								_bs = _bs.setValue(_propertyNew, _bso.getValue(_propertyOld));
 							} catch (Exception e) {
+								LOGGER.debug("Failed to copy property '{}' during block teleport: {}", _propertyOld.getName(), e.getMessage());
 							}
 					}
 					BlockEntity _be = world.getBlockEntity(_bp);
@@ -84,7 +90,8 @@ public class BlockTeleporterOnTickUpdateProcedure {
 						if (_be != null) {
 							try {
 								_be.loadWithComponents(_bnbt, world.registryAccess());
-							} catch (Exception ignored) {
+							} catch (Exception e) {
+								LOGGER.debug("Failed to load block entity after block teleport: {}", e.getMessage());
 							}
 						}
 					}
@@ -98,9 +105,9 @@ public class BlockTeleporterOnTickUpdateProcedure {
 							((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo")), 20, 1.5, 1.5, 1.5, 0.1);
 				if (world instanceof Level _level) {
 					if (!_level.isClientSide()) {
-						_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.enderman.teleport")), SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
+						_level.playSound(null, BlockPos.containing(x, y, z), net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
 					} else {
-						_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.enderman.teleport")), SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
+						_level.playLocalSound(x, y, z, net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
 					}
 				}
 				if (world instanceof Level _level) {
@@ -109,12 +116,12 @@ public class BlockTeleporterOnTickUpdateProcedure {
 								BlockPos.containing((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo"),
 										(itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("ypo") + 1,
 										(itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo")),
-								BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.enderman.teleport")), SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
+								net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
 					} else {
 						_level.playLocalSound(((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo")),
 								((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("ypo") + 1),
 								((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo")),
-								BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.enderman.teleport")), SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
+								net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
 					}
 				}
 			}

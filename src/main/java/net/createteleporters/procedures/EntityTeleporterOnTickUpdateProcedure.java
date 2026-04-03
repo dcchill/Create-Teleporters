@@ -24,6 +24,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.ParticleOptions;
@@ -31,6 +33,11 @@ import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.game.ClientboundGameEventPacket;
+import net.minecraft.network.protocol.game.ClientboundPlayerAbilitiesPacket;
+import net.minecraft.network.protocol.game.ClientboundLevelEventPacket;
+import net.minecraft.network.protocol.game.ClientboundUpdateMobEffectPacket;
+import net.minecraft.world.effect.MobEffectInstance;
 
 import net.createteleporters.init.CreateteleportersModItems;
 import net.createteleporters.configuration.CTPConfigConfiguration;
@@ -147,15 +154,42 @@ public class EntityTeleporterOnTickUpdateProcedure {
 									}
 								}
 
-								{
+								// Check if target dimension is specified and different from current
+								String targetDimName = (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy())
+										.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getString("dimension");
+								double targetX = (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy())
+										.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo");
+								double targetY = (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy())
+										.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("ypo") + 1;
+								double targetZ = (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy())
+										.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo");
+								float targetYaw = (float) (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy())
+										.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("yawpo");
+
+								if (entityiterator instanceof ServerPlayer serverPlayer && !targetDimName.isEmpty()) {
+									// Cross-dimension teleportation for players
+									try {
+										ResourceKey<Level> destinationKey = ResourceKey.create(Registries.DIMENSION, ResourceLocation.tryParse(targetDimName));
+										ServerLevel destinationLevel = serverPlayer.server.getLevel(destinationKey);
+										if (destinationLevel != null) {
+											serverPlayer.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, 0));
+											serverPlayer.teleportTo(destinationLevel, targetX, targetY, targetZ, targetYaw, serverPlayer.getXRot());
+											serverPlayer.connection.send(new ClientboundPlayerAbilitiesPacket(serverPlayer.getAbilities()));
+											for (MobEffectInstance effect : serverPlayer.getActiveEffects())
+												serverPlayer.connection.send(new ClientboundUpdateMobEffectPacket(serverPlayer.getId(), effect, false));
+											serverPlayer.connection.send(new ClientboundLevelEventPacket(1032, BlockPos.ZERO, 0, false));
+										} else {
+											serverPlayer.teleportTo(targetX, targetY, targetZ);
+										}
+									} catch (Exception e) {
+										serverPlayer.teleportTo(targetX, targetY, targetZ);
+									}
+								} else {
+									// Same-dimension teleportation for non-players or when no dimension specified
 									Entity _ent = entityiterator;
-									_ent.teleportTo(((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo")),
-											((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("ypo") + 1),
-											((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo")));
+									_ent.teleportTo(targetX, targetY, targetZ);
 									if (_ent instanceof ServerPlayer _serverPlayer)
-										_serverPlayer.connection.teleport(((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo")),
-												((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("ypo") + 1),
-												((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo")), _ent.getYRot(), _ent.getXRot());
+										_serverPlayer.connection.teleport(targetX, targetY, targetZ, _ent.getYRot(), _ent.getXRot());
 								}
 
 								// Restore player's team after teleportation (Bug fix: preserve team assignment)
@@ -168,7 +202,7 @@ public class EntityTeleporterOnTickUpdateProcedure {
 								}
 								{
 									Entity _ent = entityiterator;
-									_ent.setYRot((float) (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("yawpo"));
+									_ent.setYRot(targetYaw);
 									_ent.setXRot(0);
 									_ent.setYBodyRot(_ent.getYRot());
 									_ent.setYHeadRot(_ent.getYRot());
@@ -189,9 +223,9 @@ public class EntityTeleporterOnTickUpdateProcedure {
 									((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo")), 20, 1.5, 1.5, 1.5, 0.1);
 						if (world instanceof Level _level) {
 							if (!_level.isClientSide()) {
-								_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.enderman.teleport")), SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
+								_level.playSound(null, BlockPos.containing(x, y, z), net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
 							} else {
-								_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.enderman.teleport")), SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
+								_level.playLocalSound(x, y, z, net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
 							}
 						}
 						if (world instanceof Level _level) {
@@ -200,12 +234,12 @@ public class EntityTeleporterOnTickUpdateProcedure {
 										BlockPos.containing((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo"),
 												(itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("ypo"),
 												(itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo")),
-										BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.enderman.teleport")), SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
+										net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
 							} else {
 								_level.playLocalSound(((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo")),
 										((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("ypo")),
 										((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo")),
-										BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.enderman.teleport")), SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
+										net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
 							}
 						}
 						if (!world.isClientSide()) {

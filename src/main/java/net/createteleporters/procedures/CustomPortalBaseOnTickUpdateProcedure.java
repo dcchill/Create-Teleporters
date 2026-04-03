@@ -56,6 +56,30 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				int interiorMax = maxExtent - 1;
 				int fillHeight = portalHeight - 1;
 
+				// Check if this portal is linked to another portal
+				BlockEntity linkedBE = world.getBlockEntity(BlockPos.containing(x, y, z));
+				boolean isLinked = linkedBE != null && linkedBE.getPersistentData().getBoolean("isLinked");
+
+				// For linked portals, only create portals when BOTH sides are valid
+				if (isLinked) {
+					int linkedX = linkedBE.getPersistentData().getInt("linkedX");
+					int linkedY = linkedBE.getPersistentData().getInt("linkedY");
+					int linkedZ = linkedBE.getPersistentData().getInt("linkedZ");
+					BlockEntity remoteBE = world.getBlockEntity(new BlockPos(linkedX, linkedY, linkedZ));
+					boolean remoteActive = remoteBE != null && remoteBE.getPersistentData().getBoolean("portalActive");
+
+					if (!remoteActive) {
+						// Linked portal not ready yet — wait
+						clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
+						if (getBlockNBTLogic(world, BlockPos.containing(x, y, z), "immersivePortalCreated")) {
+							removeTrackedImmersivePortal(world, x, y, z);
+							if (linkedBE != null)
+								linkedBE.getPersistentData().putBoolean("immersivePortalCreated", false);
+						}
+						return "Waiting for linked portal";
+					}
+				}
+
 				if (useImmersivePortals && ImmersivePortalsIntegration.isImmersivePortalsLoaded()) {
 					// Use Immersive Portals integration - NO quantum portal blocks
 					// IP handles the portal rendering and teleportation automatically
@@ -152,10 +176,6 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				String targetDim;
 				double tx, ty, tz, yaw;
 
-				// Check if this portal is linked to another portal
-				BlockEntity linkedBE = world.getBlockEntity(BlockPos.containing(x, y, z));
-				boolean isLinked = linkedBE != null && linkedBE.getPersistentData().getBoolean("isLinked");
-
 				if (isLinked) {
 					// Check if either portal has the Advanced TP Link in its inventory
 					boolean hasTpLink = hasAdvancedTpLink(world, BlockPos.containing(x, y, z)) ||
@@ -232,9 +252,9 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 							_level.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
 									("execute in " + targetDim
 											+ (" run tp " + entityiterator.getStringUUID() + " "
-													+ tx + " "
+													+ (tx + 0.5) + " "
 													+ (ty + 1) + " "
-													+ tz)));
+													+ (tz + 0.5))));
 						{
 							Entity _ent = entityiterator;
 							_ent.setYRot((float) yaw);
@@ -267,16 +287,16 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 							_level.sendParticles(ParticleTypes.END_ROD, tx, ty, tz, 20, 1.5, 1.5, 1.5, 0.1);
 						if (world instanceof Level _level) {
 							if (!_level.isClientSide()) {
-								_level.playSound(null, BlockPos.containing(x, y + 1, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.enderman.teleport")), SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
+								_level.playSound(null, BlockPos.containing(x, y + 1, z), net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
 							} else {
-								_level.playLocalSound(x, (y + 1), z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.enderman.teleport")), SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
+								_level.playLocalSound(x, (y + 1), z, net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
 							}
 						}
 						if (world instanceof Level _level) {
 							if (!_level.isClientSide()) {
-								_level.playSound(null, BlockPos.containing(tx, ty, tz), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.enderman.teleport")), SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
+								_level.playSound(null, BlockPos.containing(tx, ty, tz), net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
 							} else {
-								_level.playLocalSound(tx, ty, tz, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.enderman.teleport")), SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
+								_level.playLocalSound(tx, ty, tz, net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
 							}
 						}
 					}

@@ -135,7 +135,9 @@ public class CustomPortalBaseBlockEntity extends RandomizableContainerBlockEntit
 		protected void onContentsChanged() {
 			super.onContentsChanged();
 			setChanged();
-			level.sendBlockUpdated(worldPosition, level.getBlockState(worldPosition), level.getBlockState(worldPosition), 2);
+			if (level != null) {
+				level.sendBlockUpdated(worldPosition, level.getBlockState(worldPosition), level.getBlockState(worldPosition), 2);
+			}
 		}
 	};
 

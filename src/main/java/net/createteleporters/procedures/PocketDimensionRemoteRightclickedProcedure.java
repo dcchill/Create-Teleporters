@@ -82,6 +82,8 @@ public class PocketDimensionRemoteRightclickedProcedure {
 					ResourceKey<Level> destinationType = Level.OVERWORLD;
 					if (_player.level().dimension() == destinationType)
 						return;
+					if (_player.server == null)
+						return;
 					ServerLevel nextLevel = _player.server.getLevel(destinationType);
 					if (nextLevel != null) {
 						_player.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, 0));
@@ -123,6 +125,8 @@ public class PocketDimensionRemoteRightclickedProcedure {
 				if (entity instanceof ServerPlayer _player && !_player.level().isClientSide()) {
 					ResourceKey<Level> destinationType = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("createteleporters:pocket_dimension"));
 					if (_player.level().dimension() == destinationType)
+						return;
+					if (_player.server == null)
 						return;
 					ServerLevel nextLevel = _player.server.getLevel(destinationType);
 					if (nextLevel != null) {

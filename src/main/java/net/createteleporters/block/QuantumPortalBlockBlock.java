@@ -9,12 +9,20 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.util.RandomSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 import net.createteleporters.procedures.QuantumPortalBlockOnTickUpdateProcedure;
 
 public class QuantumPortalBlockBlock extends IronBarsBlock {
 	public QuantumPortalBlockBlock() {
 		super(BlockBehaviour.Properties.of().sound(SoundType.GLASS).strength(-1, 3600000).noOcclusion().hasPostProcess((bs, br, bp) -> true).emissiveRendering((bs, br, bp) -> true).isRedstoneConductor((bs, br, bp) -> false));
+	}
+
+	@Override
+	public VoxelShape getCollisionShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		return Shapes.empty();
 	}
 
 	@Override

@@ -4,7 +4,6 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.common.extensions.ILevelExtension;
 import net.neoforged.neoforge.capabilities.Capabilities;
 
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -38,8 +37,8 @@ public class ScalablePortalCheckerProcedure {
 			return;
 		}
 
-		// Check if we have enough fluid (at least 8000 mB)
-		if (8000 > drainTankSimulate(world, BlockPos.containing(x, y, z), 8000, null)) {
+		// Check if we have enough fluid (at least 256 mB)
+		if (256 > drainTankSimulate(world, BlockPos.containing(x, y, z), 256, null)) {
 			setPortalActive(world, BlockPos.containing(x, y, z), false);
 			return;
 		}
@@ -63,9 +62,6 @@ public class ScalablePortalCheckerProcedure {
 	 */
 	private static PortalDimensions findValidPortalDimensions(LevelAccessor world, BlockPos basePos, boolean horizontal) {
 		// The base must have dummy blocks on both sides on the bottom row
-		Direction.Axis axis = horizontal ? Direction.Axis.Z : Direction.Axis.X;
-
-		// First, verify dummy blocks are adjacent to the base
 		BlockPos leftDummyPos = horizontal ? basePos.offset(0, 0, -1) : basePos.offset(-1, 0, 0);
 		BlockPos rightDummyPos = horizontal ? basePos.offset(0, 0, 1) : basePos.offset(1, 0, 0);
 
@@ -131,9 +127,7 @@ public class ScalablePortalCheckerProcedure {
 				if (h > 1) {
 					for (int w = minExtent + 1; w < maxExtent; w++) {
 						BlockPos interiorPos = horizontal ? basePos.offset(0, h - 1, w) : basePos.offset(w, h - 1, 0);
-						BlockState interiorState = world.getBlockState(interiorPos);
-						// Interior should NOT be quantum casing
-						if (interiorState.getBlock() == CreateteleportersModBlocks.QUANTUM_CASING.get()) {
+						if (world.getBlockState(interiorPos).getBlock() == CreateteleportersModBlocks.QUANTUM_CASING.get()) {
 							interiorIsValid = false;
 							break;
 						}
@@ -150,13 +144,14 @@ public class ScalablePortalCheckerProcedure {
 			}
 		}
 
-		// Minimum height is 5 (bottom row + 4 more for 3-block interior + top)
-		if (maxHeight < 5) {
+		// Minimum height is 5 (base row + 4 more rows = height offset of 4)
+		int actualHeight = maxHeight + 1; // Convert offset to actual block count (for comparison only)
+		if (actualHeight < 5) {
 			return null;
 		}
 
 		// Restrict valid portal frame to perfect square dimensions
-		if (totalWidth != maxHeight) {
+		if (totalWidth != actualHeight) {
 			return null;
 		}
 
@@ -164,7 +159,7 @@ public class ScalablePortalCheckerProcedure {
 		for (int h = 1; h < maxHeight; h++) {
 			for (int w = minExtent + 1; w < maxExtent; w++) {
 				BlockPos interiorPos = horizontal ? basePos.offset(0, h, w) : basePos.offset(w, h, 0);
-				BlockState state = world.getBlockState(interiorPos);
+				net.minecraft.world.level.block.state.BlockState state = world.getBlockState(interiorPos);
 				// Allow air, custom portal blocks, quantum portal block (filled interior), or the base/dummy at bottom
 				if (!state.isAir() && state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL.get() && state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get()
 						&& state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL_ON.get() && state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL_BASE_DUMMY_BLOCK.get()
@@ -174,6 +169,7 @@ public class ScalablePortalCheckerProcedure {
 			}
 		}
 
+		// Store maxHeight as the offset (what downstream code expects), not actualHeight
 		return new PortalDimensions(totalWidth, maxHeight, minExtent, maxExtent);
 	}
 
@@ -203,11 +199,10 @@ public class ScalablePortalCheckerProcedure {
 	private static void setPortalActive(LevelAccessor world, BlockPos pos, boolean active) {
 		if (!world.isClientSide()) {
 			BlockEntity _blockEntity = world.getBlockEntity(pos);
-			BlockState _bs = world.getBlockState(pos);
 			if (_blockEntity != null)
 				_blockEntity.getPersistentData().putBoolean("portalActive", active);
 			if (world instanceof Level _level)
-				_level.sendBlockUpdated(pos, _bs, _bs, 3);
+				_level.sendBlockUpdated(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
 		}
 	}
 
