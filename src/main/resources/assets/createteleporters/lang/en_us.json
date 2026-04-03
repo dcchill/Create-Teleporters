@@ -54,9 +54,12 @@
   "block.createteleporters.block_teleporter": "Block Teleporter",
   "gui.createteleporters.block_teleporter_gui.label_entity_teleporter": "Block Teleporter",
   "gui.createteleporters.block_teleporter_gui.label_tp_link": "Advanced TP Link",
-  "block.createteleporters.block_teleporter.description_0": "§6Redstone Signal To Activate",
-  "block.createteleporters.teleporter.description_0": "§6Stand On To Activate",
-  "block.createteleporters.entity_teleporter_slab.description_0": "§6Stand On To Activate",
-  "block.createteleporters.entity_teleporter_quarter.description_0": "§6Stand On To Activate",
-  "block.createteleporters.item_tp.description_0": "§6Redstone Signal To Activate"
+  "block.createteleporters.block_teleporter.description_0": "\u00a76Redstone Signal To Activate",
+  "block.createteleporters.teleporter.description_0": "\u00a76Stand On To Activate",
+  "block.createteleporters.entity_teleporter_slab.description_0": "\u00a76Stand On To Activate",
+  "block.createteleporters.entity_teleporter_quarter.description_0": "\u00a76Stand On To Activate",
+  "block.createteleporters.item_tp.description_0": "\u00a76Redstone Signal To Activate",
+  "createteleporters.ponder.c_portal_1.header": "Portal Controller Setup",
+  "createteleporters.ponder.c_portal_2.header": "Building a Square Portal Frame",
+  "createteleporters.ponder.c_portal_3.header": "Activating and Linking the Portal"
 }

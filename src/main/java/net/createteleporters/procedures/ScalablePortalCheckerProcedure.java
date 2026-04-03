@@ -15,15 +15,17 @@ import net.createteleporters.init.CreateteleportersModBlocks;
 
 /**
  * Checks for a valid scalable custom portal frame.
- * 
+ *
  * Portal structure:
  * - Bottom row: quantum_casing(s) - dummy - base - dummy - quantum_casing(s)
  * - Side rows: quantum casing on both ends, air/portal interior
  * - Top row: all quantum casing
- * 
- * Minimum size: 5 wide x 4 tall (3x2 interior)
+ *
+ * Minimum size: 5 wide x 5 tall (3x3 interior)
  * Maximum size: 23 wide x 23 tall (21x21 interior)
  * The base can be anywhere on the bottom row (must have dummy on each side)
+ *
+ * Note: Portal frames must be perfect squares.
  */
 public class ScalablePortalCheckerProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z) {
@@ -44,7 +46,7 @@ public class ScalablePortalCheckerProcedure {
 
 		// Find the valid portal dimensions
 		PortalDimensions dims = findValidPortalDimensions(world, BlockPos.containing(x, y, z), isHorizontal);
-		
+
 		if (dims != null) {
 			// Store the portal dimensions for later use
 			storePortalDimensions(world, BlockPos.containing(x, y, z), dims.width, dims.height, dims.minExtent, dims.maxExtent);
@@ -62,15 +64,15 @@ public class ScalablePortalCheckerProcedure {
 	private static PortalDimensions findValidPortalDimensions(LevelAccessor world, BlockPos basePos, boolean horizontal) {
 		// The base must have dummy blocks on both sides on the bottom row
 		Direction.Axis axis = horizontal ? Direction.Axis.Z : Direction.Axis.X;
-		
+
 		// First, verify dummy blocks are adjacent to the base
 		BlockPos leftDummyPos = horizontal ? basePos.offset(0, 0, -1) : basePos.offset(-1, 0, 0);
 		BlockPos rightDummyPos = horizontal ? basePos.offset(0, 0, 1) : basePos.offset(1, 0, 0);
-		
+
 		if (!isDummyBlock(world, leftDummyPos) || !isDummyBlock(world, rightDummyPos)) {
 			return null; // Must have dummy blocks on both sides
 		}
-		
+
 		// Scan left/bottom from the left dummy to find quantum casing extent
 		int minExtent = -1; // Start at left dummy position
 		for (int i = 2; i <= 23; i++) {
@@ -81,7 +83,7 @@ public class ScalablePortalCheckerProcedure {
 				break;
 			}
 		}
-		
+
 		// Scan right/top from the right dummy to find quantum casing extent
 		int maxExtent = 1; // Start at right dummy position
 		for (int i = 2; i <= 23; i++) {
@@ -92,7 +94,7 @@ public class ScalablePortalCheckerProcedure {
 				break;
 			}
 		}
-		
+
 		// Calculate total width (must be at least 5: 1q + 1d + 1c + 1d + 1q)
 		int totalWidth = maxExtent - minExtent + 1;
 		if (totalWidth < 5 || totalWidth > 23) {
@@ -108,8 +110,7 @@ public class ScalablePortalCheckerProcedure {
 			BlockPos rightPos = horizontal ? basePos.offset(0, h, maxExtent) : basePos.offset(maxExtent, h, 0);
 
 			// Both sides must be quantum casing
-			if (world.getBlockState(leftPos).getBlock() != CreateteleportersModBlocks.QUANTUM_CASING.get() ||
-				world.getBlockState(rightPos).getBlock() != CreateteleportersModBlocks.QUANTUM_CASING.get()) {
+			if (world.getBlockState(leftPos).getBlock() != CreateteleportersModBlocks.QUANTUM_CASING.get() || world.getBlockState(rightPos).getBlock() != CreateteleportersModBlocks.QUANTUM_CASING.get()) {
 				break;
 			}
 
@@ -149,28 +150,30 @@ public class ScalablePortalCheckerProcedure {
 			}
 		}
 
-		// Minimum height is 4 (bottom row + 3 more for 2-block interior + top)
-		if (maxHeight < 4) {
+		// Minimum height is 5 (bottom row + 4 more for 3-block interior + top)
+		if (maxHeight < 5) {
 			return null;
 		}
-		
+
+		// Restrict valid portal frame to perfect square dimensions
+		if (totalWidth != maxHeight) {
+			return null;
+		}
+
 		// Verify all interior blocks are air or portal blocks (not frame blocks)
 		for (int h = 1; h < maxHeight; h++) {
 			for (int w = minExtent + 1; w < maxExtent; w++) {
 				BlockPos interiorPos = horizontal ? basePos.offset(0, h, w) : basePos.offset(w, h, 0);
 				BlockState state = world.getBlockState(interiorPos);
 				// Allow air, custom portal blocks, quantum portal block (filled interior), or the base/dummy at bottom
-				if (!state.isAir() &&
-					state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL.get() &&
-					state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get() &&
-					state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL_ON.get() &&
-					state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL_BASE_DUMMY_BLOCK.get() &&
-					state.getBlock() != CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get()) {
+				if (!state.isAir() && state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL.get() && state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get()
+						&& state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL_ON.get() && state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL_BASE_DUMMY_BLOCK.get()
+						&& state.getBlock() != CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get()) {
 					return null;
 				}
 			}
 		}
-		
+
 		return new PortalDimensions(totalWidth, maxHeight, minExtent, maxExtent);
 	}
 
