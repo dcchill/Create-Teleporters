@@ -8,7 +8,8 @@
       "Bash(mkdir *)",
       "Bash(findstr *)",
       "WebSearch",
-      "WebFetch(github.com)"
+      "WebFetch(github.com)",
+      "Bash(gradlew *)"
     ]
   },
   "$version": 3

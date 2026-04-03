@@ -24,6 +24,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.BlockPos;
 
 import net.createteleporters.network.CreateteleportersModVariables;
+import net.createteleporters.util.PocketDimensionTracker;
 
 public class PocketDimensionRemoteRightclickedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, ItemStack itemstack) {
@@ -31,6 +32,19 @@ public class PocketDimensionRemoteRightclickedProcedure {
 			return;
 		if (itemstack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getBoolean("notFirstUse") == false) {
 			if (Level.OVERWORLD == (entity.level().dimension())) {
+				// Use floored coordinates for consistent position tracking
+				long bindX = (long) Math.floor(entity.getX());
+				long bindY = (long) Math.floor(entity.getY());
+				long bindZ = (long) Math.floor(entity.getZ());
+				
+				// Check if position was previously bound and warn the player
+				if (PocketDimensionTracker.get(world).isPositionBound(bindX, bindY, bindZ)) {
+					if (entity instanceof Player _player && !_player.level().isClientSide())
+						_player.displayClientMessage(Component.literal("Rebinding existing pocket dimension..."), true);
+				}
+				
+				// Bind/overwrite this position
+				PocketDimensionTracker.get(world).bindPosition(bindX, bindY, bindZ);
 				{
 					final String _tagName = "dimX";
 					final double _tagValue = (entity.getX() * 4 * 16);
