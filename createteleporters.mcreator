@@ -1629,18 +1629,18 @@
   },
   "metadata": {
     "files": [
-      "src/main/resources/META-INF/neoforge.mods.toml",
-      "src/main/java/net/createteleporters/init/CreateteleportersModModels.java",
       "src/main/java/net/createteleporters/CreateteleportersMod.java",
+      "src/main/resources/pack.mcmeta",
+      "src/main/resources/META-INF/neoforge.mods.toml",
       "src/main/java/net/createteleporters/network/CreateteleportersModVariables.java",
       "src/main/java/net/createteleporters/init/CreateteleportersModTabs.java",
-      "src/main/resources/pack.mcmeta",
+      "src/main/java/net/createteleporters/init/CreateteleportersModModels.java",
       "src/main/java/net/createteleporters/init/CreateteleportersModConfigs.java",
       "src/main/java/net/createteleporters/init/CreateteleportersModFluids.java",
       "src/main/java/net/createteleporters/init/CreateteleportersModFluidTypes.java",
+      "src/main/java/net/createteleporters/init/CreateteleportersModMenus.java",
       "src/main/java/net/createteleporters/init/CreateteleportersModScreens.java",
       "src/main/java/net/createteleporters/network/MenuStateUpdateMessage.java",
-      "src/main/java/net/createteleporters/init/CreateteleportersModMenus.java",
       "src/main/java/net/createteleporters/init/CreateteleportersModBlocks.java",
       "src/main/java/net/createteleporters/init/CreateteleportersModBlockEntities.java",
       "src/main/java/net/createteleporters/init/CreateteleportersModItems.java"
@@ -1650,15 +1650,11 @@
     "name": "~",
     "children": [
       {
-        "name": "entity_teleporter",
-        "children": []
-      },
-      {
         "name": "quantum_mech",
         "children": []
       },
       {
-        "name": "recipes",
+        "name": "pocket_dim",
         "children": []
       },
       {
@@ -1666,7 +1662,11 @@
         "children": []
       },
       {
-        "name": "adv_portal",
+        "name": "BlockTeleporter",
+        "children": []
+      },
+      {
+        "name": "entity_teleporter",
         "children": []
       },
       {
@@ -1678,11 +1678,11 @@
         "children": []
       },
       {
-        "name": "pocket_dim",
+        "name": "recipes",
         "children": []
       },
       {
-        "name": "BlockTeleporter",
+        "name": "adv_portal",
         "children": []
       }
     ]

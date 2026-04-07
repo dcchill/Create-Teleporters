@@ -33,6 +33,7 @@ import net.minecraft.world.scores.Scoreboard;
 
 import net.createteleporters.configuration.CTPConfigConfiguration;
 import net.createteleporters.integration.ImmersivePortalsIntegration;
+import net.createteleporters.procedures.BindCustomPortalProcedure;
 
 public class CustomPortalBaseOnTickUpdateProcedure {
 	public static String execute(LevelAccessor world, double x, double y, double z) {
@@ -176,7 +177,25 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				String targetDim;
 				double tx, ty, tz, yaw;
 
-				if (isLinked) {
+				// Check if portal-to-portal binding is forced by config
+				boolean forceBinding = BindCustomPortalProcedure.isForcePortalToPortalBinding();
+
+				if (forceBinding) {
+					// When binding is forced, read coordinates from the Advanced TP Link in inventory
+					ItemStack invStack = (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy());
+					
+					if (invStack.isEmpty() || !(invStack.getItem() instanceof net.createteleporters.item.ADVTplinkItem)) {
+						return "Missing Advanced TP Link"; // Require TP Link when binding is forced
+					}
+					
+					CompoundTag cd = invStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+					targetDim = cd.getString("dimension");
+					tx = cd.getDouble("xpo");
+					ty = cd.getDouble("ypo");
+					tz = cd.getDouble("zpo");
+					yaw = cd.getDouble("yawpo");
+				} else if (isLinked) {
+					// Portal is explicitly linked to another portal
 					// Check if either portal has the Advanced TP Link in its inventory
 					boolean hasTpLink = hasAdvancedTpLink(world, BlockPos.containing(x, y, z)) ||
 									   hasAdvancedTpLinkAtLinkedPortal(world, linkedBE);
@@ -192,7 +211,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					targetDim = linkedBE.getPersistentData().getString("linkedDim");
 					yaw = linkedBE.getPersistentData().getDouble("linkedYaw");
 				} else {
-					// Fall back to item data (for backwards compatibility)
+					// Fall back to item data (for backwards compatibility when binding not forced)
 					ItemStack invStack = (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy());
 					CompoundTag cd = invStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
 					targetDim = cd.getString("dimension");
@@ -226,105 +245,132 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 						int cooldown = entityData.getInt("PortalTeleportCooldown");
 						if (cooldown > 0) {
 							entityData.putInt("PortalTeleportCooldown", cooldown - 1);
+							continue; // Skip this entity, still on cooldown
 						}
 					}
 
-					// Check if entity has teleportation cooldown (prevents infinite loops)
-					if (entityData.contains("PortalTeleportCooldown") && 
-						entityData.getInt("PortalTeleportCooldown") > 0) {
-						continue; // Skip this entity, still on cooldown
-					}
-
+					// Check if entity is charging up for teleport
+					int chargeTime = entityData.contains("TeleportCharge") ? entityData.getInt("TeleportCharge") : 0;
+					
 					// use the entity's feet (minY of bounding box) to prevent premature triggers
 					double feetY = entityiterator.getBoundingBox().minY;
 					if (feetY + 1e-6 >= (y + 1) && feetY <= (y + portalInnerHeight + 1) + 1e-6) {
-						// Save player's team before teleportation (Bug fix: preserve team assignment)
-						String playerTeamName = null;
-						if (entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-							Scoreboard scoreboard = serverPlayer.getScoreboard();
-							Team playerTeam = scoreboard.getPlayerTeam(serverPlayer.getScoreboardName());
-							if (playerTeam != null) {
-								playerTeamName = playerTeam.getName();
+						// Start or continue charging
+						if (chargeTime <= 0) {
+							// First tick in portal - start charging
+							entityData.putInt("TeleportCharge", 10); // 10 ticks = 0.5 seconds
+						} else {
+							// Continue charging
+							chargeTime--;
+							entityData.putInt("TeleportCharge", chargeTime);
+							
+							// Apply vision effects during charge
+							if (entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+								// Nausea creates a swirling/warping vision effect
+								serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+									net.minecraft.world.effect.MobEffects.CONFUSION, 15, 1, false, false, false));
+								// Brief darkness for dramatic effect
+								serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+									net.minecraft.world.effect.MobEffects.DARKNESS, 10, 0, false, false, false));
 							}
-						}
+							
+							// Teleport when charge completes
+							if (chargeTime <= 0) {
+								// Save player's team before teleportation (Bug fix: preserve team assignment)
+								String playerTeamName = null;
+								if (entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+									Scoreboard scoreboard = serverPlayer.getScoreboard();
+									Team playerTeam = scoreboard.getPlayerTeam(serverPlayer.getScoreboardName());
+									if (playerTeam != null) {
+										playerTeamName = playerTeam.getName();
+									}
+								}
 
-						if (world instanceof ServerLevel _level)
-							_level.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
-									("execute in " + targetDim
-											+ (" run tp " + entityiterator.getStringUUID() + " "
-													+ (tx + 0.5) + " "
-													+ (ty + 1) + " "
-													+ (tz + 0.5))));
-						{
-							Entity _ent = entityiterator;
-							_ent.setYRot((float) yaw);
-							_ent.setXRot(0);
-							_ent.setYBodyRot(_ent.getYRot());
-							_ent.setYHeadRot(_ent.getYRot());
-							_ent.yRotO = _ent.getYRot();
-							_ent.xRotO = _ent.getXRot();
-							if (_ent instanceof LivingEntity _entity) {
-								_entity.yBodyRotO = _entity.getYRot();
-								_entity.yHeadRotO = _entity.getYRot();
-							}
-						}
+								if (world instanceof ServerLevel _level)
+									_level.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
+											("execute in " + targetDim
+													+ (" run tp " + entityiterator.getStringUUID() + " "
+															+ (tx + 0.5) + " "
+															+ (ty + 1) + " "
+															+ (tz + 0.5))));
+								{
+									Entity _ent = entityiterator;
+									_ent.setYRot((float) yaw);
+									_ent.setXRot(0);
+									_ent.setYBodyRot(_ent.getYRot());
+									_ent.setYHeadRot(_ent.getYRot());
+									_ent.yRotO = _ent.getYRot();
+									_ent.xRotO = _ent.getXRot();
+									if (_ent instanceof LivingEntity _entity) {
+										_entity.yBodyRotO = _entity.getYRot();
+										_entity.yHeadRotO = _entity.getYRot();
+									}
+								}
 
-						// Set teleportation cooldown (20 ticks = 1 second)
-						entityiterator.getPersistentData().putInt("PortalTeleportCooldown", 20);
+								// Set teleportation cooldown (20 ticks = 1 second)
+								entityiterator.getPersistentData().putInt("PortalTeleportCooldown", 20);
+								entityData.remove("TeleportCharge"); // Reset charge counter
 
-						// === ENHANCED TELEPORTATION EFFECTS ===
-						// Dramatic burst at source
-						if (world instanceof ServerLevel _level) {
-							_level.sendParticles(ParticleTypes.END_ROD, x + 0.5, y + 1, z + 0.5, 30, 0.6, 0.6, 0.6, 0.15);
-							_level.sendParticles(ParticleTypes.POOF, x + 0.5, y + 1, z + 0.5, 20, 0.4, 0.4, 0.4, 0.1);
-							_level.sendParticles(ParticleTypes.GLOW, x + 0.5, y + 1, z + 0.5, 15, 0.8, 0.8, 0.8, 0.08);
-						}
-						
-						// Dramatic burst at destination
-						if (world instanceof ServerLevel _level) {
-							_level.sendParticles(ParticleTypes.END_ROD, tx + 0.5, ty + 1, tz + 0.5, 30, 0.6, 0.6, 0.6, 0.15);
-							_level.sendParticles(ParticleTypes.POOF, tx + 0.5, ty + 1, tz + 0.5, 20, 0.4, 0.4, 0.4, 0.1);
-							_level.sendParticles(ParticleTypes.GLOW, tx + 0.5, ty + 1, tz + 0.5, 15, 0.8, 0.8, 0.8, 0.08);
-						}
-						
-						// Apply disorientation effect to players
-						if (entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-							// Brief nausea (swirl effect) for 2 seconds
-							serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-								net.minecraft.world.effect.MobEffects.CONFUSION, 40, 0, false, false));
-							// Very brief blindness for dramatic "re-materializing" effect
-							serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-								net.minecraft.world.effect.MobEffects.BLINDNESS, 8, 0, false, false));
-						}
-						
-						// Restore player's team after teleportation (Bug fix: preserve team assignment)
-						if (playerTeamName != null && entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-							Scoreboard scoreboard = serverPlayer.getScoreboard();
-							// Get the team by name and re-add the player
-							net.minecraft.world.scores.PlayerTeam playerTeam = scoreboard.getPlayerTeam(playerTeamName);
-							if (playerTeam != null) {
-								scoreboard.addPlayerToTeam(serverPlayer.getScoreboardName(), playerTeam);
+								// === ENHANCED TELEPORTATION EFFECTS ===
+								// Dramatic burst at source
+								if (world instanceof ServerLevel _level) {
+									_level.sendParticles(ParticleTypes.END_ROD, x + 0.5, y + 1, z + 0.5, 30, 0.6, 0.6, 0.6, 0.15);
+									_level.sendParticles(ParticleTypes.POOF, x + 0.5, y + 1, z + 0.5, 20, 0.4, 0.4, 0.4, 0.1);
+									_level.sendParticles(ParticleTypes.GLOW, x + 0.5, y + 1, z + 0.5, 15, 0.8, 0.8, 0.8, 0.08);
+								}
+
+								// Dramatic burst at destination
+								if (world instanceof ServerLevel _level) {
+									_level.sendParticles(ParticleTypes.END_ROD, tx + 0.5, ty + 1, tz + 0.5, 30, 0.6, 0.6, 0.6, 0.15);
+									_level.sendParticles(ParticleTypes.POOF, tx + 0.5, ty + 1, tz + 0.5, 20, 0.4, 0.4, 0.4, 0.1);
+									_level.sendParticles(ParticleTypes.GLOW, tx + 0.5, ty + 1, tz + 0.5, 15, 0.8, 0.8, 0.8, 0.08);
+								}
+
+								// Apply disorientation effect to players
+								if (entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+									// Brief nausea (swirl effect) for 2 seconds
+									serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+										net.minecraft.world.effect.MobEffects.CONFUSION, 40, 0, false, false));
+									// Very brief blindness for dramatic "re-materializing" effect
+									serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+										net.minecraft.world.effect.MobEffects.BLINDNESS, 8, 0, false, false));
+								}
+
+								// Restore player's team after teleportation (Bug fix: preserve team assignment)
+								if (playerTeamName != null && entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+									Scoreboard scoreboard = serverPlayer.getScoreboard();
+									// Get the team by name and re-add the player
+									net.minecraft.world.scores.PlayerTeam playerTeam = scoreboard.getPlayerTeam(playerTeamName);
+									if (playerTeam != null) {
+										scoreboard.addPlayerToTeam(serverPlayer.getScoreboardName(), playerTeam);
+									}
+								}
+
+								// Original particle effects (keeping for compatibility)
+								if (world instanceof ServerLevel _level)
+									_level.sendParticles(ParticleTypes.END_ROD, x, (y + 1), z, 20, 1.5, 1.5, 1.5, 0.1);
+								if (world instanceof ServerLevel _level)
+									_level.sendParticles(ParticleTypes.END_ROD, tx, ty, tz, 20, 1.5, 1.5, 1.5, 0.1);
+								if (world instanceof Level _level) {
+									if (!_level.isClientSide()) {
+										_level.playSound(null, BlockPos.containing(x, y + 1, z), net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
+									} else {
+										_level.playLocalSound(x, (y + 1), z, net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
+									}
+								}
+								if (world instanceof Level _level) {
+									if (!_level.isClientSide()) {
+										_level.playSound(null, BlockPos.containing(tx, ty, tz), net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
+									} else {
+										_level.playLocalSound(tx, ty, tz, net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
+									}
+								}
 							}
 						}
-						
-						// Original particle effects (keeping for compatibility)
-						if (world instanceof ServerLevel _level)
-							_level.sendParticles(ParticleTypes.END_ROD, x, (y + 1), z, 20, 1.5, 1.5, 1.5, 0.1);
-						if (world instanceof ServerLevel _level)
-							_level.sendParticles(ParticleTypes.END_ROD, tx, ty, tz, 20, 1.5, 1.5, 1.5, 0.1);
-						if (world instanceof Level _level) {
-							if (!_level.isClientSide()) {
-								_level.playSound(null, BlockPos.containing(x, y + 1, z), net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
-							} else {
-								_level.playLocalSound(x, (y + 1), z, net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
-							}
-						}
-						if (world instanceof Level _level) {
-							if (!_level.isClientSide()) {
-								_level.playSound(null, BlockPos.containing(tx, ty, tz), net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
-							} else {
-								_level.playLocalSound(tx, ty, tz, net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
-							}
+					} else {
+						// Entity left portal before charging completed - reset charge
+						if (chargeTime > 0) {
+							entityData.remove("TeleportCharge");
 						}
 					}
 				}
