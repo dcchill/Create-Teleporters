@@ -21,6 +21,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.createteleporters.init.CreateteleportersModBlocks;
 import net.createteleporters.init.CreateteleportersModItems;
 import net.createteleporters.block.CustomPortalBaseBlock;
+import net.createteleporters.configuration.CTPConfigConfiguration;
 
 /**
  * Procedure for binding custom portals together.
@@ -194,6 +195,15 @@ public class BindCustomPortalProcedure {
 			this.z = z;
 			this.dimension = dimension;
 		}
+	}
+
+	/**
+	 * Checks if portal-to-portal binding is forced by config.
+	 * When true, portals must be explicitly linked to another portal.
+	 * When false, portals can teleport to arbitrary coordinates.
+	 */
+	public static boolean isForcePortalToPortalBinding() {
+		return CTPConfigConfiguration.FORCE_PORTAL_TO_PORTAL_BINDING.get();
 	}
 	
 	/**
