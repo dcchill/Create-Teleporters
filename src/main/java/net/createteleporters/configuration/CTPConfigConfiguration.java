@@ -26,7 +26,7 @@ public class CTPConfigConfiguration {
 		BUILDER.pop();
 
 		BUILDER.push("Portal Binding");
-		FORCE_PORTAL_TO_PORTAL_BINDING = BUILDER.comment("Force custom portals to require an Advanced TP Link item in their inventory. When enabled, portals will read teleportation coordinates from the Advanced TP Link item placed inside the portal block. When disabled (default), portals can use either linked portal coordinates (if explicitly linked) or item data.").define("Force Portal-to-Portal Binding", true);
+		FORCE_PORTAL_TO_PORTAL_BINDING = BUILDER.comment("When enabled, portals will read teleportation coordinates from the Advanced TP Link item placed inside the portal block. When disabled (default), portals will used linked portal coordinates").define("Force Portal-to-Portal Binding", true);
 		BUILDER.pop();
 
 		SPEC = BUILDER.build();
