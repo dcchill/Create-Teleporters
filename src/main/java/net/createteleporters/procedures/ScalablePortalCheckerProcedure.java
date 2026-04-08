@@ -33,12 +33,14 @@ public class ScalablePortalCheckerProcedure {
 		boolean isVertical = "north".equals(rotation) || "south".equals(rotation);
 
 		if (!isHorizontal && !isVertical) {
+			storeErrorReason(world, BlockPos.containing(x, y, z), "Incorrect Portal Frame");
 			setPortalActive(world, BlockPos.containing(x, y, z), false);
 			return;
 		}
 
 		// Check if we have enough fluid (at least 256 mB)
 		if (256 > drainTankSimulate(world, BlockPos.containing(x, y, z), 256, null)) {
+			storeErrorReason(world, BlockPos.containing(x, y, z), "Incorrect Portal Frame");
 			setPortalActive(world, BlockPos.containing(x, y, z), false);
 			return;
 		}
@@ -49,6 +51,7 @@ public class ScalablePortalCheckerProcedure {
 		if (dims != null) {
 			// Store the portal dimensions for later use
 			storePortalDimensions(world, BlockPos.containing(x, y, z), dims.width, dims.height, dims.minExtent, dims.maxExtent);
+			storeErrorReason(world, BlockPos.containing(x, y, z), ""); // Clear error on success
 			setPortalActive(world, BlockPos.containing(x, y, z), true);
 		} else {
 			setPortalActive(world, BlockPos.containing(x, y, z), false);
@@ -66,6 +69,7 @@ public class ScalablePortalCheckerProcedure {
 		BlockPos rightDummyPos = horizontal ? basePos.offset(0, 0, 1) : basePos.offset(1, 0, 0);
 
 		if (!isDummyBlock(world, leftDummyPos) || !isDummyBlock(world, rightDummyPos)) {
+			storeErrorReason(world, basePos, "Incorrect Portal Frame");
 			return null; // Must have dummy blocks on both sides
 		}
 
@@ -94,6 +98,7 @@ public class ScalablePortalCheckerProcedure {
 		// Calculate total width (must be at least 5: 1q + 1d + 1c + 1d + 1q)
 		int totalWidth = maxExtent - minExtent + 1;
 		if (totalWidth < 5 || totalWidth > 23) {
+			storeErrorReason(world, basePos, "Incorrect Portal Frame");
 			return null;
 		}
 
@@ -139,6 +144,7 @@ public class ScalablePortalCheckerProcedure {
 					break; // Found the actual top row
 				} else {
 					// Interior has QC - this is not a valid portal frame
+					storeErrorReason(world, basePos, "Incorrect Portal Frame");
 					return null;
 				}
 			}
@@ -147,11 +153,13 @@ public class ScalablePortalCheckerProcedure {
 		// Minimum height is 5 (base row + 4 more rows = height offset of 4)
 		int actualHeight = maxHeight + 1; // Convert offset to actual block count (for comparison only)
 		if (actualHeight < 5) {
+			storeErrorReason(world, basePos, "Incorrect Portal Frame");
 			return null;
 		}
 
 		// Restrict valid portal frame to perfect square dimensions
 		if (totalWidth != actualHeight) {
+			storeErrorReason(world, basePos, "Incorrect Portal Frame");
 			return null;
 		}
 
@@ -164,6 +172,7 @@ public class ScalablePortalCheckerProcedure {
 				if (!state.isAir() && state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL.get() && state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get()
 						&& state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL_ON.get() && state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL_BASE_DUMMY_BLOCK.get()
 						&& state.getBlock() != CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get()) {
+					storeErrorReason(world, basePos, "Incorrect Portal Frame");
 					return null;
 				}
 			}
@@ -220,6 +229,16 @@ public class ScalablePortalCheckerProcedure {
 		if (blockEntity != null)
 			return blockEntity.getPersistentData().getString(tag);
 		return "";
+	}
+
+	/**
+	 * Stores a detailed error reason in the block entity NBT for GUI display.
+	 */
+	private static void storeErrorReason(LevelAccessor world, BlockPos pos, String reason) {
+		BlockEntity blockEntity = world.getBlockEntity(pos);
+		if (blockEntity != null) {
+			blockEntity.getPersistentData().putString("portalError", reason);
+		}
 	}
 
 	/**

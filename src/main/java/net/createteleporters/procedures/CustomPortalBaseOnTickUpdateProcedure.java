@@ -76,7 +76,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 							if (linkedBE != null)
 								linkedBE.getPersistentData().putBoolean("immersivePortalCreated", false);
 						}
-						return "Waiting for linked portal";
+						return "Waiting for Linked Portal";
 					}
 				}
 
@@ -340,7 +340,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					if (world instanceof Level _level)
 						_level.sendBlockUpdated(_bp, _bs, _bs, 3);
 				}
-				return "No Telefluid";
+				return "Quantum Fluid Depleted";
 			}
 		} else {
 			// Clear portal blocks when frame is invalid
@@ -352,7 +352,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 
 			// Check if Immersive Portals compatibility is enabled
 			boolean useImmersivePortals = CTPConfigConfiguration.IMMERSIVE_PORTALS_COMPAT.get();
-			
+
 			if (useImmersivePortals && ImmersivePortalsIntegration.isImmersivePortalsLoaded()) {
 				// Remove Immersive Portals portal
 				removeTrackedImmersivePortal(world, x, y, z);
@@ -393,6 +393,11 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 							"fill ~-1 ~1 ~ ~1 ~3 ~ air replace createteleporters:quantum_portal_block");
 				}
 			}
+		}
+		// Return detailed error message if portal is not active
+		String errorReason = getBlockNBTString(world, BlockPos.containing(x, y, z), "portalError");
+		if (!errorReason.isEmpty()) {
+			return errorReason;
 		}
 		return "Portal Frame Incorrect";
 	}
