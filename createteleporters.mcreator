@@ -1650,15 +1650,11 @@
     "name": "~",
     "children": [
       {
-        "name": "entity_teleporter",
-        "children": []
-      },
-      {
         "name": "quantum_mech",
         "children": []
       },
       {
-        "name": "recipes",
+        "name": "pocket_dim",
         "children": []
       },
       {
@@ -1666,7 +1662,11 @@
         "children": []
       },
       {
-        "name": "adv_portal",
+        "name": "BlockTeleporter",
+        "children": []
+      },
+      {
+        "name": "entity_teleporter",
         "children": []
       },
       {
@@ -1678,11 +1678,11 @@
         "children": []
       },
       {
-        "name": "pocket_dim",
+        "name": "recipes",
         "children": []
       },
       {
-        "name": "BlockTeleporter",
+        "name": "adv_portal",
         "children": []
       }
     ]
