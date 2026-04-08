@@ -20,7 +20,7 @@ public class ModRecipeEvents {
 		// Check if the crafted item is the Custom Portal Base
 		if (crafted.is(CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get().asItem())) {
 			// Check if Portal Binding is disabled
-			boolean forcePortalBinding = CTPConfigConfiguration.FORCE_PORTAL_TO_PORTAL_BINDING.get();
+			boolean forcePortalBinding = CTPConfigConfiguration.isCoordinateBindingEnabled();
 			
 			// When Portal Binding is disabled (forcePortalBinding = false), output 2
 			// When Portal Binding is enabled (forcePortalBinding = true), output 1

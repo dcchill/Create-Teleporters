@@ -8,9 +8,9 @@ public class CTPConfigConfiguration {
 
 	public static final ModConfigSpec.ConfigValue<Double> ENTITY_TP_RANGE;
 	public static final ModConfigSpec.ConfigValue<Double> ITEM_TP_RANGE;
-	public static final ModConfigSpec.ConfigValue<Boolean> IMMERSIVE_PORTALS_COMPAT;
-	public static final ModConfigSpec.ConfigValue<Boolean> ALLOW_POCKETDBLOCK_BREAKING;
-	public static final ModConfigSpec.ConfigValue<Boolean> FORCE_PORTAL_TO_PORTAL_BINDING;
+	public static final ModConfigSpec.BooleanValue IMMERSIVE_PORTALS_COMPAT;
+	public static final ModConfigSpec.BooleanValue ALLOW_POCKETDBLOCK_BREAKING;
+	public static final ModConfigSpec.BooleanValue FORCE_PORTAL_TO_PORTAL_BINDING;
 	static {
 		BUILDER.push("Ranges");
 		ENTITY_TP_RANGE = BUILDER.comment("Max Range of Entity Teleporter").define("Entity Teleporter Range", (double) 450);
@@ -26,10 +26,21 @@ public class CTPConfigConfiguration {
 		BUILDER.pop();
 
 		BUILDER.push("Portal Binding");
-		FORCE_PORTAL_TO_PORTAL_BINDING = BUILDER.comment("When enabled, portals will read teleportation coordinates from the Advanced TP Link item placed inside the portal block. When disabled (default), portals will used linked portal coordinates").define("Force Portal-to-Portal Binding", true);
+		FORCE_PORTAL_TO_PORTAL_BINDING = BUILDER.comment("When enabled, portals will read teleportation coordinates from the Advanced TP Link item placed inside the portal block. When disabled (default), portals will use linked portal coordinates.\nNOTE: This option is automatically disabled when Immersive Portals Compatibility is enabled.").define("Custom Portal Bind To Coordinates?", true);
 		BUILDER.pop();
 
 		SPEC = BUILDER.build();
+	}
+
+	/**
+	 * Checks if coordinate binding is effectively enabled.
+	 * Returns false if Immersive Portals Compat is enabled (as it overrides this setting).
+	 */
+	public static boolean isCoordinateBindingEnabled() {
+		if (IMMERSIVE_PORTALS_COMPAT.get()) {
+			return false; // Immersive Portals always uses portal-to-portal linking
+		}
+		return FORCE_PORTAL_TO_PORTAL_BINDING.get();
 	}
 
 }

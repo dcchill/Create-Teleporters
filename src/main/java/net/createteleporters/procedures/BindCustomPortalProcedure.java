@@ -201,9 +201,10 @@ public class BindCustomPortalProcedure {
 	 * Checks if portal-to-portal binding is forced by config.
 	 * When true, portals must be explicitly linked to another portal.
 	 * When false, portals can teleport to arbitrary coordinates.
+	 * Note: This is automatically disabled when Immersive Portals Compat is enabled.
 	 */
 	public static boolean isForcePortalToPortalBinding() {
-		return CTPConfigConfiguration.FORCE_PORTAL_TO_PORTAL_BINDING.get();
+		return CTPConfigConfiguration.isCoordinateBindingEnabled();
 	}
 	
 	/**
