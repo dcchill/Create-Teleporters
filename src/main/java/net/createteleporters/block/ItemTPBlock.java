@@ -1,5 +1,7 @@
 package net.createteleporters.block;
 
+import org.checkerframework.checker.units.qual.s;
+
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.api.distmarker.Dist;
 
@@ -22,7 +24,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Item;
@@ -34,17 +35,12 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.Containers;
 import net.minecraft.util.RandomSource;
-import net.minecraft.tags.TagKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.ChatFormatting;
 
 import net.createteleporters.world.inventory.ItemTeleporterGuiMenu;
 import net.createteleporters.procedures.ProgressBlockstateBlockAddedProcedure;
@@ -82,15 +78,7 @@ public class ItemTPBlock extends Block implements EntityBlock {
 	@OnlyIn(Dist.CLIENT)
 	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, context, list, flag);
-
-		if (Screen.hasShiftDown()) {
-			list.add(Component.translatable("block.createteleporters.item_tp.description_1").withStyle(ChatFormatting.WHITE));
-			list.add(Component.translatable("block.createteleporters.item_tp.description_2").withStyle(ChatFormatting.GOLD));
-		} else {
-			list.add(Component.translatable("block.createteleporters.shift_for_info",
-					Component.translatable("key.keyboard.left.shift").withStyle(ChatFormatting.YELLOW))
-					.withStyle(ChatFormatting.GRAY));
-		}
+		list.add(Component.translatable("block.createteleporters.item_tp.description_0"));
 	}
 
 	@Override

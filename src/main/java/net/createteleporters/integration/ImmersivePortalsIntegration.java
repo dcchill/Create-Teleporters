@@ -65,17 +65,17 @@ public class ImmersivePortalsIntegration {
         int extentCenter = (minExtent + maxExtent) / 2;
         int portalBottomY = baseY + 1;
         int portalCenterY = portalBottomY + interiorHeight / 2;
-        
+
         double portalX, portalY, portalZ;
         Direction portalNormal = getPortalNormal(rotation);
-        
+
         if ("north".equals(rotation) || "south".equals(rotation)) {
             portalX = baseX + extentCenter + 0.5;
-            portalY = portalCenterY + 0.5;
+            portalY = portalCenterY;
             portalZ = baseZ + 0.5;
         } else {
             portalX = baseX + 0.5;
-            portalY = portalCenterY + 0.5;
+            portalY = portalCenterY;
             portalZ = baseZ + extentCenter + 0.5;
         }
         
@@ -242,9 +242,9 @@ public class ImmersivePortalsIntegration {
         int portalCenterY = portalBottomY + interiorHeight / 2;
 
         if ("north".equals(rotation) || "south".equals(rotation)) {
-            return new PortalTargetInfo(new Vec3(baseX + extentCenter + 0.5, portalCenterY + 0.5, baseZ + 0.5), squareSize);
+            return new PortalTargetInfo(new Vec3(baseX + extentCenter + 0.5, portalCenterY, baseZ + 0.5), squareSize);
         }
-        return new PortalTargetInfo(new Vec3(baseX + 0.5, portalCenterY + 0.5, baseZ + extentCenter + 0.5), squareSize);
+        return new PortalTargetInfo(new Vec3(baseX + 0.5, portalCenterY, baseZ + extentCenter + 0.5), squareSize);
     }
 
     private record PortalTargetInfo(Vec3 center, int squareSize) {}

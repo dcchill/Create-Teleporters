@@ -1510,8 +1510,7 @@
     ],
     "BLOCKS:minecraft:overworld_carver_replaceables": [],
     "BLOCKS:minecraft:mineable/pickaxe": [
-      "~CUSTOM:BlockTeleporter",
-      "~CUSTOM:CustomPortalBase"
+      "~CUSTOM:BlockTeleporter"
     ],
     "BLOCKS:mod:non_teleportable": [
       "CUSTOM:CustomPortalBase",
@@ -1582,7 +1581,7 @@
       "gui.createteleporters.custom_teleporter_gui.label_proc_entity_teleporter_on_tick_u": "",
       "item.createteleporters.pocket_dimension_remote": "Pocket Dimension Remote",
       "biome.createteleporters.pd_biome": "PD Biome",
-      "block.createteleporters.pocket_d_block": "Pocket Dimension Block",
+      "block.createteleporters.pocket_d_block": "Pocketdblock",
       "block.createteleporters.custom_portal_base_dummy_block": "Custom Portal Base Dummy Block",
       "block.createteleporters.entity_teleporter_slab": "Entity Teleporter",
       "block.createteleporters.entity_teleporter_quarter": "Entity Teleporter",
@@ -1690,7 +1689,7 @@
   "workspaceSettings": {
     "modid": "createteleporters",
     "modName": "Create Teleporters Remastered",
-    "version": "2.0.1",
+    "version": "2.0.1c",
     "author": "Dcchill",
     "websiteURL": "https://www.curseforge.com/members/chilllliii/projects",
     "license": "Not specified",

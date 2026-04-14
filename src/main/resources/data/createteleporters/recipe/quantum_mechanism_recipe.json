@@ -6,7 +6,7 @@
   "loops": 1,
   "results": [
     {
-      "id": "createteleporters:quantum_mechanism"
+      "item": "createteleporters:quantum_mechanism"
     }
   ],
   "sequence": [
@@ -17,14 +17,13 @@
           "item": "createteleporters:incomplete_q_mechanism"
         },
         {
-          "type": "fluid_stack",
           "amount": 250,
           "fluid": "createteleporters:quantum_fluid"
         }
       ],
       "results": [
         {
-          "id": "createteleporters:incomplete_q_mechanism"
+          "item": "createteleporters:incomplete_q_mechanism"
         }
       ]
     },
@@ -40,7 +39,7 @@
       ],
       "results": [
         {
-          "id": "createteleporters:incomplete_q_mechanism"
+          "item": "createteleporters:incomplete_q_mechanism"
         }
       ]
     },
@@ -53,12 +52,12 @@
       ],
       "results": [
         {
-          "id": "createteleporters:incomplete_q_mechanism"
+          "item": "createteleporters:incomplete_q_mechanism"
         }
       ]
     }
   ],
   "transitional_item": {
-    "id": "createteleporters:incomplete_q_mechanism"
+    "item": "createteleporters:incomplete_q_mechanism"
   }
 }

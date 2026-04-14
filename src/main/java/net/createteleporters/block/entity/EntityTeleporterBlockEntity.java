@@ -126,9 +126,7 @@ public class EntityTeleporterBlockEntity extends RandomizableContainerBlockEntit
 		protected void onContentsChanged() {
 			super.onContentsChanged();
 			setChanged();
-			if (level != null) {
-				level.sendBlockUpdated(worldPosition, level.getBlockState(worldPosition), level.getBlockState(worldPosition), 2);
-			}
+			level.sendBlockUpdated(worldPosition, level.getBlockState(worldPosition), level.getBlockState(worldPosition), 2);
 		}
 	};
 

@@ -18,9 +18,11 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.Direction;
@@ -81,49 +83,77 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					}
 				}
 
+				// Track whether IP actually created a portal (so we skip vanilla teleportation)
+				boolean ipPortalActive = false;
+
 				if (useImmersivePortals && ImmersivePortalsIntegration.isImmersivePortalsLoaded()) {
-					// Use Immersive Portals integration - NO quantum portal blocks
-					// IP handles the portal rendering and teleportation automatically
-					clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
-					// Ambient particles while immersive portals are enabled.
-					if (world instanceof ServerLevel _level) {
-						// Spawn particles across the full width and height of the portal interior
-						boolean northSouth = "north".equals(rotation) || "south".equals(rotation);
-						
-						// Spawn particles every 2 blocks for a more sparse effect
-						for (int h = 1; h <= fillHeight; h += 2) {
-							for (int i = interiorMin; i <= interiorMax; i += 2) {
-								if (_level.random.nextFloat() < 0.5f) continue; // 50% chance to skip
-								double particleX = northSouth ? x + i + 0.5 : x + 0.5;
-								double particleY = y + h + 0.5;
-								double particleZ = northSouth ? z + 0.5 : z + i + 0.5;
-								_level.sendParticles(ParticleTypes.PORTAL, particleX, particleY, particleZ, 1, 0.5,
-										0.5, 0.5, 0.01);
-							}
-						}
+					// Immersive Portals is enabled — NEVER use quantum portal blocks.
+					// IP portal only spawns when:
+					// 1. Portal is linked to another portal
+					// 2. At least one portal in the link has an Advanced TP Link
+					BlockEntity be = world.getBlockEntity(BlockPos.containing(x, y, z));
+					boolean canCreateIP = false;
+
+					if (isLinked) {
+						// Check if either portal has the Advanced TP Link
+						boolean hasTpLink = hasAdvancedTpLink(world, BlockPos.containing(x, y, z)) ||
+										   hasAdvancedTpLinkAtLinkedPortal(world, linkedBE);
+						canCreateIP = hasTpLink;
 					}
 
-					BlockEntity be = world.getBlockEntity(BlockPos.containing(x, y, z));
-					String targetDim = be != null ? be.getPersistentData().getString("linkedDim") : "minecraft:overworld";
-					double tx = be != null ? be.getPersistentData().getDouble("linkedX") : x;
-					double ty = be != null ? be.getPersistentData().getDouble("linkedY") : y;
-					double tz = be != null ? be.getPersistentData().getDouble("linkedZ") : z;
+					if (canCreateIP) {
+						// Clear any leftover quantum portal blocks from before IP was enabled
+						clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
+						// Ambient particles while immersive portals are enabled.
+						if (world instanceof ServerLevel _level) {
+							// Spawn particles across the full width and height of the portal interior
+							boolean northSouth = "north".equals(rotation) || "south".equals(rotation);
 
-					// Create Immersive Portals portal (only needs to be done once)
-					// But verify it actually exists first
-					boolean needsCreation = !getBlockNBTLogic(world, BlockPos.containing(x, y, z), "immersivePortalCreated");
-					
-					if (needsCreation) {
-						net.createteleporters.CreateteleportersMod.LOGGER.info("Creating new IP portal...");
-						boolean created = ImmersivePortalsIntegration.createImmersivePortal(
-							world, x, y, z, rotation,
-							portalWidth, portalHeight, minExtent, maxExtent,
-							targetDim, tx, ty, tz
-						);
-						net.createteleporters.CreateteleportersMod.LOGGER.info("IP portal creation result: {}", created);
-						if (created && be != null) {
-							be.getPersistentData().putBoolean("immersivePortalCreated", true);
+							// Spawn particles every 2 blocks for a more sparse effect
+							for (int h = 1; h <= fillHeight; h += 2) {
+								for (int i = interiorMin; i <= interiorMax; i += 2) {
+									if (_level.random.nextFloat() < 0.5f) continue; // 50% chance to skip
+									double particleX = northSouth ? x + i + 0.5 : x + 0.5;
+									double particleY = y + h + 0.5;
+									double particleZ = northSouth ? z + 0.5 : z + i + 0.5;
+									_level.sendParticles(ParticleTypes.PORTAL, particleX, particleY, particleZ, 1, 0.5,
+											0.5, 0.5, 0.01);
+								}
+							}
 						}
+
+						String targetDim = be != null ? be.getPersistentData().getString("linkedDim") : "minecraft:overworld";
+						double tx = be != null ? be.getPersistentData().getDouble("linkedX") : x;
+						double ty = be != null ? be.getPersistentData().getDouble("linkedY") : y;
+						double tz = be != null ? be.getPersistentData().getDouble("linkedZ") : z;
+
+						// Create Immersive Portals portal (only needs to be done once)
+						// But verify it actually exists first
+						boolean needsCreation = !getBlockNBTLogic(world, BlockPos.containing(x, y, z), "immersivePortalCreated");
+
+						if (needsCreation) {
+							net.createteleporters.CreateteleportersMod.LOGGER.info("Creating new IP portal...");
+							boolean created = ImmersivePortalsIntegration.createImmersivePortal(
+								world, x, y, z, rotation,
+								portalWidth, portalHeight, minExtent, maxExtent,
+								targetDim, tx, ty, tz
+							);
+							net.createteleporters.CreateteleportersMod.LOGGER.info("IP portal creation result: {}", created);
+							if (created && be != null) {
+								be.getPersistentData().putBoolean("immersivePortalCreated", true);
+								ipPortalActive = true;
+							}
+						} else {
+							ipPortalActive = true;
+						}
+					} else {
+						// IP requirements not met (not linked or missing TP Link) — remove any existing IP portal.
+						// Do NOT spawn quantum portal blocks; IP compat is active.
+						if (getBlockNBTLogic(world, BlockPos.containing(x, y, z), "immersivePortalCreated")) {
+							removeTrackedImmersivePortal(world, x, y, z);
+						}
+						// Ensure no quantum portal blocks remain
+						clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
 					}
 				} else {
 					// Config may have been turned off while IP portals were active.
@@ -183,11 +213,11 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				if (forceBinding) {
 					// When binding is forced, read coordinates from the Advanced TP Link in inventory
 					ItemStack invStack = (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy());
-					
+
 					if (invStack.isEmpty() || !(invStack.getItem() instanceof net.createteleporters.item.ADVTplinkItem)) {
 						return "Missing Advanced TP Link"; // Require TP Link when binding is forced
 					}
-					
+
 					CompoundTag cd = invStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
 					targetDim = cd.getString("dimension");
 					tx = cd.getDouble("xpo");
@@ -196,15 +226,14 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					yaw = cd.getDouble("yawpo");
 				} else if (isLinked) {
 					// Portal is explicitly linked to another portal
-					// Check if either portal has the Advanced TP Link in its inventory
+					// Require Advanced TP Link in at least one portal's inventory
 					boolean hasTpLink = hasAdvancedTpLink(world, BlockPos.containing(x, y, z)) ||
 									   hasAdvancedTpLinkAtLinkedPortal(world, linkedBE);
 
 					if (!hasTpLink) {
-						return "Missing Advanced TP Link"; // Require TP Link for linked portals
+						return "Missing Advanced TP Link";
 					}
 
-					// Use linked portal coordinates
 					tx = linkedBE.getPersistentData().getDouble("linkedX");
 					ty = linkedBE.getPersistentData().getDouble("linkedY");
 					tz = linkedBE.getPersistentData().getDouble("linkedZ");
@@ -221,9 +250,9 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					yaw = cd.getDouble("yawpo");
 				}
 
-				// Check if using Immersive Portals - if so, skip vanilla teleportation
+				// Check if Immersive Portals actually created a portal — if so, skip vanilla teleportation
 				// IP handles teleportation automatically when entities walk through portal entity
-				if (useImmersivePortals) {
+				if (ipPortalActive) {
 					// IP handles teleportation - just maintain cooldown to prevent loops
 					for (Entity entityiterator : world.getEntities(null, portalArea)) {
 						CompoundTag entityData = entityiterator.getPersistentData();
@@ -286,13 +315,27 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 									}
 								}
 
-								if (world instanceof ServerLevel _level)
-									_level.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
-											("execute in " + targetDim
-													+ (" run tp " + entityiterator.getStringUUID() + " "
-															+ (tx + 0.5) + " "
-															+ (ty + 1) + " "
-															+ (tz + 0.5))));
+								// Perform teleportation
+								if (world instanceof ServerLevel _level) {
+									ResourceLocation dimLoc = ResourceLocation.tryParse(targetDim);
+									if (dimLoc != null) {
+										ResourceKey<Level> targetDimKey = ResourceKey.create(Registries.DIMENSION, dimLoc);
+										ServerLevel targetLevel = _level.getServer().getLevel(targetDimKey);
+										if (targetLevel != null) {
+											// Teleport directly using API (more reliable than commands)
+											entityiterator.teleportTo(targetLevel, tx + 0.5, ty + 1, tz + 0.5, java.util.Set.of(), (float) yaw, entityiterator.getXRot());
+										} else {
+											// Target level not found, fall back to command
+											_level.getServer().getCommands().performPrefixedCommand(
+												new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null),
+												"execute in " + targetDim + " run tp " + entityiterator.getStringUUID() + " " + (tx + 0.5) + " " + (ty + 1) + " " + (tz + 0.5));
+										}
+									} else {
+											_level.getServer().getCommands().performPrefixedCommand(
+												new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null),
+												"tp " + entityiterator.getStringUUID() + " " + (tx + 0.5) + " " + (ty + 1) + " " + (tz + 0.5));
+									}
+								}
 								{
 									Entity _ent = entityiterator;
 									_ent.setYRot((float) yaw);
