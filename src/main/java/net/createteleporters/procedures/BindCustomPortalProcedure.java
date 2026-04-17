@@ -12,11 +12,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 
 import net.createteleporters.init.CreateteleportersModBlocks;
 import net.createteleporters.init.CreateteleportersModItems;
@@ -82,9 +86,11 @@ public class BindCustomPortalProcedure {
 			String savedDim = linkData.getString("savedDim");
 			
 			BlockPos savedPos = BlockPos.containing(savedX, savedY, savedZ);
+			ResourceLocation savedDimLoc = ResourceLocation.tryParse(savedDim);
+			ServerLevel savedLevel = savedDimLoc == null ? null : serverPlayer.server.getLevel(ResourceKey.create(Registries.DIMENSION, savedDimLoc));
 			
 			// Verify the saved location is still a valid custom portal base
-			if (!(world.getBlockState(savedPos).getBlock() instanceof CustomPortalBaseBlock)) {
+			if (savedLevel == null || !(savedLevel.getBlockState(savedPos).getBlock() instanceof CustomPortalBaseBlock)) {
 				serverPlayer.sendSystemMessage(Component.literal("The linked portal is no longer valid!"));
 				// Clear the invalid link data
 				linkData.remove("savedX");
@@ -97,7 +103,7 @@ public class BindCustomPortalProcedure {
 			
 			// Bind this portal to the saved portal
 			BlockEntity thisBE = world.getBlockEntity(pos);
-			BlockEntity savedBE = world.getBlockEntity(savedPos);
+			BlockEntity savedBE = savedLevel.getBlockEntity(savedPos);
 			
 			if (thisBE != null && savedBE != null) {
 				// Get current dimension
@@ -138,7 +144,7 @@ public class BindCustomPortalProcedure {
 				// Send update to client
 				if (world instanceof Level level) {
 					level.sendBlockUpdated(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
-					level.sendBlockUpdated(savedPos, world.getBlockState(savedPos), world.getBlockState(savedPos), 3);
+					savedLevel.sendBlockUpdated(savedPos, savedLevel.getBlockState(savedPos), savedLevel.getBlockState(savedPos), 3);
 				}
 				
 				return InteractionResult.SUCCESS;

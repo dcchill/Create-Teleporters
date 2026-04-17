@@ -1,10 +1,6 @@
 package net.createteleporters.integration;
 
 import com.simibubi.create.api.contraption.train.PortalTrackProvider;
-import com.simibubi.create.content.trains.graph.TrackGraphHelper;
-import com.simibubi.create.content.trains.graph.TrackGraphLocation;
-import com.simibubi.create.content.trains.track.ITrackBlock;
-
 import net.createmod.catnip.math.BlockFace;
 
 import net.minecraft.core.BlockPos;
@@ -17,13 +13,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
 
 import net.createteleporters.CreateteleportersMod;
 import net.createteleporters.init.CreateteleportersModBlocks;
 import net.createteleporters.configuration.CTPConfigConfiguration;
 import net.createteleporters.integration.ImmersivePortalsIntegration;
-import net.createmod.catnip.data.Pair;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Registers custom portal support for Create train portal tracks.
@@ -165,11 +163,11 @@ public final class CreateTrainPortalIntegration {
 		Direction exitDirection = enteredFromBackSide ? targetNormal.getOpposite() : targetNormal;
 		CreateteleportersMod.LOGGER.info("Target normal: {}, exit direction: {}", targetNormal, exitDirection);
 
-		// Find a valid track on the exit side
-		BlockPos exitTrackPos = resolveTrackSide(targetLevel, targetPortalPos, exitDirection);
+		// Find a replaceable spot for Create to generate the linked portal track into.
+		BlockPos exitTrackPos = resolveExitTrackPos(targetLevel, targetPortalPos, exitDirection, targetBasePos, targetNbt);
 		CreateteleportersMod.LOGGER.info("Resolved exit track position: {}", exitTrackPos);
 		if (exitTrackPos == null) {
-			CreateteleportersMod.LOGGER.warn("FAILED: No valid exit track found for portal at {}", targetPortalPos);
+			CreateteleportersMod.LOGGER.warn("FAILED: No valid exit position found for portal at {}", targetPortalPos);
 			return null;
 		}
 		
@@ -182,74 +180,64 @@ public final class CreateTrainPortalIntegration {
 		return new PortalTrackProvider.Exit(targetLevel, new BlockFace(exitTrackPos, trackFace));
 	}
 
-	private static BlockPos resolveTrackSide(ServerLevel level, BlockPos portalPos, Direction preferredDirection) {
+	private static BlockPos resolveExitTrackPos(ServerLevel level, BlockPos portalPos, Direction preferredDirection, BlockPos targetBasePos, CompoundTag targetNbt) {
 		CreateteleportersMod.LOGGER.info("Resolving track side - portal: {}, preferred direction: {}", portalPos, preferredDirection);
-		
-		// Try the preferred side first
-		BlockPos preferredTrack = portalPos.relative(preferredDirection);
-		CreateteleportersMod.LOGGER.info("Checking preferred track at: {}", preferredTrack);
-		if (isUsableExitTrack(level, preferredTrack, preferredDirection.getOpposite())) {
-			CreateteleportersMod.LOGGER.info("Found usable track on preferred side");
-			return preferredTrack;
+
+		List<BlockPos> candidatePortals = collectPortalCandidates(portalPos, targetBasePos, targetNbt);
+		CreateteleportersMod.LOGGER.info("Checking {} candidate portal positions for an exit position", candidatePortals.size());
+
+		for (BlockPos candidatePortalPos : candidatePortals) {
+			BlockPos preferredTrack = candidatePortalPos.relative(preferredDirection);
+			CreateteleportersMod.LOGGER.info("Checking preferred exit position at: {} for portal {}", preferredTrack, candidatePortalPos);
+			if (isUsableExitPosition(level, preferredTrack)) {
+				CreateteleportersMod.LOGGER.info("Found usable exit position on preferred side of {}", candidatePortalPos);
+				return preferredTrack;
+			}
+
+			Direction oppositeDirection = preferredDirection.getOpposite();
+			BlockPos oppositeTrack = candidatePortalPos.relative(oppositeDirection);
+			CreateteleportersMod.LOGGER.info("Checking opposite exit position at: {} for portal {}", oppositeTrack, candidatePortalPos);
+			if (isUsableExitPosition(level, oppositeTrack)) {
+				CreateteleportersMod.LOGGER.info("Found usable exit position on opposite side of {}", candidatePortalPos);
+				return oppositeTrack;
+			}
 		}
-		
-		// Try the opposite side
-		Direction oppositeDirection = preferredDirection.getOpposite();
-		BlockPos oppositeTrack = portalPos.relative(oppositeDirection);
-		CreateteleportersMod.LOGGER.info("Checking opposite track at: {}", oppositeTrack);
-		if (isUsableExitTrack(level, oppositeTrack, oppositeDirection.getOpposite())) {
-			CreateteleportersMod.LOGGER.info("Found usable track on opposite side");
-			return oppositeTrack;
-		}
-		
-		// No valid track found
-		CreateteleportersMod.LOGGER.warn("No usable track found on either side");
+
+		CreateteleportersMod.LOGGER.warn("No usable exit position found on either side");
 		return null;
 	}
 
-	private static boolean isUsableExitTrack(ServerLevel level, BlockPos trackPos, Direction travelDirection) {
-		CreateteleportersMod.LOGGER.info("  Checking track usability at {} with travel direction {}", trackPos, travelDirection);
-		
-		BlockState blockState = level.getBlockState(trackPos);
-		CreateteleportersMod.LOGGER.info("  Block at position: {}, is ITrackBlock: {}", 
-			blockState.getBlock(), blockState.getBlock() instanceof ITrackBlock);
-		
-		if (!(blockState.getBlock() instanceof ITrackBlock track)) {
-			CreateteleportersMod.LOGGER.info("  Not a track block, rejecting");
-			return false;
+	private static List<BlockPos> collectPortalCandidates(BlockPos primaryPortalPos, BlockPos targetBasePos, CompoundTag targetNbt) {
+		List<BlockPos> candidates = new ArrayList<>();
+		candidates.add(primaryPortalPos);
+
+		if (!targetNbt.contains("portalHeight") || !targetNbt.contains("portalMinExtent") || !targetNbt.contains("portalMaxExtent")) {
+			return candidates;
 		}
 
-		// Get the direction vector the train will be traveling
-		Vec3 lookAngle = Vec3.atLowerCornerOf(travelDirection.getNormal());
-		CreateteleportersMod.LOGGER.info("  Look angle for track axis: {}", lookAngle);
-		
-		// Find the nearest track axis
-		Pair<Vec3, AxisDirection> nearestTrackAxis = track.getNearestTrackAxis(level, trackPos, blockState, lookAngle);
-		CreateteleportersMod.LOGGER.info("  Nearest track axis result: {}", nearestTrackAxis);
-		
-		if (nearestTrackAxis == null) {
-			CreateteleportersMod.LOGGER.info("  No track axis found, rejecting");
-			return false;
+		int portalHeight = targetNbt.getInt("portalHeight");
+		int interiorMin = targetNbt.getInt("portalMinExtent") + 1;
+		int interiorMax = targetNbt.getInt("portalMaxExtent") - 1;
+		String rotation = targetNbt.getString("rotation");
+		BlockPos horizontalDirection = horizontalDirection(rotation);
+		int localY = primaryPortalPos.getY() - targetBasePos.getY();
+
+		for (int horizontalOffset = interiorMin; horizontalOffset <= interiorMax; horizontalOffset++) {
+			BlockPos candidate = targetBasePos.offset(horizontalDirection.getX() * horizontalOffset, localY, horizontalDirection.getZ() * horizontalOffset);
+			if (!candidate.equals(primaryPortalPos)) {
+				candidates.add(candidate);
+			}
 		}
-		
-		CreateteleportersMod.LOGGER.info("  Track axis - position: {}, direction: {}", 
-			nearestTrackAxis.getFirst(), nearestTrackAxis.getSecond());
-		
-		// Verify the track has valid graph connectivity
-		TrackGraphLocation graphLocation = TrackGraphHelper.getGraphLocationAt(
-			level, 
-			trackPos, 
-			nearestTrackAxis.getSecond(), 
-			nearestTrackAxis.getFirst()
-		);
-		
-		boolean hasGraph = graphLocation != null;
-		CreateteleportersMod.LOGGER.info("  Track graph location exists: {}", hasGraph);
-		if (hasGraph) {
-			CreateteleportersMod.LOGGER.info("  Graph location details: {}", graphLocation);
-		}
-		
-		return hasGraph;
+
+		candidates.sort(Comparator.comparingInt(pos -> pos.distManhattan(primaryPortalPos)));
+		return candidates;
+	}
+
+	private static boolean isUsableExitPosition(ServerLevel level, BlockPos trackPos) {
+		BlockState blockState = level.getBlockState(trackPos);
+		boolean canReplace = blockState.canBeReplaced();
+		CreateteleportersMod.LOGGER.info("  Exit block at {} is {} and canBeReplaced={}", trackPos, blockState.getBlock(), canReplace);
+		return canReplace;
 	}
 
 	private static PortalBaseData findLinkedActivePortalBaseForPortalBlock(ServerLevel level, BlockPos portalPos) {

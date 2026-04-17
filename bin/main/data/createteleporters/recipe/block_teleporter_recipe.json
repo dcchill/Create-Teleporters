@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "aba",
+    "cdc",
+    "aea"
+  ],
+  "key": {
+    "a": {
+      "item": "createteleporters:quantum_casing"
+    },
+    "b": {
+      "item": "createteleporters:quantum_mechanism"
+    },
+    "c": {
+      "item": "create:deployer"
+    },
+    "d": {
+      "item": "createteleporters:item_tp"
+    },
+    "e": {
+      "item": "createteleporters:advanced_part"
+    }
+  },
+  "result": {
+    "id": "createteleporters:block_teleporter",
+    "count": 1
+  }
+}

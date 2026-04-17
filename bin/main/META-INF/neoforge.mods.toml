@@ -1,0 +1,35 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="Not specified"
+
+[[mods]]
+modId="createteleporters"
+version="2.0.1"
+displayName="Create Teleporters Remastered"
+displayURL="https://www.curseforge.com/members/chilllliii/projects"
+logoFile="logo.png"
+credits="Dcchill"
+authors="Dcchill"
+
+# Start of user code block mod configuration
+# End of user code block mod configuration
+
+[[dependencies.createteleporters]]
+    modId="neoforge"
+    type="required"
+    versionRange="[21.1.190,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.createteleporters]]
+    modId="minecraft"
+    type="required"
+    versionRange="[1.21.1]"
+    ordering="AFTER"
+    side="BOTH"
+
+
+
+
+# Start of user code block dependencies configuration
+# End of user code block dependencies configuration

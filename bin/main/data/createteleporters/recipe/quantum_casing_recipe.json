@@ -1,0 +1,19 @@
+{
+  "type": "create:item_application",
+  "ingredients": [
+    {
+      "item": "create:railway_casing"
+    },
+    {
+      "item": "createteleporters:quantum_fluid_bucket"
+    }
+  ],
+  "results": [
+    {
+      "id": "createteleporters:quantum_casing"
+    },
+    {
+      "id": "minecraft:bucket"
+    }
+  ]
+}

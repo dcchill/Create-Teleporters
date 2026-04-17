@@ -1,0 +1,11 @@
+{
+  "parent": "createteleporters:custom/entityteleporterhalf",
+  "textures": {
+    "all": "createteleporters:block/brass_casing",
+    "particle": "createteleporters:block/entity_teleporter_top_off",
+    "0": "createteleporters:block/brass_casing_double",
+    "1": "createteleporters:block/entity_teleporter_top_off",
+    "2": "createteleporters:block/brass_casing"
+  },
+  "render_type": "solid"
+}

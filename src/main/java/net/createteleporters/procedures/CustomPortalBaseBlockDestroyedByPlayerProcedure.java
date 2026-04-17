@@ -18,6 +18,7 @@ public class CustomPortalBaseBlockDestroyedByPlayerProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, BlockState blockstate) {
 		BlockPos basePos = BlockPos.containing(x, y, z);
 		BlockEntity blockEntity = world.getBlockEntity(basePos);
+		CustomPortalBaseOnTickUpdateProcedure.releasePortalChunks(world, basePos);
 		
 		// Get portal dimensions from NBT
 		int portalHeight = 0;

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "aea",
+    " b ",
+    " c "
+  ],
+  "key": {
+    "a": {
+      "item": "create:transmitter"
+    },
+    "b": {
+      "item": "createteleporters:quantum_casing"
+    },
+    "c": {
+      "item": "createteleporters:quantum_mechanism"
+    },
+    "e": {
+    "item": "createteleporters:redstone_pearl"
+    }
+  },
+  "result": {
+    "id": "createteleporters:adv_tplink",
+    "count": 1
+  }
+}

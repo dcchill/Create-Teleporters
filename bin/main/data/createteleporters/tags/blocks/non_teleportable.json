@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    "createteleporters:custom_portal_base",
+    "minecraft:end_portal",
+    "minecraft:air",
+    "minecraft:nether_portal",
+    "createteleporters:quantum_portal_block",
+    "minecraft:end_portal_frame",
+    "createteleporters:custom_portal_base_dummy_block",
+    "minecraft:barrier",
+    "minecraft:bedrock"
+  ]
+}

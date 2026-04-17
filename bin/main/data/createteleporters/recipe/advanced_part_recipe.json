@@ -1,0 +1,62 @@
+{
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "item": "minecraft:diamond"
+  },
+  "loops": 1,
+  "results": [
+    {
+      "id": "createteleporters:advanced_part"
+    }
+  ],
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "ingredients": [
+        {
+          "item": "createteleporters:incomplete_advanced_part"
+        },
+        {
+          "item": "create:sturdy_sheet"
+        }
+      ],
+      "results": [
+        {
+          "id": "createteleporters:incomplete_advanced_part"
+        }
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "ingredients": [
+        {
+          "item": "createteleporters:incomplete_advanced_part"
+        },
+        {
+          "item": "createteleporters:redstone_pearl"
+        }
+      ],
+      "results": [
+        {
+          "id": "createteleporters:incomplete_advanced_part"
+        }
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredients": [
+        {
+          "item": "createteleporters:incomplete_advanced_part"
+        }
+      ],
+      "results": [
+        {
+          "id": "createteleporters:incomplete_advanced_part"
+        }
+      ]
+    }
+  ],
+  "transitional_item": {
+    "id": "createteleporters:incomplete_advanced_part"
+  }
+}

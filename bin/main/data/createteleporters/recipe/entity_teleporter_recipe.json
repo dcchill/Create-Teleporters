@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "aba",
+    "dcd",
+    "aba"
+  ],
+  "key": {
+    "a": {
+      "item": "create:brass_casing"
+    },
+    "b": {
+      "item": "createteleporters:redstone_pearl"
+    },
+    "c": {
+      "item": "createteleporters:quantum_mechanism"
+    },
+    "d": {
+      "item": "create:electron_tube"
+    }
+  },
+  "result": {
+    "id": "createteleporters:teleporter",
+    "count": 1
+  }
+}

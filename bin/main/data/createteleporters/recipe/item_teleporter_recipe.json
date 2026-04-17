@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "aba",
+    "dcd",
+    "aba"
+  ],
+  "key": {
+    "a": {
+      "item": "create:brass_casing"
+    },
+    "b": {
+      "item": "create:chute"
+    },
+    "c": {
+      "item": "createteleporters:quantum_mechanism"
+    },
+    "d": {
+      "item": "minecraft:barrel"
+    }
+  },
+  "result": {
+    "id": "createteleporters:item_tp",
+    "count": 1
+  }
+}

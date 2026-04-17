@@ -1,5 +1,7 @@
 package net.createteleporters.procedures;
 
+import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
+
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.common.extensions.ILevelExtension;
@@ -18,6 +20,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
@@ -41,6 +44,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 	public static String execute(LevelAccessor world, double x, double y, double z) {
 		// Use scalable portal checker instead of fixed size
 		ScalablePortalCheckerProcedure.execute(world, x, y, z);
+		ensurePortalChunksLoaded(world, BlockPos.containing(x, y, z));
 
 		if (getBlockNBTLogic(world, BlockPos.containing(x, y, z), "portalActive")) {
 			if (4 <= getFluidTankLevel(world, BlockPos.containing(x, y, z), 1, null)) {
@@ -68,7 +72,15 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					int linkedX = linkedBE.getPersistentData().getInt("linkedX");
 					int linkedY = linkedBE.getPersistentData().getInt("linkedY");
 					int linkedZ = linkedBE.getPersistentData().getInt("linkedZ");
-					BlockEntity remoteBE = world.getBlockEntity(new BlockPos(linkedX, linkedY, linkedZ));
+					BlockEntity remoteBE = null;
+					String linkedDimId = linkedBE.getPersistentData().getString("linkedDim");
+					ResourceLocation linkedDimLoc = ResourceLocation.tryParse(linkedDimId);
+					if (world instanceof ServerLevel sourceLevel && linkedDimLoc != null) {
+						ServerLevel linkedLevel = sourceLevel.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, linkedDimLoc));
+						if (linkedLevel != null) {
+							remoteBE = linkedLevel.getBlockEntity(new BlockPos(linkedX, linkedY, linkedZ));
+						}
+					}
 					boolean remoteActive = remoteBE != null && remoteBE.getPersistentData().getBoolean("portalActive");
 
 					if (!remoteActive) {
@@ -173,6 +185,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 								new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
 								"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight + " ~ createteleporters:quantum_portal_block");
 					}
+
 				}
 				
 				// Drain fluid
@@ -268,6 +281,11 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 
 				// Vanilla teleportation (original code)
 				for (Entity entityiterator : world.getEntities(null, portalArea)) {
+					if (shouldIgnorePortalTeleport(entityiterator)) {
+						entityiterator.getPersistentData().remove("TeleportCharge");
+						continue;
+					}
+
 					// Decrement teleportation cooldown if present
 					CompoundTag entityData = entityiterator.getPersistentData();
 					if (entityData.contains("PortalTeleportCooldown")) {
@@ -598,9 +616,122 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 	 * Checks if the linked portal has an Advanced TP Link in its inventory.
 	 */
 	private static boolean hasAdvancedTpLinkAtLinkedPortal(LevelAccessor world, BlockEntity linkedBE) {
-		int linkedX = linkedBE.getPersistentData().getInt("linkedX");
-		int linkedY = linkedBE.getPersistentData().getInt("linkedY");
-		int linkedZ = linkedBE.getPersistentData().getInt("linkedZ");
-		return hasAdvancedTpLink(world, new BlockPos(linkedX, linkedY, linkedZ));
+		if (!(world instanceof ServerLevel sourceLevel) || linkedBE == null) {
+			return false;
+		}
+
+		ResourceLocation linkedDimLoc = ResourceLocation.tryParse(linkedBE.getPersistentData().getString("linkedDim"));
+		if (linkedDimLoc == null) {
+			return false;
+		}
+
+		ServerLevel linkedLevel = sourceLevel.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, linkedDimLoc));
+		if (linkedLevel == null) {
+			return false;
+		}
+
+		BlockPos linkedPos = BlockPos.containing(
+			linkedBE.getPersistentData().getDouble("linkedX"),
+			linkedBE.getPersistentData().getDouble("linkedY"),
+			linkedBE.getPersistentData().getDouble("linkedZ")
+		);
+		return hasAdvancedTpLink(linkedLevel, linkedPos);
+	}
+
+	public static void ensurePortalChunksLoaded(LevelAccessor world, BlockPos basePos) {
+		if (!(world instanceof ServerLevel sourceLevel)) {
+			return;
+		}
+
+		forceChunkSquare(sourceLevel, basePos, true);
+
+		BlockEntity blockEntity = sourceLevel.getBlockEntity(basePos);
+		if (blockEntity == null) {
+			return;
+		}
+
+		CompoundTag nbt = blockEntity.getPersistentData();
+		if (!nbt.getBoolean("isLinked")) {
+			return;
+		}
+
+		ResourceLocation linkedDimLoc = ResourceLocation.tryParse(nbt.getString("linkedDim"));
+		if (linkedDimLoc == null) {
+			return;
+		}
+
+		ServerLevel linkedLevel = sourceLevel.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, linkedDimLoc));
+		if (linkedLevel == null) {
+			return;
+		}
+
+		BlockPos linkedPos = BlockPos.containing(nbt.getDouble("linkedX"), nbt.getDouble("linkedY"), nbt.getDouble("linkedZ"));
+		forceChunkSquare(linkedLevel, linkedPos, true);
+	}
+
+	public static void releasePortalChunks(LevelAccessor world, BlockPos basePos) {
+		if (!(world instanceof ServerLevel sourceLevel)) {
+			return;
+		}
+
+		forceChunkSquare(sourceLevel, basePos, false);
+
+		BlockEntity blockEntity = sourceLevel.getBlockEntity(basePos);
+		if (blockEntity == null) {
+			return;
+		}
+
+		CompoundTag nbt = blockEntity.getPersistentData();
+		if (!nbt.getBoolean("isLinked")) {
+			return;
+		}
+
+		ResourceLocation linkedDimLoc = ResourceLocation.tryParse(nbt.getString("linkedDim"));
+		if (linkedDimLoc == null) {
+			return;
+		}
+
+		ServerLevel linkedLevel = sourceLevel.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, linkedDimLoc));
+		if (linkedLevel == null) {
+			return;
+		}
+
+		BlockPos linkedPos = BlockPos.containing(nbt.getDouble("linkedX"), nbt.getDouble("linkedY"), nbt.getDouble("linkedZ"));
+		forceChunkSquare(linkedLevel, linkedPos, false);
+	}
+
+	private static void forceChunkSquare(ServerLevel level, BlockPos centerPos, boolean force) {
+		ChunkPos centerChunk = new ChunkPos(centerPos);
+		for (int dx = -1; dx <= 1; dx++) {
+			for (int dz = -1; dz <= 1; dz++) {
+				level.setChunkForced(centerChunk.x + dx, centerChunk.z + dz, force);
+			}
+		}
+	}
+
+	private static Direction rotationToNormal(String rotation) {
+		return switch (rotation) {
+			case "east" -> Direction.EAST;
+			case "west" -> Direction.WEST;
+			case "south" -> Direction.SOUTH;
+			default -> Direction.NORTH;
+		};
+	}
+
+	private static BlockPos horizontalDirection(String rotation) {
+		return switch (rotation) {
+			case "south" -> new BlockPos(-1, 0, 0);
+			case "east" -> new BlockPos(0, 0, 1);
+			case "west" -> new BlockPos(0, 0, -1);
+			default -> new BlockPos(1, 0, 0);
+		};
+	}
+
+	private static boolean shouldIgnorePortalTeleport(Entity entity) {
+		if (entity instanceof CarriageContraptionEntity) {
+			return true;
+		}
+
+		return entity.isPassenger() && entity.getRootVehicle() instanceof CarriageContraptionEntity;
 	}
 }
