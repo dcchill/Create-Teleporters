@@ -13,7 +13,6 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.resources.ResourceLocation;
@@ -24,6 +23,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 
 import net.createteleporters.configuration.CTPConfigConfiguration;
+import net.createteleporters.integration.SableAeronauticsIntegration;
 import net.createteleporters.CreateteleportersMod;
 
 public class ItemTPOnTickUpdateProcedure {
@@ -81,13 +81,10 @@ public class ItemTPOnTickUpdateProcedure {
 			}
 			CreateteleportersMod.queueServerWork(5, () -> {
 				if (world instanceof ServerLevel _level) {
-					ItemEntity entityToSpawn = new ItemEntity(_level, ((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo")),
+					SableAeronauticsIntegration.spawnItem(_level, ((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("xpo")),
 							((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("ypo")),
 							((itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy()).getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getDouble("zpo")),
 							(itemFromBlockInventory(world, BlockPos.containing(x, y, z), 1).copy()));
-					entityToSpawn.setPickUpDelay(10);
-					entityToSpawn.setUnlimitedLifetime();
-					_level.addFreshEntity(entityToSpawn);
 				}
 				if (world instanceof ILevelExtension _ext && _ext.getCapability(Capabilities.ItemHandler.BLOCK, BlockPos.containing(x, y, z), null) instanceof IItemHandlerModifiable _itemHandlerModifiable)
 					_itemHandlerModifiable.setStackInSlot(1, ItemStack.EMPTY);

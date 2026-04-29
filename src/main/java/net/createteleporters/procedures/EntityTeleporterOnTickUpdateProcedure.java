@@ -41,6 +41,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 
 import net.createteleporters.init.CreateteleportersModItems;
 import net.createteleporters.configuration.CTPConfigConfiguration;
+import net.createteleporters.integration.SableAeronauticsIntegration;
 
 import java.util.List;
 import java.util.Comparator;
@@ -79,7 +80,7 @@ public class EntityTeleporterOnTickUpdateProcedure {
 				boolean isCharging = false;
 				// Check for any entity above the block (slightly expanded hitbox)
 				AABB detectionBox = new AABB(x, y - 0.5, z, x + 1, y + 1.5, z + 1);
-				List<Entity> entities = world.getEntitiesOfClass(Entity.class, detectionBox, e -> !e.getType().toString().equals("minecraft:item") && e.isAlive());
+				List<Entity> entities = SableAeronauticsIntegration.getEntities(world, detectionBox, e -> !e.getType().toString().equals("minecraft:item") && e.isAlive());
 				if (!entities.isEmpty()) {
 					isCharging = true;
 				}
@@ -151,7 +152,8 @@ public class EntityTeleporterOnTickUpdateProcedure {
 						}
 						{
 							final Vec3 _center = new Vec3(x, (y + 1), z);
-							for (Entity entityiterator : world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(2 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList()) {
+							final Vec3 _worldCenter = SableAeronauticsIntegration.resolveWorldPosition(world, x, y + 1, z);
+							for (Entity entityiterator : SableAeronauticsIntegration.getEntities(world, new AABB(_center, _center).inflate(2 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_worldCenter))).toList()) {
 								// Save player's team before teleportation (Bug fix: preserve team assignment)
 								String playerTeamName = null;
 								if (entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
@@ -182,7 +184,7 @@ public class EntityTeleporterOnTickUpdateProcedure {
 										if (destinationLevel != null) {
 											// Screen shake effect before teleport
 											serverPlayer.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, 0));
-											serverPlayer.teleportTo(destinationLevel, targetX, targetY, targetZ, targetYaw, serverPlayer.getXRot());
+											SableAeronauticsIntegration.teleportEntity(serverPlayer, destinationLevel, targetX, targetY, targetZ, targetYaw);
 											serverPlayer.connection.send(new ClientboundPlayerAbilitiesPacket(serverPlayer.getAbilities()));
 											for (MobEffectInstance effect : serverPlayer.getActiveEffects())
 												serverPlayer.connection.send(new ClientboundUpdateMobEffectPacket(serverPlayer.getId(), effect, false));
@@ -192,17 +194,16 @@ public class EntityTeleporterOnTickUpdateProcedure {
 											// Brief blindness for dramatic effect (0.5 seconds)
 											serverPlayer.addEffect(new MobEffectInstance(net.minecraft.world.effect.MobEffects.BLINDNESS, 10, 0, false, false));
 										} else {
-											serverPlayer.teleportTo(targetX, targetY, targetZ);
+											SableAeronauticsIntegration.teleportEntity(serverPlayer, targetX, targetY, targetZ, targetYaw);
 										}
 									} catch (Exception e) {
-										serverPlayer.teleportTo(targetX, targetY, targetZ);
+										SableAeronauticsIntegration.teleportEntity(serverPlayer, targetX, targetY, targetZ, targetYaw);
 									}
 								} else {
 									// Same-dimension teleportation for non-players or when no dimension specified
 									Entity _ent = entityiterator;
-									_ent.teleportTo(targetX, targetY, targetZ);
+									SableAeronauticsIntegration.teleportEntity(_ent, targetX, targetY, targetZ, targetYaw);
 									if (_ent instanceof ServerPlayer _serverPlayer) {
-										_serverPlayer.connection.teleport(targetX, targetY, targetZ, _ent.getYRot(), _ent.getXRot());
 										// Brief disorientation effect (nausea for 1 second)
 										_serverPlayer.addEffect(new MobEffectInstance(net.minecraft.world.effect.MobEffects.CONFUSION, 40, 0, false, false));
 										// Brief blindness for dramatic effect (0.5 seconds)

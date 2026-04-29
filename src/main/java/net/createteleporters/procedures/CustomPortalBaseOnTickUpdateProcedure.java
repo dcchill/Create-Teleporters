@@ -38,6 +38,7 @@ import net.minecraft.world.scores.Scoreboard;
 
 import net.createteleporters.configuration.CTPConfigConfiguration;
 import net.createteleporters.integration.ImmersivePortalsIntegration;
+import net.createteleporters.integration.SableAeronauticsIntegration;
 import net.createteleporters.procedures.BindCustomPortalProcedure;
 
 public class CustomPortalBaseOnTickUpdateProcedure {
@@ -214,13 +215,16 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 
 				// tiny epsilon to avoid strict boundary misses
 				final double EPS = 1e-6;
+				final double ACTIVATION_HORIZONTAL_PADDING = 0.25;
+				final double ACTIVATION_LOWER_PADDING = 0.75;
+				final double ACTIVATION_UPPER_PADDING = 0.25;
 				portalArea = new AABB(
-					Math.min(portalArea.minX, portalArea.maxX) - EPS,
-					Math.min(portalArea.minY, portalArea.maxY) - EPS,
-					Math.min(portalArea.minZ, portalArea.maxZ) - EPS,
-					Math.max(portalArea.minX, portalArea.maxX) + EPS,
-					Math.max(portalArea.minY, portalArea.maxY) + EPS,
-					Math.max(portalArea.minZ, portalArea.maxZ) + EPS
+					Math.min(portalArea.minX, portalArea.maxX) - ACTIVATION_HORIZONTAL_PADDING - EPS,
+					Math.min(portalArea.minY, portalArea.maxY) - ACTIVATION_LOWER_PADDING - EPS,
+					Math.min(portalArea.minZ, portalArea.maxZ) - ACTIVATION_HORIZONTAL_PADDING - EPS,
+					Math.max(portalArea.minX, portalArea.maxX) + ACTIVATION_HORIZONTAL_PADDING + EPS,
+					Math.max(portalArea.minY, portalArea.maxY) + ACTIVATION_UPPER_PADDING + EPS,
+					Math.max(portalArea.minZ, portalArea.maxZ) + ACTIVATION_HORIZONTAL_PADDING + EPS
 				);
 
 				// Get teleportation target - prefer linked portal coordinates over item data
@@ -274,7 +278,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				// IP handles teleportation automatically when entities walk through portal entity
 				if (ipPortalActive) {
 					// IP handles teleportation - just maintain cooldown to prevent loops
-					for (Entity entityiterator : world.getEntities(null, portalArea)) {
+					for (Entity entityiterator : SableAeronauticsIntegration.getEntities(world, portalArea, e -> true)) {
 						CompoundTag entityData = entityiterator.getPersistentData();
 						if (entityData.contains("PortalTeleportCooldown")) {
 							int cooldown = entityData.getInt("PortalTeleportCooldown");
@@ -287,7 +291,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				}
 
 				// Vanilla teleportation (original code)
-				for (Entity entityiterator : world.getEntities(null, portalArea)) {
+				for (Entity entityiterator : SableAeronauticsIntegration.getEntities(world, portalArea, e -> true)) {
 					if (shouldIgnorePortalTeleport(entityiterator)) {
 						entityiterator.getPersistentData().remove("TeleportCharge");
 						continue;
@@ -307,8 +311,8 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					int chargeTime = entityData.contains("TeleportCharge") ? entityData.getInt("TeleportCharge") : 0;
 					
 					// use the entity's feet (minY of bounding box) to prevent premature triggers
-					double feetY = entityiterator.getBoundingBox().minY;
-					if (feetY + 1e-6 >= (y + 1) && feetY <= (y + portalInnerHeight + 1) + 1e-6) {
+					double feetY = SableAeronauticsIntegration.getEntityFeetY(world, portalArea, entityiterator);
+					if (feetY + 1e-6 >= (y + 1 - ACTIVATION_LOWER_PADDING) && feetY <= (y + portalInnerHeight + 1 + ACTIVATION_UPPER_PADDING) + 1e-6) {
 						// Start or continue charging
 						if (chargeTime <= 0) {
 							// First tick in portal - start charging
@@ -348,7 +352,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 										ServerLevel targetLevel = _level.getServer().getLevel(targetDimKey);
 										if (targetLevel != null) {
 											// Teleport directly using API (more reliable than commands)
-											entityiterator.teleportTo(targetLevel, tx + 0.5, ty + 1, tz + 0.5, java.util.Set.of(), (float) yaw, entityiterator.getXRot());
+											SableAeronauticsIntegration.teleportEntity(entityiterator, targetLevel, tx + 0.5, ty + 1, tz + 0.5, (float) yaw);
 										} else {
 											// Target level not found, fall back to command
 											_level.getServer().getCommands().performPrefixedCommand(
@@ -356,9 +360,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 												"execute in " + targetDim + " run tp " + entityiterator.getStringUUID() + " " + (tx + 0.5) + " " + (ty + 1) + " " + (tz + 0.5));
 										}
 									} else {
-											_level.getServer().getCommands().performPrefixedCommand(
-												new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null),
-												"tp " + entityiterator.getStringUUID() + " " + (tx + 0.5) + " " + (ty + 1) + " " + (tz + 0.5));
+											SableAeronauticsIntegration.teleportEntity(entityiterator, _level, tx + 0.5, ty + 1, tz + 0.5, (float) yaw);
 									}
 								}
 								{
