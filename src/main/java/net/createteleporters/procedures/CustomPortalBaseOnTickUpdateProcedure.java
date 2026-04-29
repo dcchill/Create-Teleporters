@@ -41,6 +41,8 @@ import net.createteleporters.integration.ImmersivePortalsIntegration;
 import net.createteleporters.procedures.BindCustomPortalProcedure;
 
 public class CustomPortalBaseOnTickUpdateProcedure {
+	private static final int IMMERSIVE_PORTAL_ORIENTATION_COMPAT_VERSION = 1;
+
 	public static String execute(LevelAccessor world, double x, double y, double z) {
 		// Use scalable portal checker instead of fixed size
 		ScalablePortalCheckerProcedure.execute(world, x, y, z);
@@ -142,8 +144,12 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 						// Create Immersive Portals portal (only needs to be done once)
 						// But verify it actually exists first
 						boolean needsCreation = !getBlockNBTLogic(world, BlockPos.containing(x, y, z), "immersivePortalCreated");
+						boolean needsOrientationRebuild = be != null && be.getPersistentData().getInt("immersivePortalCompatVersion") < IMMERSIVE_PORTAL_ORIENTATION_COMPAT_VERSION;
 
-						if (needsCreation) {
+						if (needsCreation || needsOrientationRebuild) {
+							if (!needsCreation) {
+								removeTrackedImmersivePortal(world, x, y, z);
+							}
 							net.createteleporters.CreateteleportersMod.LOGGER.info("Creating new IP portal...");
 							boolean created = ImmersivePortalsIntegration.createImmersivePortal(
 								world, x, y, z, rotation,
@@ -153,6 +159,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 							net.createteleporters.CreateteleportersMod.LOGGER.info("IP portal creation result: {}", created);
 							if (created && be != null) {
 								be.getPersistentData().putBoolean("immersivePortalCreated", true);
+								be.getPersistentData().putInt("immersivePortalCompatVersion", IMMERSIVE_PORTAL_ORIENTATION_COMPAT_VERSION);
 								ipPortalActive = true;
 							}
 						} else {

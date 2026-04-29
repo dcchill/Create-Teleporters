@@ -11,6 +11,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.CommandSource;
@@ -62,21 +63,22 @@ public class ImmersivePortalsIntegration {
         int baseX = (int) Math.floor(x);
         int baseY = (int) y;
         int baseZ = (int) Math.floor(z);
-        int extentCenter = (minExtent + maxExtent) / 2;
-        int portalBottomY = baseY + 1;
-        int portalCenterY = portalBottomY + interiorHeight / 2;
+        int interiorMin = minExtent + 1;
+        int interiorMax = maxExtent - 1;
+        double horizontalCenterOffset = (interiorMin + interiorMax + 1) / 2.0;
+        double portalCenterY = baseY + 1 + interiorHeight / 2.0;
 
         double portalX, portalY, portalZ;
         Direction portalNormal = getPortalNormal(rotation);
 
         if ("north".equals(rotation) || "south".equals(rotation)) {
-            portalX = baseX + extentCenter + 0.5;
+            portalX = baseX + horizontalCenterOffset;
             portalY = portalCenterY;
             portalZ = baseZ + 0.5;
         } else {
             portalX = baseX + 0.5;
             portalY = portalCenterY;
-            portalZ = baseZ + extentCenter + 0.5;
+            portalZ = baseZ + horizontalCenterOffset;
         }
         
         try {
@@ -116,6 +118,10 @@ public class ImmersivePortalsIntegration {
                 targetDim, targetInfo.center.x, targetInfo.center.y, targetInfo.center.z);
             executeAsNearestPortal(serverLevel, portalX, portalY, portalZ, destCmd, true);
             CreateteleportersMod.LOGGER.info("Executed: {}", destCmd);
+
+            if (!orientNearestPortalOtherSide(serverLevel, portalX, portalY, portalZ, targetInfo.rotation)) {
+                CreateteleportersMod.LOGGER.warn("Could not align IP portal other-side orientation to target rotation {}", targetInfo.rotation);
+            }
 
             // Make the portal bi-way and bi-faced (4 connected portal entities total)
             // so both sides in both dimensions work automatically.
@@ -176,7 +182,51 @@ public class ImmersivePortalsIntegration {
             new net.minecraft.world.phys.Vec2(0, facing.toYRot()),
             level, 4, "", Component.literal(""), level.getServer(), null);
     }
-    
+
+    private static boolean orientNearestPortalOtherSide(ServerLevel level, double x, double y, double z, String targetRotation) {
+        Entity portalEntity = level.getEntities((Entity) null, new AABB(x - 3.0, y - 3.0, z - 3.0, x + 3.0, y + 3.0, z + 3.0),
+            entity -> "immersive_portals:portal".equals(entityTypeId(entity)))
+            .stream()
+            .min((a, b) -> Double.compare(a.distanceToSqr(x, y, z), b.distanceToSqr(x, y, z)))
+            .orElse(null);
+
+        if (portalEntity == null) {
+            return false;
+        }
+
+        try {
+            Class<?> dQuaternionClass = Class.forName("qouteall.q_misc_util.my_util.DQuaternion");
+            Class<?> portalManipulationClass = Class.forName("qouteall.imm_ptl.core.portal.PortalManipulation");
+            Direction targetNormal = getPortalNormal(targetRotation);
+            Vec3 targetAxisH = new Vec3(0.0, 1.0, 0.0);
+            Vec3 targetAxisW = axisWForNormal(targetNormal);
+            Object targetOrientation = portalManipulationClass
+                .getMethod("getPortalOrientationQuaternion", Vec3.class, Vec3.class)
+                .invoke(null, targetAxisW, targetAxisH);
+
+            portalEntity.getClass()
+                .getMethod("setOtherSideOrientation", dQuaternionClass)
+                .invoke(portalEntity, targetOrientation);
+            portalEntity.getClass().getMethod("reloadAndSyncToClient").invoke(portalEntity);
+            CreateteleportersMod.LOGGER.info("Aligned IP portal other side to target rotation {} (normal {})", targetRotation, targetNormal);
+            return true;
+        } catch (ReflectiveOperationException | LinkageError e) {
+            CreateteleportersMod.LOGGER.warn("Failed to align IP portal orientation via reflection", e);
+            return false;
+        }
+    }
+
+    private static String entityTypeId(Entity entity) {
+        ResourceLocation key = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+        return key != null ? key.toString() : "";
+    }
+
+    private static Vec3 axisWForNormal(Direction normal) {
+        Vec3 up = new Vec3(0.0, 1.0, 0.0);
+        Vec3 normalVec = Vec3.atLowerCornerOf(normal.getNormal());
+        return up.cross(normalVec).normalize();
+    }
+
     private static void executeAtPosition(ServerLevel level, double x, double y, double z, 
             String command, boolean suppress) {
         CommandSourceStack cmdSource = new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z),
@@ -237,15 +287,16 @@ public class ImmersivePortalsIntegration {
         int interiorHeight = Math.max(1, portalHeight - 1);
         int interiorWidth = Math.max(1, Math.abs(maxExtent - minExtent) - 1);
         int squareSize = Math.max(1, Math.min(interiorWidth, interiorHeight));
-        int extentCenter = (minExtent + maxExtent) / 2;
-        int portalBottomY = baseY + 1;
-        int portalCenterY = portalBottomY + interiorHeight / 2;
+        int interiorMin = minExtent + 1;
+        int interiorMax = maxExtent - 1;
+        double horizontalCenterOffset = (interiorMin + interiorMax + 1) / 2.0;
+        double portalCenterY = baseY + 1 + interiorHeight / 2.0;
 
         if ("north".equals(rotation) || "south".equals(rotation)) {
-            return new PortalTargetInfo(new Vec3(baseX + extentCenter + 0.5, portalCenterY, baseZ + 0.5), squareSize);
+            return new PortalTargetInfo(new Vec3(baseX + horizontalCenterOffset, portalCenterY, baseZ + 0.5), squareSize, rotation);
         }
-        return new PortalTargetInfo(new Vec3(baseX + 0.5, portalCenterY, baseZ + extentCenter + 0.5), squareSize);
+        return new PortalTargetInfo(new Vec3(baseX + 0.5, portalCenterY, baseZ + horizontalCenterOffset), squareSize, rotation);
     }
 
-    private record PortalTargetInfo(Vec3 center, int squareSize) {}
+    private record PortalTargetInfo(Vec3 center, int squareSize, String rotation) {}
 }
