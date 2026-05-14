@@ -41,7 +41,7 @@ public class AdvTpLinkRightclickedProcedure {
 			}
 			{
 				final String _tagName = "dimension";
-				final String _tagValue = ((("" + entity.level().dimension()).substring(34, ("" + entity.level().dimension()).length())).replace("]", " "));
+				final String _tagValue = entity.level().dimension().location().toString();
 				CustomData.update(DataComponents.CUSTOM_DATA, (entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY), tag -> tag.putString(_tagName, _tagValue));
 			}
 			if (entity instanceof Player _player && !_player.level().isClientSide())
@@ -81,7 +81,7 @@ public class AdvTpLinkRightclickedProcedure {
 			}
 			{
 				final String _tagName = "dimension";
-				final String _tagValue = ((("" + entity.level().dimension()).substring(34, ("" + entity.level().dimension()).length())).replace("]", " "));
+				final String _tagValue = entity.level().dimension().location().toString();
 				CustomData.update(DataComponents.CUSTOM_DATA, (entity instanceof LivingEntity _livEnt ? _livEnt.getOffhandItem() : ItemStack.EMPTY), tag -> tag.putString(_tagName, _tagValue));
 			}
 			if (entity instanceof Player _player && !_player.level().isClientSide())

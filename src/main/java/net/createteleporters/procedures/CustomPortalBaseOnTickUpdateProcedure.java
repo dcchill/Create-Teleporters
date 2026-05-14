@@ -243,7 +243,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					}
 
 					CompoundTag cd = invStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-					targetDim = cd.getString("dimension");
+					targetDim = cd.getString("dimension").trim();
 					tx = cd.getDouble("xpo");
 					ty = cd.getDouble("ypo");
 					tz = cd.getDouble("zpo");
@@ -267,7 +267,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					// Fall back to item data (for backwards compatibility when binding not forced)
 					ItemStack invStack = (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy());
 					CompoundTag cd = invStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-					targetDim = cd.getString("dimension");
+					targetDim = cd.getString("dimension").trim();
 					tx = cd.getDouble("xpo");
 					ty = cd.getDouble("ypo");
 					tz = cd.getDouble("zpo");

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "transportation",
+  "pattern": [
+    "Q",
+    "T",
+    "Q"
+  ],
+  "key": {
+    "Q": {
+      "item": "createteleporters:quantum_mechanism"
+    },
+    "T": {
+      "item": "create:track"
+    }
+  },
+  "result": {
+    "id": "createteleporters:same_dimension_portal_track",
+    "count": 4
+  }
+}

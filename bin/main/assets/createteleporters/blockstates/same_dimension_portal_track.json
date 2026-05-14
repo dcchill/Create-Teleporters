@@ -1,0 +1,76 @@
+{
+  "multipart": [
+    {
+      "when": { "shape": "ae" },
+      "apply": { "model": "create:block/track/ascending", "y": 270 }
+    },
+    {
+      "when": { "shape": "an" },
+      "apply": { "model": "create:block/track/ascending", "y": 180 }
+    },
+    {
+      "when": { "shape": "as" },
+      "apply": { "model": "create:block/track/ascending" }
+    },
+    {
+      "when": { "shape": "aw" },
+      "apply": { "model": "create:block/track/ascending", "y": 90 }
+    },
+    {
+      "when": { "shape": "cr_d" },
+      "apply": { "model": "create:block/track/cross_diag" }
+    },
+    {
+      "when": { "shape": "cr_ndx" },
+      "apply": { "model": "create:block/track/cross_d2_xo" }
+    },
+    {
+      "when": { "shape": "cr_ndz" },
+      "apply": { "model": "create:block/track/cross_d2_zo" }
+    },
+    {
+      "when": { "shape": "cr_o" },
+      "apply": { "model": "create:block/track/cross_ortho" }
+    },
+    {
+      "when": { "shape": "cr_pdx" },
+      "apply": { "model": "create:block/track/cross_d1_xo" }
+    },
+    {
+      "when": { "shape": "cr_pdz" },
+      "apply": { "model": "create:block/track/cross_d1_zo" }
+    },
+    {
+      "when": { "shape": "nd" },
+      "apply": { "model": "create:block/track/diag_2" }
+    },
+    {
+      "when": { "shape": "pd" },
+      "apply": { "model": "create:block/track/diag" }
+    },
+    {
+      "when": { "shape": "te" },
+      "apply": { "model": "create:block/track/teleport", "y": 270 }
+    },
+    {
+      "when": { "shape": "tn" },
+      "apply": { "model": "create:block/track/teleport", "y": 180 }
+    },
+    {
+      "when": { "shape": "ts" },
+      "apply": { "model": "create:block/track/teleport" }
+    },
+    {
+      "when": { "shape": "tw" },
+      "apply": { "model": "create:block/track/teleport", "y": 90 }
+    },
+    {
+      "when": { "shape": "xo" },
+      "apply": { "model": "create:block/track/x_ortho" }
+    },
+    {
+      "when": { "shape": "zo" },
+      "apply": { "model": "create:block/track/z_ortho" }
+    }
+  ]
+}

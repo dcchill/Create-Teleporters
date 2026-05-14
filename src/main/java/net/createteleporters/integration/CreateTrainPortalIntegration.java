@@ -5,7 +5,6 @@ import net.createmod.catnip.math.BlockFace;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Direction.AxisDirection;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
@@ -33,7 +32,7 @@ import java.util.List;
  * portal data stored on the custom portal base block entity.
  */
 public final class CreateTrainPortalIntegration {
-	private static final int SEARCH_RADIUS = 16;
+	private static final int SEARCH_RADIUS = 24;
 	
 	static {
 		CreateteleportersMod.LOGGER.info("CreateTrainPortalIntegration class loaded!");
@@ -64,6 +63,9 @@ public final class CreateTrainPortalIntegration {
 	private static PortalTrackProvider.Exit findExit(ServerLevel level, BlockFace entryFace) {
 		CreateteleportersMod.LOGGER.info("=== TRAIN PORTAL TELEPORT ATTEMPT ===");
 		CreateteleportersMod.LOGGER.info("Entry face: {} at {}", entryFace.getFace(), entryFace.getPos());
+		boolean sameDimensionTrack = isSameDimensionPortalTrack(level, entryFace.getPos());
+		CreateteleportersMod.LOGGER.info("Entry track block: {}, same-dimension track: {}",
+			level.getBlockState(entryFace.getPos()).getBlock(), sameDimensionTrack);
 		
 		BlockPos sourcePortalPos = entryFace.getConnectedPos();
 		CreateteleportersMod.LOGGER.info("Source portal position: {}", sourcePortalPos);
@@ -75,14 +77,30 @@ public final class CreateTrainPortalIntegration {
 		}
 		CreateteleportersMod.LOGGER.info("Found source portal base at {}", sourceBase.basePos);
 
-		ResourceLocation targetDimLoc = ResourceLocation.tryParse(sourceBase.nbt.getString("linkedDim"));
-		CreateteleportersMod.LOGGER.info("Target dimension string: '{}', parsed: {}", sourceBase.nbt.getString("linkedDim"), targetDimLoc);
+		PortalTargetData targetData = resolveLinkedPortalTarget(sourceBase);
+		if (targetData == null) {
+			CreateteleportersMod.LOGGER.warn("FAILED: Train portal tracks require an active portal-to-portal link at {}", sourceBase.basePos);
+			return null;
+		}
+
+		ResourceLocation targetDimLoc = targetData.dimension();
+		CreateteleportersMod.LOGGER.info("Target resolved from {} - dimension: {}, base position: {}",
+			targetData.source(), targetDimLoc, targetData.basePos());
 		if (targetDimLoc == null) {
 			CreateteleportersMod.LOGGER.warn("FAILED: Invalid target dimension for portal at {}", sourcePortalPos);
 			return null;
 		}
 
 		ResourceKey<net.minecraft.world.level.Level> targetDim = ResourceKey.create(Registries.DIMENSION, targetDimLoc);
+		if (targetDim.equals(level.dimension()) && !sameDimensionTrack) {
+			CreateteleportersMod.LOGGER.warn("FAILED: Create train portal tracks only support cross-dimension links. Source and target are both {} (target source: {})",
+				targetDimLoc, targetData.source());
+			return null;
+		}
+		if (targetDim.equals(level.dimension())) {
+			CreateteleportersMod.LOGGER.info("Allowing same-dimension train portal because the entry track is the custom same-dimension portal track");
+		}
+
 		ServerLevel targetLevel = level.getServer().getLevel(targetDim);
 		CreateteleportersMod.LOGGER.info("Target dimension key: {}, level exists: {}", targetDim, targetLevel != null);
 		if (targetLevel == null) {
@@ -90,16 +108,8 @@ public final class CreateTrainPortalIntegration {
 			return null;
 		}
 
-		BlockPos targetBasePos = BlockPos.containing(
-			sourceBase.nbt.getDouble("linkedX"),
-			sourceBase.nbt.getDouble("linkedY"),
-			sourceBase.nbt.getDouble("linkedZ")
-		);
-		CreateteleportersMod.LOGGER.info("Target base position: {} (x={}, y={}, z={})", 
-			targetBasePos, 
-			sourceBase.nbt.getDouble("linkedX"),
-			sourceBase.nbt.getDouble("linkedY"),
-			sourceBase.nbt.getDouble("linkedZ"));
+		BlockPos targetBasePos = targetData.basePos();
+		CreateteleportersMod.LOGGER.info("Target base position: {}", targetBasePos);
 		
 		BlockEntity targetBE = targetLevel.getBlockEntity(targetBasePos);
 		CreateteleportersMod.LOGGER.info("Target block entity exists: {}, type: {}", 
@@ -128,7 +138,7 @@ public final class CreateTrainPortalIntegration {
 		BlockPos targetPortalPos = toPortalPos(targetBasePos, targetRotation, localHorizontalOffset, localY);
 		CreateteleportersMod.LOGGER.info("Calculated target portal position: {}", targetPortalPos);
 		
-		// Verify the target portal block exists
+		// Prefer the matching portal block, but fall back to any usable interior block.
 		BlockState targetPortalState = targetLevel.getBlockState(targetPortalPos);
 		boolean isPortalBlock = targetPortalState.is(CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get());
 		CreateteleportersMod.LOGGER.info("Target portal block check - position: {}, is portal: {}, block: {}", 
@@ -142,69 +152,84 @@ public final class CreateTrainPortalIntegration {
 			CreateteleportersMod.LOGGER.info("Mirrored portal block check - is portal: {}, block: {}", 
 				isMirroredPortal, mirroredState.getBlock());
 			
-			if (!isMirroredPortal) {
-				CreateteleportersMod.LOGGER.warn("FAILED: No portal block found at calculated target position {} or mirrored position {}", 
+			if (isMirroredPortal) {
+				targetPortalPos = mirroredTargetPos;
+				CreateteleportersMod.LOGGER.info("Using mirrored portal position: {}", targetPortalPos);
+			} else {
+				CreateteleportersMod.LOGGER.warn("No portal block found at calculated target position {} or mirrored position {}; scanning the full target portal interior",
 					targetPortalPos, mirroredTargetPos);
-				return null;
 			}
-			targetPortalPos = mirroredTargetPos;
-			CreateteleportersMod.LOGGER.info("Using mirrored portal position: {}", targetPortalPos);
 		}
 
-		Direction sourceNormal = rotationToNormal(sourceRotation);
-		Direction targetNormal = rotationToNormal(targetRotation);
-		
-		// Determine which side the train entered from
-		boolean enteredFromBackSide = entryFace.getFace() == sourceNormal;
-		CreateteleportersMod.LOGGER.info("Entry analysis - face: {}, sourceNormal: {}, enteredFromBackSide: {}", 
-			entryFace.getFace(), sourceNormal, enteredFromBackSide);
-		
-		// Exit from the corresponding side of the target portal
-		Direction exitDirection = enteredFromBackSide ? targetNormal.getOpposite() : targetNormal;
-		CreateteleportersMod.LOGGER.info("Target normal: {}, exit direction: {}", targetNormal, exitDirection);
+		Direction exitDirection = getCreateStyleExitDirection(entryFace.getFace(), targetRotation);
+		CreateteleportersMod.LOGGER.info("Create-style exit direction from entry face {} and target rotation {}: {}",
+			entryFace.getFace(), targetRotation, exitDirection);
 
 		// Find a replaceable spot for Create to generate the linked portal track into.
-		BlockPos exitTrackPos = resolveExitTrackPos(targetLevel, targetPortalPos, exitDirection, targetBasePos, targetNbt);
-		CreateteleportersMod.LOGGER.info("Resolved exit track position: {}", exitTrackPos);
-		if (exitTrackPos == null) {
+		BlockFace exitTrackFace = resolveExitTrackFace(targetLevel, targetPortalPos, exitDirection, targetBasePos, targetNbt);
+		CreateteleportersMod.LOGGER.info("Resolved exit track face: {}", exitTrackFace);
+		if (exitTrackFace == null) {
 			CreateteleportersMod.LOGGER.warn("FAILED: No valid exit position found for portal at {}", targetPortalPos);
 			return null;
 		}
 		
-		// The face should point FROM the track TOWARD the portal
-		Direction trackFace = exitDirection.getOpposite();
 		CreateteleportersMod.LOGGER.info("SUCCESS: Train teleporting from {} to {} (track at {}, face {})", 
-			sourcePortalPos, targetPortalPos, exitTrackPos, trackFace);
+			sourcePortalPos, exitTrackFace.getConnectedPos(), exitTrackFace.getPos(), exitTrackFace.getFace());
 		CreateteleportersMod.LOGGER.info("=== END TELEPORT ATTEMPT ===");
 		
-		return new PortalTrackProvider.Exit(targetLevel, new BlockFace(exitTrackPos, trackFace));
+		return new PortalTrackProvider.Exit(targetLevel, exitTrackFace);
 	}
 
-	private static BlockPos resolveExitTrackPos(ServerLevel level, BlockPos portalPos, Direction preferredDirection, BlockPos targetBasePos, CompoundTag targetNbt) {
+	private static PortalTargetData resolveLinkedPortalTarget(PortalBaseData sourceBase) {
+		if (!sourceBase.nbt.getBoolean("isLinked")) {
+			return null;
+		}
+
+		String targetDimString = sourceBase.nbt.getString("linkedDim").trim();
+		ResourceLocation targetDimLoc = ResourceLocation.tryParse(targetDimString);
+		CreateteleportersMod.LOGGER.info("Linked portal target dimension string: '{}', parsed: {}", targetDimString, targetDimLoc);
+		if (targetDimLoc == null) {
+			return null;
+		}
+
+		BlockPos targetBasePos = BlockPos.containing(
+			sourceBase.nbt.getDouble("linkedX"),
+			sourceBase.nbt.getDouble("linkedY"),
+			sourceBase.nbt.getDouble("linkedZ")
+		);
+		return new PortalTargetData(targetDimLoc, targetBasePos, "linked portal metadata");
+	}
+
+	private static boolean isSameDimensionPortalTrack(ServerLevel level, BlockPos trackPos) {
+		return level.getBlockState(trackPos).is(CreateteleportersModBlocks.SAME_DIMENSION_PORTAL_TRACK.get());
+	}
+
+	private static BlockFace resolveExitTrackFace(ServerLevel level, BlockPos portalPos, Direction preferredDirection, BlockPos targetBasePos, CompoundTag targetNbt) {
 		CreateteleportersMod.LOGGER.info("Resolving track side - portal: {}, preferred direction: {}", portalPos, preferredDirection);
 
 		List<BlockPos> candidatePortals = collectPortalCandidates(portalPos, targetBasePos, targetNbt);
 		CreateteleportersMod.LOGGER.info("Checking {} candidate portal positions for an exit position", candidatePortals.size());
 
 		for (BlockPos candidatePortalPos : candidatePortals) {
-			BlockPos preferredTrack = candidatePortalPos.relative(preferredDirection);
-			CreateteleportersMod.LOGGER.info("Checking preferred exit position at: {} for portal {}", preferredTrack, candidatePortalPos);
-			if (isUsableExitPosition(level, preferredTrack)) {
-				CreateteleportersMod.LOGGER.info("Found usable exit position on preferred side of {}", candidatePortalPos);
-				return preferredTrack;
+			if (!level.getBlockState(candidatePortalPos).is(CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get())) {
+				CreateteleportersMod.LOGGER.info("Skipping candidate {} because it is not a quantum portal block", candidatePortalPos);
+				continue;
 			}
 
-			Direction oppositeDirection = preferredDirection.getOpposite();
-			BlockPos oppositeTrack = candidatePortalPos.relative(oppositeDirection);
-			CreateteleportersMod.LOGGER.info("Checking opposite exit position at: {} for portal {}", oppositeTrack, candidatePortalPos);
-			if (isUsableExitPosition(level, oppositeTrack)) {
-				CreateteleportersMod.LOGGER.info("Found usable exit position on opposite side of {}", candidatePortalPos);
-				return oppositeTrack;
+			BlockFace preferredFace = toExitTrackFace(candidatePortalPos, preferredDirection);
+			CreateteleportersMod.LOGGER.info("Checking preferred exit position at: {} for portal {}", preferredFace.getPos(), candidatePortalPos);
+			if (isUsableExitPosition(level, preferredFace.getPos())) {
+				CreateteleportersMod.LOGGER.info("Found usable exit position on preferred side of {}", candidatePortalPos);
+				return preferredFace;
 			}
 		}
 
-		CreateteleportersMod.LOGGER.warn("No usable exit position found on either side");
+		CreateteleportersMod.LOGGER.warn("No usable exit position found on the Create-matched side");
 		return null;
+	}
+
+	private static BlockFace toExitTrackFace(BlockPos portalPos, Direction trackSide) {
+		return new BlockFace(portalPos.relative(trackSide), trackSide.getOpposite());
 	}
 
 	private static List<BlockPos> collectPortalCandidates(BlockPos primaryPortalPos, BlockPos targetBasePos, CompoundTag targetNbt) {
@@ -220,17 +245,32 @@ public final class CreateTrainPortalIntegration {
 		int interiorMax = targetNbt.getInt("portalMaxExtent") - 1;
 		String rotation = targetNbt.getString("rotation");
 		BlockPos horizontalDirection = horizontalDirection(rotation);
-		int localY = primaryPortalPos.getY() - targetBasePos.getY();
 
-		for (int horizontalOffset = interiorMin; horizontalOffset <= interiorMax; horizontalOffset++) {
-			BlockPos candidate = targetBasePos.offset(horizontalDirection.getX() * horizontalOffset, localY, horizontalDirection.getZ() * horizontalOffset);
-			if (!candidate.equals(primaryPortalPos)) {
-				candidates.add(candidate);
+		for (int yOffset = 1; yOffset <= portalHeight - 1; yOffset++) {
+			for (int horizontalOffset = interiorMin; horizontalOffset <= interiorMax; horizontalOffset++) {
+				BlockPos candidate = targetBasePos.offset(horizontalDirection.getX() * horizontalOffset, yOffset, horizontalDirection.getZ() * horizontalOffset);
+				if (!candidates.contains(candidate)) {
+					candidates.add(candidate);
+				}
 			}
 		}
 
-		candidates.sort(Comparator.comparingInt(pos -> pos.distManhattan(primaryPortalPos)));
+		candidates.sort(Comparator
+			.comparingInt((BlockPos pos) -> Math.abs(pos.getY() - primaryPortalPos.getY()))
+			.thenComparingInt(pos -> pos.distManhattan(primaryPortalPos)));
 		return candidates;
+	}
+
+	private static Direction getCreateStyleExitDirection(Direction entryDirection, String targetRotation) {
+		Direction exitDirection = entryDirection;
+		if (exitDirection.getAxis() == getPortalPlaneAxis(targetRotation)) {
+			exitDirection = exitDirection.getClockWise();
+		}
+		return exitDirection;
+	}
+
+	private static Direction.Axis getPortalPlaneAxis(String rotation) {
+		return "east".equals(rotation) || "west".equals(rotation) ? Direction.Axis.Z : Direction.Axis.X;
 	}
 
 	private static boolean isUsableExitPosition(ServerLevel level, BlockPos trackPos) {
@@ -265,7 +305,7 @@ public final class CreateTrainPortalIntegration {
 			boolean isLinked = nbt.getBoolean("isLinked");
 			boolean isActive = nbt.getBoolean("portalActive");
 			
-			CreateteleportersMod.LOGGER.info("  Found base at {} - isInterior: {}, isLinked: {}, isActive: {}", 
+			CreateteleportersMod.LOGGER.info("  Found base at {} - isInterior: {}, isLinked: {}, isActive: {}",
 				cursor, isInterior, isLinked, isActive);
 			
 			if (!isInterior) {
@@ -283,7 +323,7 @@ public final class CreateTrainPortalIntegration {
 			}
 		}
 		
-		CreateteleportersMod.LOGGER.info("Search complete - bases found: {}, linked+active: {}, best distance: {}", 
+		CreateteleportersMod.LOGGER.info("Search complete - bases found: {}, linked+active: {}, best distance: {}",
 			basesFound, linkedActiveBases, bestDistance == Integer.MAX_VALUE ? "none" : bestDistance);
 		return best;
 	}
@@ -331,15 +371,9 @@ public final class CreateTrainPortalIntegration {
 		};
 	}
 
-	private static Direction rotationToNormal(String rotation) {
-		return switch (rotation) {
-			case "east" -> Direction.EAST;
-			case "west" -> Direction.WEST;
-			case "south" -> Direction.SOUTH;
-			default -> Direction.NORTH;
-		};
+	private record PortalBaseData(BlockPos basePos, CompoundTag nbt) {
 	}
 
-	private record PortalBaseData(BlockPos basePos, CompoundTag nbt) {
+	private record PortalTargetData(ResourceLocation dimension, BlockPos basePos, String source) {
 	}
 }
