@@ -1,6 +1,6 @@
 /*
-*    MCreator note: This file will be REGENERATED on each build.
-*/
+ *    MCreator note: This file will be REGENERATED on each build.
+ */
 package net.createteleporters.init;
 
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -45,10 +45,8 @@ public class CreateteleportersModItems {
 	public static final DeferredItem<Item> CUSTOM_PORTAL = block(CreateteleportersModBlocks.CUSTOM_PORTAL);
 	public static final DeferredItem<Item> CUSTOM_PORTAL_ON = block(CreateteleportersModBlocks.CUSTOM_PORTAL_ON);
 	public static final DeferredItem<Item> BLOCK_TELEPORTER = block(CreateteleportersModBlocks.BLOCK_TELEPORTER);
-	// Start of user code block custom items
-	public static final DeferredItem<Item> SAME_DIMENSION_PORTAL_TRACK = REGISTRY.register("same_dimension_portal_track",
-			() -> new com.simibubi.create.content.trains.track.TrackBlockItem(CreateteleportersModBlocks.SAME_DIMENSION_PORTAL_TRACK.get(), new Item.Properties()));
 
+	// Start of user code block custom items
 	// End of user code block custom items
 	private static DeferredItem<Item> block(DeferredHolder<Block, Block> block) {
 		return REGISTRY.register(block.getId().getPath(), () -> new BlockItem(block.get(), new Item.Properties()));
