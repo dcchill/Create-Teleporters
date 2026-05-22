@@ -63,9 +63,7 @@ public final class CreateTrainPortalIntegration {
 	private static PortalTrackProvider.Exit findExit(ServerLevel level, BlockFace entryFace) {
 		CreateteleportersMod.LOGGER.info("=== TRAIN PORTAL TELEPORT ATTEMPT ===");
 		CreateteleportersMod.LOGGER.info("Entry face: {} at {}", entryFace.getFace(), entryFace.getPos());
-		boolean sameDimensionTrack = isSameDimensionPortalTrack(level, entryFace.getPos());
-		CreateteleportersMod.LOGGER.info("Entry track block: {}, same-dimension track: {}",
-			level.getBlockState(entryFace.getPos()).getBlock(), sameDimensionTrack);
+		CreateteleportersMod.LOGGER.info("Entry track block: {}", level.getBlockState(entryFace.getPos()).getBlock());
 		
 		BlockPos sourcePortalPos = entryFace.getConnectedPos();
 		CreateteleportersMod.LOGGER.info("Source portal position: {}", sourcePortalPos);
@@ -92,13 +90,10 @@ public final class CreateTrainPortalIntegration {
 		}
 
 		ResourceKey<net.minecraft.world.level.Level> targetDim = ResourceKey.create(Registries.DIMENSION, targetDimLoc);
-		if (targetDim.equals(level.dimension()) && !sameDimensionTrack) {
+		if (targetDim.equals(level.dimension())) {
 			CreateteleportersMod.LOGGER.warn("FAILED: Create train portal tracks only support cross-dimension links. Source and target are both {} (target source: {})",
 				targetDimLoc, targetData.source());
 			return null;
-		}
-		if (targetDim.equals(level.dimension())) {
-			CreateteleportersMod.LOGGER.info("Allowing same-dimension train portal because the entry track is the custom same-dimension portal track");
 		}
 
 		ServerLevel targetLevel = level.getServer().getLevel(targetDim);
@@ -198,10 +193,6 @@ public final class CreateTrainPortalIntegration {
 			sourceBase.nbt.getDouble("linkedZ")
 		);
 		return new PortalTargetData(targetDimLoc, targetBasePos, "linked portal metadata");
-	}
-
-	private static boolean isSameDimensionPortalTrack(ServerLevel level, BlockPos trackPos) {
-		return level.getBlockState(trackPos).is(CreateteleportersModBlocks.SAME_DIMENSION_PORTAL_TRACK.get());
 	}
 
 	private static BlockFace resolveExitTrackFace(ServerLevel level, BlockPos portalPos, Direction preferredDirection, BlockPos targetBasePos, CompoundTag targetNbt) {

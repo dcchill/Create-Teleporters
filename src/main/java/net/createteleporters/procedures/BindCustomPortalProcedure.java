@@ -25,7 +25,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.createteleporters.init.CreateteleportersModBlocks;
 import net.createteleporters.init.CreateteleportersModItems;
 import net.createteleporters.block.CustomPortalBaseBlock;
-import net.createteleporters.configuration.CTPConfigConfiguration;
 
 /**
  * Procedure for binding custom portals together.
@@ -203,16 +202,6 @@ public class BindCustomPortalProcedure {
 		}
 	}
 
-	/**
-	 * Checks if portal-to-portal binding is forced by config.
-	 * When true, portals must be explicitly linked to another portal.
-	 * When false, portals can teleport to arbitrary coordinates.
-	 * Note: This is automatically disabled when Immersive Portals Compat is enabled.
-	 */
-	public static boolean isForcePortalToPortalBinding() {
-		return CTPConfigConfiguration.isCoordinateBindingEnabled();
-	}
-	
 	/**
 	 * Converts a rotation string to yaw value.
 	 */

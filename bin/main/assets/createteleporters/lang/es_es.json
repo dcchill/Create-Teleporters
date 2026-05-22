@@ -77,5 +77,6 @@
   "block.createteleporters.quantum_casing.description_1": "Mantén [Mayús] para ver el resumen",
   "block.createteleporters.quantum_casing.description_2": "Se usa para construir el marco del portal personalizado.",
   "block.createteleporters.block_teleporter.description_1": "Mantén [Mayús] para ver el resumen",
-  "block.createteleporters.block_teleporter.description_2": "Llena con telejugo para teletransportar un bloque a un destino emparejado. Inicia el teletransporte activando con una señal de redstone."
+  "block.createteleporters.block_teleporter.description_2": "Llena con telejugo para teletransportar un bloque a un destino emparejado. Inicia el teletransporte activando con una señal de redstone.",
+  "gui.createteleporters.custom_teleporter_gui.mode_tooltip": "¿Enlace a un portal?"
 }

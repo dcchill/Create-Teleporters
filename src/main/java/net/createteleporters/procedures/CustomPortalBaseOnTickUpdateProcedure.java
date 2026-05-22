@@ -39,7 +39,7 @@ import net.minecraft.world.scores.Scoreboard;
 import net.createteleporters.configuration.CTPConfigConfiguration;
 import net.createteleporters.integration.ImmersivePortalsIntegration;
 import net.createteleporters.integration.SableAeronauticsIntegration;
-import net.createteleporters.procedures.BindCustomPortalProcedure;
+import net.createteleporters.util.CustomPortalTeleportMode;
 
 public class CustomPortalBaseOnTickUpdateProcedure {
 	private static final int IMMERSIVE_PORTAL_ORIENTATION_COMPAT_VERSION = 1;
@@ -47,19 +47,22 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 	public static String execute(LevelAccessor world, double x, double y, double z) {
 		// Use scalable portal checker instead of fixed size
 		ScalablePortalCheckerProcedure.execute(world, x, y, z);
-		ensurePortalChunksLoaded(world, BlockPos.containing(x, y, z));
+		BlockPos basePos = BlockPos.containing(x, y, z);
+		CustomPortalTeleportMode.getOrMigrate(world, basePos);
+		ensurePortalChunksLoaded(world, basePos);
 
-		if (getBlockNBTLogic(world, BlockPos.containing(x, y, z), "portalActive")) {
-			if (4 <= getFluidTankLevel(world, BlockPos.containing(x, y, z), 1, null)) {
+		if (getBlockNBTLogic(world, basePos, "portalActive")) {
+			if (4 <= getFluidTankLevel(world, basePos, 1, null)) {
 				// Get portal dimensions from NBT
-				int portalWidth = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalWidth");
-				int portalHeight = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalHeight");
-				int minExtent = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalMinExtent");
-				int maxExtent = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalMaxExtent");
-				String rotation = getBlockNBTString(world, BlockPos.containing(x, y, z), "rotation");
+				int portalWidth = getBlockNBTInt(world, basePos, "portalWidth");
+				int portalHeight = getBlockNBTInt(world, basePos, "portalHeight");
+				int minExtent = getBlockNBTInt(world, basePos, "portalMinExtent");
+				int maxExtent = getBlockNBTInt(world, basePos, "portalMaxExtent");
+				String rotation = getBlockNBTString(world, basePos, "rotation");
 
 				// Check if Immersive Portals compatibility is enabled
 				boolean useImmersivePortals = CTPConfigConfiguration.IMMERSIVE_PORTALS_COMPAT.get();
+				boolean coordinateMode = CustomPortalTeleportMode.isCoordinateMode(world, basePos) && !useImmersivePortals;
 				
 				// Calculate interior dimensions (needed for both IP and vanilla)
 				int interiorMin = minExtent + 1;
@@ -67,11 +70,11 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				int fillHeight = portalHeight - 1;
 
 				// Check if this portal is linked to another portal
-				BlockEntity linkedBE = world.getBlockEntity(BlockPos.containing(x, y, z));
+				BlockEntity linkedBE = world.getBlockEntity(basePos);
 				boolean isLinked = linkedBE != null && linkedBE.getPersistentData().getBoolean("isLinked");
 
 				// For linked portals, only create portals when BOTH sides are valid
-				if (isLinked) {
+				if (isLinked && !coordinateMode) {
 					int linkedX = linkedBE.getPersistentData().getInt("linkedX");
 					int linkedY = linkedBE.getPersistentData().getInt("linkedY");
 					int linkedZ = linkedBE.getPersistentData().getInt("linkedZ");
@@ -89,7 +92,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					if (!remoteActive) {
 						// Linked portal not ready yet — wait
 						clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
-						if (getBlockNBTLogic(world, BlockPos.containing(x, y, z), "immersivePortalCreated")) {
+						if (getBlockNBTLogic(world, basePos, "immersivePortalCreated")) {
 							removeTrackedImmersivePortal(world, x, y, z);
 							if (linkedBE != null)
 								linkedBE.getPersistentData().putBoolean("immersivePortalCreated", false);
@@ -111,7 +114,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 
 					if (isLinked) {
 						// Check if either portal has the Advanced TP Link
-						boolean hasTpLink = hasAdvancedTpLink(world, BlockPos.containing(x, y, z)) ||
+						boolean hasTpLink = hasAdvancedTpLink(world, basePos) ||
 										   hasAdvancedTpLinkAtLinkedPortal(world, linkedBE);
 						canCreateIP = hasTpLink;
 					}
@@ -144,7 +147,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 
 						// Create Immersive Portals portal (only needs to be done once)
 						// But verify it actually exists first
-						boolean needsCreation = !getBlockNBTLogic(world, BlockPos.containing(x, y, z), "immersivePortalCreated");
+						boolean needsCreation = !getBlockNBTLogic(world, basePos, "immersivePortalCreated");
 						boolean needsOrientationRebuild = be != null && be.getPersistentData().getInt("immersivePortalCompatVersion") < IMMERSIVE_PORTAL_ORIENTATION_COMPAT_VERSION;
 
 						if (needsCreation || needsOrientationRebuild) {
@@ -169,7 +172,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					} else {
 						// IP requirements not met (not linked or missing TP Link) — remove any existing IP portal.
 						// Do NOT spawn quantum portal blocks; IP compat is active.
-						if (getBlockNBTLogic(world, BlockPos.containing(x, y, z), "immersivePortalCreated")) {
+						if (getBlockNBTLogic(world, basePos, "immersivePortalCreated")) {
 							removeTrackedImmersivePortal(world, x, y, z);
 						}
 						// Ensure no quantum portal blocks remain
@@ -198,7 +201,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				
 				// Drain fluid
 				if (world instanceof ILevelExtension _ext) {
-					IFluidHandler _fluidHandler = _ext.getCapability(Capabilities.FluidHandler.BLOCK, BlockPos.containing(x, y, z), null);
+					IFluidHandler _fluidHandler = _ext.getCapability(Capabilities.FluidHandler.BLOCK, basePos, null);
 					if (_fluidHandler != null)
 						_fluidHandler.drain(4, IFluidHandler.FluidAction.EXECUTE);
 				}
@@ -231,15 +234,11 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				String targetDim;
 				double tx, ty, tz, yaw;
 
-				// Check if portal-to-portal binding is forced by config
-				boolean forceBinding = BindCustomPortalProcedure.isForcePortalToPortalBinding();
-
-				if (forceBinding) {
-					// When binding is forced, read coordinates from the Advanced TP Link in inventory
-					ItemStack invStack = (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy());
+				if (coordinateMode) {
+					ItemStack invStack = (itemFromBlockInventory(world, basePos, 0).copy());
 
 					if (invStack.isEmpty() || !(invStack.getItem() instanceof net.createteleporters.item.ADVTplinkItem)) {
-						return "Missing Advanced TP Link"; // Require TP Link when binding is forced
+						return "Missing Advanced TP Link";
 					}
 
 					CompoundTag cd = invStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
@@ -248,10 +247,12 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					ty = cd.getDouble("ypo");
 					tz = cd.getDouble("zpo");
 					yaw = cd.getDouble("yawpo");
-				} else if (isLinked) {
-					// Portal is explicitly linked to another portal
-					// Require Advanced TP Link in at least one portal's inventory
-					boolean hasTpLink = hasAdvancedTpLink(world, BlockPos.containing(x, y, z)) ||
+				} else {
+					if (!isLinked) {
+						return "Portal Not Linked";
+					}
+
+					boolean hasTpLink = hasAdvancedTpLink(world, basePos) ||
 									   hasAdvancedTpLinkAtLinkedPortal(world, linkedBE);
 
 					if (!hasTpLink) {
@@ -263,15 +264,6 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					tz = linkedBE.getPersistentData().getDouble("linkedZ");
 					targetDim = linkedBE.getPersistentData().getString("linkedDim");
 					yaw = linkedBE.getPersistentData().getDouble("linkedYaw");
-				} else {
-					// Fall back to item data (for backwards compatibility when binding not forced)
-					ItemStack invStack = (itemFromBlockInventory(world, BlockPos.containing(x, y, z), 0).copy());
-					CompoundTag cd = invStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-					targetDim = cd.getString("dimension").trim();
-					tx = cd.getDouble("xpo");
-					ty = cd.getDouble("ypo");
-					tz = cd.getDouble("zpo");
-					yaw = cd.getDouble("yawpo");
 				}
 
 				// Check if Immersive Portals actually created a portal — if so, skip vanilla teleportation
@@ -448,7 +440,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				return "Portal Ready";
 			} else {
 				if (!world.isClientSide()) {
-					BlockPos _bp = BlockPos.containing(x, y, z);
+					BlockPos _bp = basePos;
 					BlockEntity _blockEntity = world.getBlockEntity(_bp);
 					BlockState _bs = world.getBlockState(_bp);
 					if (_blockEntity != null)

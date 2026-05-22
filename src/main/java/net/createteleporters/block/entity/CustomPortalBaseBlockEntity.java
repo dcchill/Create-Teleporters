@@ -21,6 +21,7 @@ import net.minecraft.core.BlockPos;
 import net.createteleporters.world.inventory.CustomTeleporterGuiMenu;
 import net.createteleporters.init.CreateteleportersModFluids;
 import net.createteleporters.init.CreateteleportersModBlockEntities;
+import net.createteleporters.util.CustomPortalTeleportMode;
 
 import javax.annotation.Nullable;
 
@@ -43,6 +44,7 @@ public class CustomPortalBaseBlockEntity extends RandomizableContainerBlockEntit
 		ContainerHelper.loadAllItems(compound, this.stacks, lookupProvider);
 		if (compound.get("fluidTank") instanceof CompoundTag compoundTag)
 			fluidTank.readFromNBT(lookupProvider, compoundTag);
+		CustomPortalTeleportMode.getOrMigrate(this);
 	}
 
 	@Override

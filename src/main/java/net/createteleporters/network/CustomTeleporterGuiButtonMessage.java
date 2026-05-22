@@ -17,6 +17,8 @@ import net.minecraft.core.BlockPos;
 
 import net.createteleporters.procedures.CloseGuiProcedure;
 import net.createteleporters.CreateteleportersMod;
+import net.createteleporters.init.CreateteleportersModBlocks;
+import net.createteleporters.util.CustomPortalTeleportMode;
 
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public record CustomTeleporterGuiButtonMessage(int buttonID, int x, int y, int z) implements CustomPacketPayload {
@@ -50,6 +52,9 @@ public record CustomTeleporterGuiButtonMessage(int buttonID, int x, int y, int z
 		if (buttonID == 0) {
 
 			CloseGuiProcedure.execute(entity);
+		}
+		if (buttonID == 1 && world.getBlockState(new BlockPos(x, y, z)).is(CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get())) {
+			CustomPortalTeleportMode.toggle(world, new BlockPos(x, y, z));
 		}
 	}
 

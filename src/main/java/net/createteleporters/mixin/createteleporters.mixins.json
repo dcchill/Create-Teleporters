@@ -3,11 +3,6 @@
   "package": "net.createteleporters.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "CarriageMixin",
-    "TrackBlockMixin",
-    "TrackEdgeAccessor",
-    "TrackEdgeMixin",
-    "TrackGraphMixin"
   ],
   "injectors": {
     "defaultRequire": 1

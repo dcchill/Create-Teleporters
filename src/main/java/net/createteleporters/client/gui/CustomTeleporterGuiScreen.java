@@ -11,13 +11,16 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.BlockPos;
 
 import net.createteleporters.world.inventory.CustomTeleporterGuiMenu;
 import net.createteleporters.procedures.FluidDisplayProcedure;
 import net.createteleporters.procedures.CustomPortalBaseOnTickUpdateProcedure;
 import net.createteleporters.network.CustomTeleporterGuiButtonMessage;
 import net.createteleporters.init.CreateteleportersModScreens;
+import net.createteleporters.util.CustomPortalTeleportMode;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 
@@ -27,6 +30,7 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 	private final Player entity;
 	private boolean menuStateUpdateActive = false;
 	ImageButton imagebutton_check;
+	Button button_mode;
 
 	public CustomTeleporterGuiScreen(CustomTeleporterGuiMenu container, Inventory inventory, Component text) {
 		super(container, inventory, text);
@@ -49,6 +53,9 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
+		if (button_mode != null && button_mode.isMouseOver(mouseX, mouseY)) {
+			guiGraphics.renderTooltip(this.font, Component.translatable("gui.createteleporters.custom_teleporter_gui.mode_tooltip"), mouseX, mouseY);
+		}
 	}
 
 	@Override
@@ -96,5 +103,39 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 			}
 		};
 		this.addRenderableWidget(imagebutton_check);
+		button_mode = new Button(this.leftPos + 134, this.topPos + 16, 36, 16, getModeLabel(), e -> {
+			int x = CustomTeleporterGuiScreen.this.x;
+			int y = CustomTeleporterGuiScreen.this.y;
+			PacketDistributor.sendToServer(new CustomTeleporterGuiButtonMessage(1, x, y, z));
+			CustomTeleporterGuiButtonMessage.handleButtonAction(entity, 1, x, y, z);
+			button_mode.setMessage(getModeLabel());
+		}, supplier -> supplier.get()) {
+			@Override
+			public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+				String mode = CustomPortalTeleportMode.getOrMigrate(world, new BlockPos(CustomTeleporterGuiScreen.this.x, CustomTeleporterGuiScreen.this.y, z));
+				boolean portalMode = CustomPortalTeleportMode.PORTAL_TO_PORTAL.equals(mode);
+				int trackX = getX();
+				int trackY = getY() + 3;
+				int trackW = 26;
+				int trackH = 11;
+				int trackColor = portalMode ? 0xFF2F8F5B : 0xFF555B66;
+				int borderColor = isHoveredOrFocused() ? 0xFFFFFFFF : 0xFFB8C0CC;
+				int knobW = 8;
+				int knobX = portalMode ? trackX + trackW - knobW - 2 : trackX + 2;
+
+				guiGraphics.fill(trackX, trackY, trackX + trackW, trackY + trackH, 0xFF15191F);
+				guiGraphics.fill(trackX + 1, trackY + 1, trackX + trackW - 1, trackY + trackH - 1, trackColor);
+				guiGraphics.fill(trackX, trackY, trackX + trackW, trackY + 1, borderColor);
+				guiGraphics.fill(trackX, trackY + trackH - 1, trackX + trackW, trackY + trackH, borderColor);
+				guiGraphics.fill(trackX, trackY, trackX + 1, trackY + trackH, borderColor);
+				guiGraphics.fill(trackX + trackW - 1, trackY, trackX + trackW, trackY + trackH, borderColor);
+				guiGraphics.fill(knobX, trackY + 2, knobX + knobW, trackY + trackH - 2, 0xFFF4F7FA);
+			}
+		};
+		this.addRenderableWidget(button_mode);
+	}
+
+	private Component getModeLabel() {
+		return CustomPortalTeleportMode.displayName(CustomPortalTeleportMode.getOrMigrate(world, new BlockPos(x, y, z)));
 	}
 }
