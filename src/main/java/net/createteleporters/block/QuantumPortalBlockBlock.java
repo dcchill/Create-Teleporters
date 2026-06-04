@@ -78,7 +78,8 @@ public class QuantumPortalBlockBlock extends IronBarsBlock {
 			}
 
 			String boundTrackKey = getBoundCreatePortalTrackKey(serverLevel, trackPos);
-			if (boundTrackKey == null || shouldRefreshBoundPortalTrack(serverLevel, pos, trackPos, readyLinkKey, boundTrackKey)) {
+			String trackStateKey = boundTrackKey == null ? "<unbound>" : boundTrackKey;
+			if (shouldRefreshBoundPortalTrack(serverLevel, pos, trackPos, readyLinkKey, trackStateKey)) {
 				serverLevel.scheduleTick(trackPos, trackBlock, 1);
 			}
 		}
