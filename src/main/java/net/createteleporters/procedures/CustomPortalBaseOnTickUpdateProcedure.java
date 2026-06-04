@@ -40,6 +40,7 @@ import net.createteleporters.configuration.CTPConfigConfiguration;
 import net.createteleporters.integration.ImmersivePortalsIntegration;
 import net.createteleporters.integration.SableAeronauticsIntegration;
 import net.createteleporters.util.CustomPortalTeleportMode;
+import net.createteleporters.block.QuantumPortalBlockBlock;
 
 public class CustomPortalBaseOnTickUpdateProcedure {
 	private static final int IMMERSIVE_PORTAL_ORIENTATION_COMPAT_VERSION = 1;
@@ -185,16 +186,17 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 
 					// Use vanilla quantum portal blocks
 					// Fill portal interior only (not the frame)
+					String portalColor = QuantumPortalBlockBlock.getStoredPortalColorName(world.getBlockEntity(basePos));
 					if ("east".equals(rotation) || "west".equals(rotation)) {
 						if (world instanceof ServerLevel _level)
 							_level.getServer().getCommands().performPrefixedCommand(
 								new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
-								"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax + " createteleporters:quantum_portal_block");
+								"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax + " createteleporters:quantum_portal_block[color=" + portalColor + "]");
 					} else if ("north".equals(rotation) || "south".equals(rotation)) {
 						if (world instanceof ServerLevel _level)
 							_level.getServer().getCommands().performPrefixedCommand(
 								new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
-								"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight + " ~ createteleporters:quantum_portal_block");
+								"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight + " ~ createteleporters:quantum_portal_block[color=" + portalColor + "]");
 					}
 
 				}

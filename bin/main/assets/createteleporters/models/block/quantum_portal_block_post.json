@@ -1,5 +1,5 @@
 {
-  "parent": "block/template_glass_pane_post",
+  "parent": "createteleporters:block/tinted_glass_pane_post",
   "textures": {
     "particle": "createteleporters:block/p_portal",
     "edge": "createteleporters:block/p_portal",

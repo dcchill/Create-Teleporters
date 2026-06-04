@@ -28,6 +28,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import net.createteleporters.CreateteleportersMod;
@@ -78,6 +79,7 @@ public final class CreateTrainPortalIntegration {
 		PortalTrackProvider.REGISTRY.register(CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get(), CreateTrainPortalIntegration::findExit);
 		if (!tickListenerRegistered) {
 			NeoForge.EVENT_BUS.addListener(CreateTrainPortalIntegration::onServerTick);
+			NeoForge.EVENT_BUS.addListener(CreateTrainPortalIntegration::onBlockBroken);
 			tickListenerRegistered = true;
 		}
 		CreateteleportersMod.LOGGER.info("Registered Create train portal provider for quantum portal blocks.");
@@ -247,6 +249,52 @@ public final class CreateTrainPortalIntegration {
 		trackBlockEntity.getPersistentData().putLong(PORTAL_COUNTERPART_TAG, counterpartTrackPos.asLong());
 		trackBlockEntity.setChanged();
 		TrackPropagator.onRailAdded(level, trackPos, level.getBlockState(trackPos));
+	}
+
+	private static void onBlockBroken(BlockEvent.BreakEvent event) {
+		if (!(event.getLevel() instanceof ServerLevel sourceLevel)
+			|| !(sourceLevel.getBlockEntity(event.getPos()) instanceof TrackBlockEntity sourceTrack)) {
+			return;
+		}
+
+		PortalTrackLocation counterpart = getPortalTrackCounterpart(sourceLevel, sourceTrack);
+		if (counterpart == null) {
+			return;
+		}
+		BlockPos sourcePos = event.getPos().immutable();
+
+		CreateteleportersMod.queueServerWork(1, () -> {
+			if (sourceLevel.getBlockEntity(sourcePos) instanceof TrackBlockEntity) {
+				return;
+			}
+
+			ServerLevel targetLevel = sourceLevel.getServer().getLevel(counterpart.dimension());
+			if (targetLevel == null || !(targetLevel.getBlockEntity(counterpart.pos()) instanceof TrackBlockEntity targetTrack)) {
+				return;
+			}
+
+			PortalTrackLocation reverseLink = getPortalTrackCounterpart(targetLevel, targetTrack);
+			if (reverseLink == null
+				|| !reverseLink.dimension().equals(sourceLevel.dimension())
+				|| !reverseLink.pos().equals(sourcePos)) {
+				return;
+			}
+
+			targetLevel.destroyBlock(counterpart.pos(), false);
+			CreateteleportersMod.LOGGER.info("Removed destination portal track at {} after its counterpart at {} was broken",
+				counterpart.pos(), sourcePos);
+		});
+	}
+
+	private static PortalTrackLocation getPortalTrackCounterpart(ServerLevel level, TrackBlockEntity track) {
+		CompoundTag persistentData = track.getPersistentData();
+		if (persistentData.getBoolean(SAME_DIMENSION_PORTAL_TRACK_TAG) && persistentData.contains(PORTAL_COUNTERPART_TAG)) {
+			return new PortalTrackLocation(level.dimension(), BlockPos.of(persistentData.getLong(PORTAL_COUNTERPART_TAG)));
+		}
+		if (track.boundLocation != null) {
+			return new PortalTrackLocation(track.boundLocation.getFirst(), track.boundLocation.getSecond());
+		}
+		return null;
 	}
 
 	private static void onServerTick(ServerTickEvent.Post event) {
@@ -675,6 +723,9 @@ public final class CreateTrainPortalIntegration {
 	}
 
 	private record PortalRearmState(ResourceKey<net.minecraft.world.level.Level> dimension, BlockPos sourceTrack, BlockPos targetTrack) {
+	}
+
+	private record PortalTrackLocation(ResourceKey<net.minecraft.world.level.Level> dimension, BlockPos pos) {
 	}
 
 }

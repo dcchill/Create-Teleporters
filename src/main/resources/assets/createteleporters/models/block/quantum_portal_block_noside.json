@@ -1,5 +1,5 @@
 {
-  "parent": "block/template_glass_pane_noside",
+  "parent": "createteleporters:block/tinted_glass_pane_noside",
   "textures": {
     "particle": "createteleporters:block/p_portal",
     "pane": "createteleporters:block/p_portal"
