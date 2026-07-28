@@ -6,6 +6,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 
 import net.createteleporters.CreateteleportersMod;
+import net.createteleporters.configuration.CTPConfigConfiguration;
 
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD, modid = "createteleporters")
 public final class CreateTrainPortalBootstrap {
@@ -15,14 +16,16 @@ public final class CreateTrainPortalBootstrap {
 
 	@SubscribeEvent
 	public static void onCommonSetup(FMLCommonSetupEvent event) {
-		CreateteleportersMod.LOGGER.info("=== CREATE TRAIN PORTAL BOOTSTRAP CALLED ===");
-		CreateteleportersMod.LOGGER.info("Create mod loaded: {}", ModList.get().isLoaded("create"));
+		if (!CTPConfigConfiguration.EXPERIMENTAL_TRAIN_TELEPORTATION.get()) {
+			CreateteleportersMod.LOGGER.info("Experimental train teleportation is disabled");
+			return;
+		}
 		if (!ModList.get().isLoaded("create")) {
 			CreateteleportersMod.LOGGER.info("Create mod not loaded, skipping train portal integration");
 			return;
 		}
 
-		CreateteleportersMod.LOGGER.info("Enqueueing Create train portal integration registration");
+		CreateteleportersMod.LOGGER.warn("Experimental train teleportation is enabled");
 		event.enqueueWork(CreateTrainPortalIntegration::register);
 	}
 }

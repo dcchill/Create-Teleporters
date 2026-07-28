@@ -9,9 +9,6 @@ build/
 .classpath
 .project
 
-# MCreator workspace
-.mcreator/
-
 # Minecraft client/server files
 run/
 

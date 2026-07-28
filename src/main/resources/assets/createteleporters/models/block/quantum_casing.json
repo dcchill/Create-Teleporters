@@ -1,8 +1,6 @@
 {
-  "type": "fusion:connecting",
   "parent": "minecraft:block/cube_all",
-  "loader": "fusion:model",
   "textures": {
-    "all": "createteleporters:block/quantum_casing_connect"
+    "all": "createteleporters:block/quantum_casing_base"
   }
 }

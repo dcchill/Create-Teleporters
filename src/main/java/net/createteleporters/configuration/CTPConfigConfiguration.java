@@ -18,6 +18,7 @@ public class CTPConfigConfiguration {
 	public static final ModConfigSpec.ConfigValue<Double> ENTITY_TP_RANGE;
 	public static final ModConfigSpec.ConfigValue<Double> ITEM_TP_RANGE;
 	public static final ModConfigSpec.BooleanValue IMMERSIVE_PORTALS_COMPAT;
+	public static final ModConfigSpec.BooleanValue EXPERIMENTAL_TRAIN_TELEPORTATION;
 	public static final ModConfigSpec.BooleanValue ALLOW_POCKETDBLOCK_BREAKING;
 	public static final boolean LEGACY_CUSTOM_PORTAL_COORDINATE_BINDING_DEFAULT = readLegacyCoordinateBindingFromDisk().orElse(true);
 	static {
@@ -28,6 +29,9 @@ public class CTPConfigConfiguration {
 
 		BUILDER.push("Integration");
 		IMMERSIVE_PORTALS_COMPAT = BUILDER.comment("Enable Immersive Portals compatibility. When enabled, quantum portals will use Immersive Portals API instead of vanilla teleportation commands. Requires Immersive Portals mod to be installed.").define("Immersive Portals Compatibility", false);
+		EXPERIMENTAL_TRAIN_TELEPORTATION = BUILDER.comment(
+				"EXPERIMENTAL: Allow Create trains to teleport through linked quantum portals. This feature may cause unexpected train behavior or data loss.")
+				.define("Experimental Train Teleportation", false);
 		BUILDER.pop();
 
 		BUILDER.push("Blocks");
