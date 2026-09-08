@@ -30,7 +30,6 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import net.createteleporters.init.CreateteleportersModBlocks;
-import net.createteleporters.configuration.CTPConfigConfiguration;
 import net.createteleporters.procedures.QuantumPortalBlockOnTickUpdateProcedure;
 
 import java.util.Map;
@@ -105,8 +104,7 @@ public class QuantumPortalBlockBlock extends IronBarsBlock {
 	}
 
 	private static void scheduleAdjacentCreateTracks(Level world, BlockPos pos) {
-		if (!CTPConfigConfiguration.EXPERIMENTAL_TRAIN_TELEPORTATION.get()
-				|| !(world instanceof ServerLevel serverLevel)) {
+		if (!(world instanceof ServerLevel serverLevel)) {
 			return;
 		}
 

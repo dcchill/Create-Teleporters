@@ -26,10 +26,32 @@
     {
       "type": "java",
       "request": "launch",
-      "name": "Server",
+      "name": "GameTestServer",
       "presentation": {
         "group": "Mod Development - Create-Teleporters",
         "order": 1
+      },
+      "projectName": "Create-Teleporters",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@C:\\Users\\dsmar\\Documents\\GitHub\\Create-Teleporters\\build\\moddev\\gameTestServerRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@C:\\Users\\dsmar\\Documents\\GitHub\\Create-Teleporters\\build\\moddev\\gameTestServerRunVmArgs.txt",
+        "-Dfml.modFolders\u003dcreateteleporters%%C:\\Users\\dsmar\\Documents\\GitHub\\Create-Teleporters\\bin\\main"
+      ],
+      "cwd": "${workspaceFolder}\\build\\train-gametest",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Server",
+      "presentation": {
+        "group": "Mod Development - Create-Teleporters",
+        "order": 2
       },
       "projectName": "Create-Teleporters",
       "mainClass": "net.neoforged.devlaunch.Main",

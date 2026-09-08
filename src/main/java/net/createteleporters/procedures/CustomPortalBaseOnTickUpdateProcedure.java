@@ -62,8 +62,8 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				String rotation = getBlockNBTString(world, basePos, "rotation");
 
 				// Check if Immersive Portals compatibility is enabled
-				boolean useImmersivePortals = CTPConfigConfiguration.IMMERSIVE_PORTALS_COMPAT.get();
-				boolean coordinateMode = CustomPortalTeleportMode.isCoordinateMode(world, basePos) && !useImmersivePortals;
+				boolean coordinateMode = CustomPortalTeleportMode.isCoordinateMode(world, basePos);
+				boolean useImmersivePortals = !coordinateMode && CTPConfigConfiguration.IMMERSIVE_PORTALS_COMPAT.get();
 				
 				// Calculate interior dimensions (needed for both IP and vanilla)
 				int interiorMin = minExtent + 1;

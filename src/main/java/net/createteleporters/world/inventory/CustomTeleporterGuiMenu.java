@@ -14,6 +14,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.DataSlot;
+import net.createteleporters.util.CustomPortalTeleportMode;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.Entity;
@@ -48,6 +50,7 @@ public class CustomTeleporterGuiMenu extends AbstractContainerMenu implements Cr
 	private Supplier<Boolean> boundItemMatcher = null;
 	private Entity boundEntity = null;
 	private BlockEntity boundBlockEntity = null;
+	private final DataSlot teleportMode = DataSlot.standalone();
 
 	public CustomTeleporterGuiMenu(int id, Inventory inv, FriendlyByteBuf extraData) {
 		super(CreateteleportersModMenus.CUSTOM_TELEPORTER_GUI.get(), id);
@@ -105,7 +108,17 @@ public class CustomTeleporterGuiMenu extends AbstractContainerMenu implements Cr
 				this.addSlot(new Slot(inv, sj + (si + 1) * 9, 0 + 8 + sj * 18, 0 + 84 + si * 18));
 		for (int si = 0; si < 9; ++si)
 			this.addSlot(new Slot(inv, si, 0 + 8 + si * 18, 0 + 142));
+		addDataSlot(teleportMode);
+		updateModeData();
 	}
+
+	private void updateModeData() {
+		if (world.isClientSide) return;
+		teleportMode.set(CustomPortalTeleportMode.PORTAL_TO_PORTAL.equals(CustomPortalTeleportMode.getOrMigrate(boundBlockEntity)) ? 1 : 0);
+	}
+	public String getTeleportMode() { return teleportMode.get() == 1 ? CustomPortalTeleportMode.PORTAL_TO_PORTAL : CustomPortalTeleportMode.COORDINATE; }
+	@Override
+	public void broadcastChanges() { updateModeData(); super.broadcastChanges(); }
 
 	@Override
 	public boolean stillValid(Player player) {

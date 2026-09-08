@@ -20,6 +20,11 @@ neoForge {
         server {
             server()
         }
+        gameTestServer {
+            type = "gameTestServer"
+            gameDirectory = file('build/train-gametest')
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'createteleporters'
+        }
 
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
@@ -32,6 +37,15 @@ neoForge {
             sourceSet sourceSets.main
         }
     }
+}
+
+// Compile the integration checks only for the explicit development test run.
+// These are in-game tests, not standalone JVM tests.
+sourceSets.test.java.setSrcDirs([])
+sourceSets.test.resources.setSrcDirs([])
+if (providers.gradleProperty('trainPortalTests').isPresent()) {
+    sourceSets.main.java.srcDir 'src/test/java'
+    sourceSets.main.resources.srcDir 'src/test/resources'
 }
 
 tasks.withType(JavaCompile).configureEach {

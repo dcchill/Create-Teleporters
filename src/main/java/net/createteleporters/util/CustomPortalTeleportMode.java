@@ -33,6 +33,7 @@ public final class CustomPortalTeleportMode {
 		}
 
 		mode = defaultModeFromLegacyConfig();
+		if (blockEntity.getLevel() != null && blockEntity.getLevel().isClientSide) return mode;
 		nbt.putString(TAG, mode);
 		blockEntity.setChanged();
 		if (blockEntity.getLevel() instanceof Level level) {
@@ -50,6 +51,7 @@ public final class CustomPortalTeleportMode {
 		if (blockEntity == null) {
 			return defaultModeFromLegacyConfig();
 		}
+		if (world.isClientSide()) return getOrMigrate(blockEntity);
 
 		String current = getOrMigrate(blockEntity);
 		String next = COORDINATE.equals(current) ? PORTAL_TO_PORTAL : COORDINATE;

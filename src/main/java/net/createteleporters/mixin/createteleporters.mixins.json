@@ -2,7 +2,22 @@
   "required": true,
   "package": "net.createteleporters.mixin",
   "compatibilityLevel": "JAVA_21",
+  "plugin": "net.createteleporters.mixin.TrainPortalMixinPlugin",
   "mixins": [
+    "PortalNodeMixin",
+    "PortalEdgeMixin",
+    "PortalTrackMixin",
+    "PortalTrackEntityMixin",
+    "PortalCarriageMixin",
+    "PortalDimensionalCarriageMixin",
+    "PortalBogeyMixin",
+    "PortalCarriageEntityMixin",
+    "PortalCarriageSyncMixin",
+    "PortalTrainMixin"
+  ],
+  "client": [
+    "PortalCarriageRenderMixin",
+    "PortalCouplingMixin"
   ],
   "injectors": {
     "defaultRequire": 1

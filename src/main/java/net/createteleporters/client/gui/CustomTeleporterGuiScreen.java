@@ -11,6 +11,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
+import net.createteleporters.util.CustomPortalTeleportMode;
 import net.minecraft.client.gui.GuiGraphics;
 
 import net.createteleporters.world.inventory.CustomTeleporterGuiMenu;
@@ -27,6 +30,7 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 	private final Player entity;
 	private boolean menuStateUpdateActive = false;
 	ImageButton imagebutton_check;
+	private Button modeButton;
 
 	public CustomTeleporterGuiScreen(CustomTeleporterGuiMenu container, Inventory inventory, Component text) {
 		super(container, inventory, text);
@@ -81,13 +85,16 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 	@Override
 	public void init() {
 		super.init();
+		modeButton = addRenderableWidget(Button.builder(modeLabel(), button ->
+			PacketDistributor.sendToServer(new CustomTeleporterGuiButtonMessage(1, x, y, z)))
+			.bounds(leftPos + 8, topPos + 36, 160, 20).build());
+		updateModeButton();
 		imagebutton_check = new ImageButton(this.leftPos + 159, this.topPos + 56, 18, 18,
 				new WidgetSprites(ResourceLocation.parse("createteleporters:textures/screens/check.png"), ResourceLocation.parse("createteleporters:textures/screens/check_hover.png")), e -> {
 					int x = CustomTeleporterGuiScreen.this.x;
 					int y = CustomTeleporterGuiScreen.this.y;
 					if (true) {
 						PacketDistributor.sendToServer(new CustomTeleporterGuiButtonMessage(0, x, y, z));
-						CustomTeleporterGuiButtonMessage.handleButtonAction(entity, 0, x, y, z);
 					}
 				}) {
 			@Override
@@ -97,4 +104,14 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 		};
 		this.addRenderableWidget(imagebutton_check);
 	}
+
+	private Component modeLabel() {
+		return Component.translatable("gui.createteleporters.custom_teleporter_gui.mode", CustomPortalTeleportMode.displayName(menu.getTeleportMode()));
+	}
+	private void updateModeButton() {
+		modeButton.setMessage(modeLabel());
+		modeButton.setTooltip(Tooltip.create(Component.translatable("gui.createteleporters.custom_teleporter_gui.mode_tooltip")));
+	}
+	@Override
+	protected void containerTick() { super.containerTick(); updateModeButton(); }
 }

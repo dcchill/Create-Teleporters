@@ -17,6 +17,9 @@ import net.minecraft.core.BlockPos;
 
 import net.createteleporters.procedures.CloseGuiProcedure;
 import net.createteleporters.CreateteleportersMod;
+import net.createteleporters.world.inventory.CustomTeleporterGuiMenu;
+import net.createteleporters.util.CustomPortalTeleportMode;
+import net.createteleporters.init.CreateteleportersModBlocks;
 
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public record CustomTeleporterGuiButtonMessage(int buttonID, int x, int y, int z) implements CustomPacketPayload {
@@ -44,12 +47,20 @@ public record CustomTeleporterGuiButtonMessage(int buttonID, int x, int y, int z
 
 	public static void handleButtonAction(Player entity, int buttonID, int x, int y, int z) {
 		Level world = entity.level();
+		if (world.isClientSide || !(entity.containerMenu instanceof CustomTeleporterGuiMenu menu)
+			|| menu.x != x || menu.y != y || menu.z != z || !menu.stillValid(entity)) return;
+		BlockPos pos = new BlockPos(x, y, z);
 		// security measure to prevent arbitrary chunk generation
 		if (!world.hasChunkAt(new BlockPos(x, y, z)))
 			return;
 		if (buttonID == 0) {
 
 			CloseGuiProcedure.execute(entity);
+		}
+		if (buttonID == 1 && entity.distanceToSqr(x + 0.5, y + 0.5, z + 0.5) <= 64
+			&& world.getBlockState(pos).is(CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get())) {
+			CustomPortalTeleportMode.toggle(world, pos);
+			menu.broadcastChanges();
 		}
 	}
 
