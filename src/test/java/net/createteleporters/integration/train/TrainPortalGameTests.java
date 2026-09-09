@@ -144,6 +144,10 @@ public final class TrainPortalGameTests {
 		carriage.updateContraptionAnchors();
 		check(((PortalCarriage) carriage).ctp$entities().size() == 2, "A single bogey can straddle the portal");
 		check(bogey.getDimension() == null && bogey.getStress() == 0, "A split bogey must not stretch between distant wheels");
+		PortalCarriageState.of(carriage).recoverShutdown(helper.getLevel());
+		check(!PortalCarriageState.of(carriage).active(), "Portal shutdown must collapse a split carriage");
+		check(((PortalCarriage) carriage).ctp$entities().size() == 1, "Recovery must leave one accessible carriage portion");
+		check(carriage.getPresentDimensions().equals(List.of(Level.OVERWORLD)), "Recovery must restore the real world dimension");
 		for (int i = 0; i < 3; i++) carriage.updateContraptionAnchors();
 		for (var dce : ((PortalCarriage) carriage).ctp$entities().values()) check(Double.isFinite(dce.positionAnchor.x), "A wheel at the portal plane must have a finite anchor");
 		bogey.leading().travel(f.graph, -3, bogey.leading().follow(point(f.before, 18)));
@@ -215,6 +219,52 @@ public final class TrainPortalGameTests {
 			Carriage loaded = Carriage.read(carriage.write(palette, level.registryAccess()), level.registryAccess(), f.graph, palette);
 			check(loaded.storage.getAllItems().getStackInSlot(0).getCount() == 6, "Cargo must survive a mid-transition save");
 			check(!train.invalid, "Entity creation must not invalidate the train");
+			exit.entity.get().getPassengers().forEach(net.minecraft.world.entity.Entity::discard);
+			var profile = new com.mojang.authlib.GameProfile(UUID.randomUUID(), "portal-driver-test");
+			var driver = new net.minecraft.server.level.ServerPlayer(level.getServer(), level, profile, net.minecraft.server.level.ClientInformation.createDefault());
+			var connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
+			new io.netty.channel.embedded.EmbeddedChannel(connection);
+			driver.connection = new net.minecraft.server.network.ServerGamePacketListenerImpl(level.getServer(), connection, driver,
+				net.minecraft.server.network.CommonListenerCookie.createInitial(profile, false)) {
+				@Override public void send(net.minecraft.network.protocol.Packet<?> packet) { }
+			};
+			// Register lookup only: the in-game test connection has no mod payload handshake.
+			var playerMapField = net.minecraft.server.players.PlayerList.class.getDeclaredField("playersByUUID");
+			playerMapField.setAccessible(true);
+			@SuppressWarnings("unchecked")
+			var playerMap = (java.util.Map<UUID, net.minecraft.server.level.ServerPlayer>) playerMapField.get(level.getServer().getPlayerList());
+			playerMap.put(driver.getUUID(), driver);
+			var inputs = com.simibubi.create.content.contraptions.actors.trainControls.ControlsServerHandler.receivedInputs.get(level);
+			try {
+				for (boolean holdingKey : new boolean[] { true, false }) {
+					driver.teleportTo(level, source.positionAnchor.x, source.positionAnchor.y, source.positionAnchor.z, 0, 0);
+					source.entity.get().addSittingPassenger(driver, 0);
+					source.entity.get().startControlling(BlockPos.ZERO, driver);
+					source.entity.get().setControllingPlayer(driver.getUUID());
+					if (holdingKey) com.simibubi.create.content.contraptions.actors.trainControls.ControlsServerHandler.receivePressed(
+						level, source.entity.get(), BlockPos.ZERO, driver.getUUID(), List.of(0), true);
+					else inputs.remove(driver.getUUID());
+					var dismount = Carriage.DimensionalCarriageEntity.class.getDeclaredMethod("dismountPlayer", net.minecraft.server.level.ServerLevel.class,
+						net.minecraft.server.level.ServerPlayer.class, Integer.class, boolean.class);
+					dismount.setAccessible(true);
+					dismount.invoke(source, level, driver, 0, true);
+					check(!inputs.containsKey(driver.getUUID()), "The entrance must release the old input session");
+					exit.updatePassengerLoadout();
+					check(driver.getVehicle() == exit.entity.get(), "The driver must retain their seat at the exit");
+					check(exit.entity.get().getControllingPlayer().filter(driver.getUUID()::equals).isPresent(), "Portal passage must retain the controlling player");
+					var context = (net.createteleporters.mixin.PortalControlsContextAccessor) (Object) inputs.get(driver.getUUID());
+					check(context != null && context.ctp$entity() == exit.entity.get(), "Inputs must target the emerging carriage");
+					check(context.ctp$keys().size() == (holdingKey ? 1 : 0), "Held inputs must survive without inventing a throttle input");
+					check(((PortalCarriageEntity) exit.entity.get()).ctp$getControls().orElseThrow().equals(BlockPos.ZERO), "Client control resumption must use the original local controls");
+					driver.stopRiding();
+					exit.entity.get().setControllingPlayer(null);
+				}
+			} finally {
+				inputs.remove(driver.getUUID());
+				driver.stopRiding();
+				playerMap.remove(driver.getUUID());
+				driver.discard();
+			}
 		} finally {
 			carriage.forEachPresentEntity(entity -> { entity.getPassengers().forEach(net.minecraft.world.entity.Entity::discard); entity.discard(); });
 			rider.discard();

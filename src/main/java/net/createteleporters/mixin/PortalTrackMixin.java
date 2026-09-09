@@ -31,6 +31,9 @@ public abstract class PortalTrackMixin {
 		BlockPos neighborPos, CallbackInfoReturnable<BlockState> cir) {
 		if (cir.getReturnValue().isAir() && reader instanceof ServerLevel level
 			&& level.getBlockEntity(pos) instanceof TrackBlockEntity track && track.getPersistentData().contains("CTPTrainBase")
-			&& QuantumTrainPortals.occupied(level, pos, state)) cir.setReturnValue(state);
+			&& QuantumTrainPortals.occupied(level, pos, state)) {
+			QuantumTrainPortals.recoverShutdown(level, pos, state);
+			if (QuantumTrainPortals.occupied(level, pos, state)) cir.setReturnValue(state);
+		}
 	}
 }

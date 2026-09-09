@@ -33,3 +33,6 @@ authors="Dcchill"
 
 # Start of user code block dependencies configuration
 # End of user code block dependencies configuration
+
+[[mixins]]
+    config="createteleporters.mixins.json"

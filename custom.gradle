@@ -11,9 +11,10 @@ repositories {
 
 def createJarJarDependencyDir = layout.buildDirectory.dir("createJarJarDependencies")
 def extractCreateJarJarDependencies = tasks.register("extractCreateJarJarDependencies", Copy) {
-    from(zipTree("libs/create-1.21.1-6.0.6.jar")) {
-        include "META-INF/jarjar/flywheel-neoforge-1.21.1-1.0.4.jar"
-        include "META-INF/jarjar/Registrate-MC1.21-1.3.0+62.jar"
+    from(zipTree("libs/create-1.21.1-6.0.10.jar")) {
+        include "META-INF/jarjar/flywheel-neoforge-1.21.1-1.0.6.jar"
+        include "META-INF/jarjar/ponder-neoforge-1.0.82+mc1.21.1.jar"
+        include "META-INF/jarjar/Registrate-MC1.21-1.3.0+67.jar"
         eachFile { details -> details.path = details.name }
     }
     includeEmptyDirs = false
@@ -21,12 +22,10 @@ def extractCreateJarJarDependencies = tasks.register("extractCreateJarJarDepende
 }
 
 dependencies {
-    compileOnly name: "create-1.21.1-6.0.6"
-    runtimeOnly name: "create-1.21.1-6.0.6"
+    compileOnly name: "create-1.21.1-6.0.10"
+    runtimeOnly name: "create-1.21.1-6.0.10"
     compileOnly fileTree(dir: createJarJarDependencyDir.get().asFile, include: ["*.jar"])
 
-    compileOnly "net.createmod.ponder:Ponder-NeoForge-1.21.1:1.0.56"
-    runtimeOnly "net.createmod.ponder:Ponder-NeoForge-1.21.1:1.0.56"
     
     // Immersive Portals compatibility (optional - requires mod to be installed at runtime)
     // compileOnly fg.deobf("curse.maven:immersive-portals-for-forge-495466:5025474")

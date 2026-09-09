@@ -13,11 +13,13 @@
     "PortalBogeyMixin",
     "PortalCarriageEntityMixin",
     "PortalCarriageSyncMixin",
-    "PortalTrainMixin"
+    "PortalTrainMixin",
+    "PortalControlsContextAccessor"
   ],
   "client": [
     "PortalCarriageRenderMixin",
-    "PortalCouplingMixin"
+    "PortalCouplingMixin",
+    "PortalDriverClientMixin"
   ],
   "injectors": {
     "defaultRequire": 1

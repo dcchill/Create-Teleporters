@@ -12,6 +12,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 
 public final class PortalCarriageState {
 	private final Carriage carriage;
@@ -23,6 +24,44 @@ public final class PortalCarriageState {
 	public PortalCarriageState(Carriage carriage) { this.carriage = carriage; }
 	public static PortalCarriageState of(Carriage carriage) { return ((PortalCarriage) carriage).ctp$state(); }
 	public boolean active() { return crossing != null; }
+	public boolean involves(TrackNodeLocation endpoint) {
+		return crossing != null && (crossing.entrance().equals(endpoint) || crossing.exit().equals(endpoint));
+	}
+
+	public void recoverShutdown(ServerLevel level) {
+		if (crossing == null || carriage.train == null) return;
+		ResourceKey<Level> dimension = level.dimension();
+		Carriage.DimensionalCarriageEntity survivor = entities().get(dimension);
+		if (survivor == null) {
+			double best = Double.MAX_VALUE;
+			for (var entry : entities().entrySet()) {
+				var dce = entry.getValue();
+				if (!PortalSide.dimension(entry.getKey()).equals(dimension)
+					|| dce.positionAnchor == null) continue;
+				double distance = dce.positionAnchor.distanceToSqr(crossing.entrance().getLocation());
+				if (distance < best) { best = distance; survivor = dce; }
+			}
+		}
+		if (survivor == null) return;
+		final Carriage.DimensionalCarriageEntity accessible = survivor;
+
+		// Let Create serialize anything outside each split portion before collapsing it.
+		for (var dce : entities().values()) if (dce != accessible) dce.updatePassengerLoadout();
+		entities().entrySet().removeIf(entry -> {
+			if (entry.getValue() == accessible) return false;
+			var entity = entry.getValue().entity.get();
+			if (entity != null) entity.discard();
+			return true;
+		});
+		entities().remove(dimension);
+		entities().put(dimension, accessible);
+		setEntitySide(accessible, dimension);
+		crossing = null;
+		sides.clear();
+		accessible.cutoff = 0;
+		accessible.updateRenderedCutoff();
+		accessible.updatePassengerLoadout();
+	}
 	public Carriage.DimensionalCarriageEntity hiddenCoupling() {
 		if (hiddenCoupling == null) hiddenCoupling = carriage.new DimensionalCarriageEntity();
 		return hiddenCoupling;

@@ -135,7 +135,9 @@ public final class QuantumTrainPortals {
 		if (!track.getPersistentData().contains(BASE) || track.boundLocation == null) return;
 		ServerLevel other = level.getServer().getLevel(track.boundLocation.getFirst());
 		if (other == null || !other.hasChunkAt(track.boundLocation.getSecond())) return;
-		if (active(track) || occupied(level, track.getBlockPos(), track.getBlockState())) return;
+		if (active(track)) return;
+		recoverShutdown(level, track.getBlockPos(), track.getBlockState());
+		if (occupied(level, track.getBlockPos(), track.getBlockState())) return;
 		BlockPos pos = track.getBlockPos();
 		BlockState state = track.getBlockState();
 		BlockPos basePos = BlockPos.of(track.getPersistentData().getLong(BASE));
@@ -152,6 +154,14 @@ public final class QuantumTrainPortals {
 			level.scheduleTick(pos, state.getBlock(), 1);
 		} else {
 			level.destroyBlock(pos, false);
+		}
+	}
+	public static void recoverShutdown(ServerLevel level, BlockPos pos, BlockState state) {
+		TrackNodeLocation endpoint = endpoint(level, pos, state);
+		if (endpoint == null) return;
+		for (Train train : Create.RAILWAYS.trains.values()) for (Carriage carriage : train.carriages) {
+			PortalCarriageState recovery = PortalCarriageState.of(carriage);
+			if (recovery.involves(endpoint)) recovery.recoverShutdown(level);
 		}
 	}
 

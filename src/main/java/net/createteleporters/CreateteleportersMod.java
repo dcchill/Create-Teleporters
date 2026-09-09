@@ -8,6 +8,7 @@ import net.neoforged.neoforge.network.handling.IPayloadHandler;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.capabilities.EntityCapability;
 import net.neoforged.fml.util.thread.SidedThreadGroups;
@@ -33,6 +34,10 @@ import net.createteleporters.init.CreateteleportersModFluids;
 import net.createteleporters.init.CreateteleportersModFluidTypes;
 import net.createteleporters.init.CreateteleportersModBlocks;
 import net.createteleporters.init.CreateteleportersModBlockEntities;
+import net.createteleporters.integration.SableAeronauticsIntegration;
+import com.simibubi.create.Create;
+import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
+import com.simibubi.create.content.contraptions.actors.trainControls.ControlsServerHandler;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.Map;
@@ -106,6 +111,24 @@ public class CreateteleportersMod {
 		});
 		actions.forEach(e -> e.getA().run());
 		workQueue.removeAll(actions);
+	}
+
+	@SubscribeEvent
+	public void serverStopping(ServerStoppingEvent event) {
+		Create.RAILWAYS.trains.values().forEach(train -> train.carriages.forEach(carriage ->
+			carriage.forEachPresentEntity(entity -> {
+				if (!(entity instanceof CarriageContraptionEntity carriageEntity)) return;
+				var controlling = carriageEntity.getControllingPlayer();
+				if (controlling.isPresent()) {
+					ControlsServerHandler.receivedInputs.get(carriageEntity.level()).remove(controlling.get());
+					carriageEntity.setControllingPlayer(null);
+				}
+				for (Player passenger : carriageEntity.getPassengers().stream().filter(Player.class::isInstance).map(Player.class::cast).toList()) {
+					ControlsServerHandler.receivedInputs.get(carriageEntity.level()).remove(passenger.getUUID());
+					passenger.stopRiding();
+					SableAeronauticsIntegration.detachEntity(passenger);
+				}
+			}))); 
 	}
 
 	public static class CuriosApiHelper {

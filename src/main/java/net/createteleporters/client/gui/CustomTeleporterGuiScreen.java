@@ -40,7 +40,7 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 		this.z = container.z;
 		this.entity = container.entity;
 		this.imageWidth = 176;
-		this.imageHeight = 166;
+		this.imageHeight = 175;
 	}
 
 	@Override
@@ -60,7 +60,7 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
-		guiGraphics.blit(ResourceLocation.parse("createteleporters:textures/screens/custom_tp_gui.png"), this.leftPos + -8, this.topPos + -29, 0, 0, 192, 195, 192, 195);
+		guiGraphics.blit(ResourceLocation.parse("createteleporters:textures/screens/custom_tp_gui.png"), this.leftPos + -8, this.topPos + -29, 0, 0, 192, 204, 192, 204);
 		guiGraphics.blit(ResourceLocation.parse("createteleporters:textures/screens/empty_tank.png"), this.leftPos + -68, this.topPos + -22, 0, 0, 95, 95, 95, 95);
 		guiGraphics.blit(ResourceLocation.parse("createteleporters:textures/screens/tank_sprite.png"), this.leftPos + -68, this.topPos + -22, Mth.clamp((int) FluidDisplayProcedure.execute(world, x, y, z) * 95, 0, 1615), 0, 95, 95, 1710, 95);
 		RenderSystem.disableBlend();
@@ -78,18 +78,29 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 	@Override
 	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
 		guiGraphics.drawString(this.font, Component.translatable("gui.createteleporters.custom_teleporter_gui.label_tp_link"), 45, 20, -1, false);
-		guiGraphics.drawString(this.font, CustomPortalBaseOnTickUpdateProcedure.execute(world, x, y, z), 0, 61, -12829636, false);
+		guiGraphics.drawString(this.font, CustomPortalTeleportMode.displayName(menu.getTeleportMode()), modeRowX() + 36, 47, 0xFFF6E9FF, true);
+		guiGraphics.drawString(this.font, CustomPortalBaseOnTickUpdateProcedure.execute(world, x, y, z), 0, 70, -12829636, false);
 		guiGraphics.drawString(this.font, Component.translatable("gui.createteleporters.custom_teleporter_gui.label_entity_teleporter"), -1, -22, -12829636, false);
 	}
 
 	@Override
 	public void init() {
 		super.init();
-		modeButton = addRenderableWidget(Button.builder(modeLabel(), button ->
-			PacketDistributor.sendToServer(new CustomTeleporterGuiButtonMessage(1, x, y, z)))
-			.bounds(leftPos + 8, topPos + 36, 160, 20).build());
+		modeButton = addRenderableWidget(new Button(leftPos + modeRowX(), topPos + 45, 28, 12, modeLabel(), button ->
+			PacketDistributor.sendToServer(new CustomTeleporterGuiButtonMessage(1, x, y, z)), narration -> narration.get()) {
+			@Override
+			public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+				boolean portalMode = CustomPortalTeleportMode.PORTAL_TO_PORTAL.equals(menu.getTeleportMode());
+				int trackColor = portalMode ? 0xFF914BCC : 0xFF574365;
+				drawSwitchShape(graphics, getX(), getY(), 28, 12, isHoveredOrFocused() ? 0xFFF2B0FF : 0xFFBC79E6);
+				drawSwitchShape(graphics, getX() + 1, getY() + 1, 26, 10, trackColor);
+				int thumbX = getX() + (portalMode ? 18 : 2);
+				drawSwitchShape(graphics, thumbX, getY() + 3, 8, 8, 0xFF392147);
+				drawSwitchShape(graphics, thumbX, getY() + 2, 8, 8, 0xFFF6E9FF);
+			}
+		});
 		updateModeButton();
-		imagebutton_check = new ImageButton(this.leftPos + 159, this.topPos + 56, 18, 18,
+		imagebutton_check = new ImageButton(this.leftPos + 159, this.topPos + 65, 18, 18,
 				new WidgetSprites(ResourceLocation.parse("createteleporters:textures/screens/check.png"), ResourceLocation.parse("createteleporters:textures/screens/check_hover.png")), e -> {
 					int x = CustomTeleporterGuiScreen.this.x;
 					int y = CustomTeleporterGuiScreen.this.y;
@@ -107,6 +118,17 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 
 	private Component modeLabel() {
 		return Component.translatable("gui.createteleporters.custom_teleporter_gui.mode", CustomPortalTeleportMode.displayName(menu.getTeleportMode()));
+	}
+	private int modeRowX() {
+		int labelWidth = Math.max(
+			font.width(CustomPortalTeleportMode.displayName(CustomPortalTeleportMode.COORDINATE)),
+			font.width(CustomPortalTeleportMode.displayName(CustomPortalTeleportMode.PORTAL_TO_PORTAL)));
+		return (imageWidth - 36 - labelWidth) / 2;
+	}
+	private static void drawSwitchShape(GuiGraphics graphics, int x, int y, int width, int height, int color) {
+		graphics.fill(x + 2, y, x + width - 2, y + height, color);
+		graphics.fill(x + 1, y + 1, x + width - 1, y + height - 1, color);
+		graphics.fill(x, y + 3, x + width, y + height - 3, color);
 	}
 	private void updateModeButton() {
 		modeButton.setMessage(modeLabel());

@@ -1,5 +1,6 @@
 package net.createteleporters.mixin;
 
+import net.minecraft.nbt.CompoundTag;
 import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.CarriageBogey;
 import com.simibubi.create.content.trains.entity.Train;
@@ -31,6 +32,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class PortalCarriageMixin implements PortalCarriage {
 	@Shadow private Map<ResourceKey<Level>, Carriage.DimensionalCarriageEntity> entities;
 	@Shadow public Train train;
+	@Shadow private Map<Integer, CompoundTag> serialisedPassengers;
+	public Map<Integer, CompoundTag> ctp$passengers() { return serialisedPassengers; }
 	@Unique private PortalCarriageState ctp$state;
 	public Map<ResourceKey<Level>, Carriage.DimensionalCarriageEntity> ctp$entities() { return entities; }
 	public PortalCarriageState ctp$state() {

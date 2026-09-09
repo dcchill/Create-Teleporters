@@ -80,6 +80,12 @@ public final class SableAeronauticsIntegration {
 		entity.teleportTo(targetX, targetY, targetZ);
 	}
 
+	public static void detachEntity(Entity entity) {
+		if (!isSableAvailable()) return;
+		Object sourceSubLevel = getTrackingSubLevel(entity);
+		if (sourceSubLevel != null) popEntityLocal(sourceSubLevel, entity);
+	}
+
 	public static ItemEntity spawnItem(ServerLevel level, double targetX, double targetY, double targetZ, ItemStack stack) {
 		Vec3 rawTarget = new Vec3(targetX, targetY, targetZ);
 		Object targetSubLevel = getContainingSubLevel(level, rawTarget);
