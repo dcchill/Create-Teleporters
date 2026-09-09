@@ -5,7 +5,9 @@ import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.Optional;
 import com.simibubi.create.content.trains.entity.Carriage;
+import com.simibubi.create.content.trains.CubeParticleData;
 import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
+import net.createteleporters.block.QuantumPortalBlockBlock;
 import net.createteleporters.integration.train.PortalCarriageEntity;
 import net.createteleporters.integration.train.PortalCarriageState;
 import net.minecraft.core.HolderLookup;
@@ -25,6 +27,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = CarriageContraptionEntity.class, remap = false)
 public abstract class PortalCarriageEntityMixin implements PortalCarriageEntity {
+	@Redirect(method = "spawnPortalParticles", at = @At(value = "NEW", target = "com/simibubi/create/content/trains/CubeParticleData"))
+	private CubeParticleData ctp$portalParticleColor(float red, float green, float blue, float scale, int age, boolean hot,
+		Carriage.DimensionalCarriageEntity portion) {
+		Level level = ((CarriageContraptionEntity) (Object) this).level();
+		// The pivot borders the track and the portal on this carriage portion's side.
+		for (BlockPos pos : portion.pivot.allAdjacent()) {
+			var state = level.getBlockState(pos);
+			if (state.getBlock() instanceof QuantumPortalBlockBlock) {
+				int color = state.getValue(QuantumPortalBlockBlock.COLOR).getTextureDiffuseColor();
+				return new CubeParticleData((color >> 16 & 255) / 255f, (color >> 8 & 255) / 255f,
+					(color & 255) / 255f, scale, age, hot);
+			}
+		}
+		return new CubeParticleData(red, green, blue, scale, age, hot);
+	}
 	@Inject(method = "startControlling", at = @At("RETURN"))
 	private void ctp$rememberControls(BlockPos pos, Player player,
 		CallbackInfoReturnable<Boolean> cir) {

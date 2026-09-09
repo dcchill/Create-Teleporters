@@ -17,6 +17,7 @@
     "PortalControlsContextAccessor"
   ],
   "client": [
+    "PortalCubeParticleMixin",
     "PortalCarriageRenderMixin",
     "PortalCouplingMixin",
     "PortalDriverClientMixin"
