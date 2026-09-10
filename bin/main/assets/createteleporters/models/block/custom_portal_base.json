@@ -1,9 +1,0 @@
-{
-  "parent": "createteleporters:custom/customportalbase",
-  "textures": {
-    "all": "createteleporters:block/custom_portal_256",
-    "particle": "createteleporters:block/newcasing",
-    "0": "createteleporters:block/custom_portal_256_off"
-  },
-  "render_type": "solid"
-}

@@ -1,6 +1,7 @@
 # Gradle build system ignores
 .gradle/
 build/
+bin/
 
 # Other IDE related folders
 .idea/

@@ -1,8 +1,0 @@
-{
-  "parent": "block/cube_all",
-  "textures": {
-    "all": "createteleporters:block/pdblock",
-    "particle": "createteleporters:block/pdblock"
-  },
-  "render_type": "solid"
-}

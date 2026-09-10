@@ -1,8 +1,0 @@
-{
-  "parent": "createteleporters:block/tinted_glass_pane_noside",
-  "textures": {
-    "particle": "createteleporters:block/p_portal",
-    "pane": "createteleporters:block/p_portal"
-  },
-  "render_type": "translucent"
-}

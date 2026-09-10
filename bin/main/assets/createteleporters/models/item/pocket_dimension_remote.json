@@ -1,7 +1,0 @@
-{
-  "parent": "createteleporters:custom/pocketdimension",
-  "textures": {
-    "0": "createteleporters:block/pocketd",
-    "particle": "createteleporters:item/pocketd"
-  }
-}
