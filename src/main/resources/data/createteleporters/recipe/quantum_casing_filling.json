@@ -1,0 +1,18 @@
+{
+  "type": "create:filling",
+  "ingredients": [
+    {
+      "item": "create:railway_casing"
+    },
+    {
+      "type": "neoforge:single",
+      "amount": 1000,
+      "fluid": "createteleporters:quantum_fluid"
+    }
+  ],
+  "results": [
+    {
+      "id": "createteleporters:quantum_casing"
+    }
+  ]
+}

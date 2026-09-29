@@ -17,7 +17,7 @@
           "item": "createteleporters:incomplete_q_mechanism"
         },
         {
-        	"type": "fluid_stack",
+          "type": "neoforge:single",
           "amount": 250,
           "fluid": "createteleporters:quantum_fluid"
         }

@@ -6,6 +6,7 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.common.extensions.ILevelExtension;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.Vec2;
@@ -16,6 +17,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.sounds.SoundSource;
@@ -41,6 +43,7 @@ import net.createteleporters.integration.ImmersivePortalsIntegration;
 import net.createteleporters.integration.SableAeronauticsIntegration;
 import net.createteleporters.util.CustomPortalTeleportMode;
 import net.createteleporters.block.QuantumPortalBlockBlock;
+import net.createteleporters.network.CustomPortalEffectPayload;
 
 public class CustomPortalBaseOnTickUpdateProcedure {
 	private static final int IMMERSIVE_PORTAL_ORIENTATION_COMPAT_VERSION = 1;
@@ -64,6 +67,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				// Check if Immersive Portals compatibility is enabled
 				boolean coordinateMode = CustomPortalTeleportMode.isCoordinateMode(world, basePos);
 				boolean useImmersivePortals = !coordinateMode && CTPConfigConfiguration.IMMERSIVE_PORTALS_COMPAT.get();
+				boolean immersiveMode = useImmersivePortals && ImmersivePortalsIntegration.isImmersivePortalsLoaded();
 				
 				// Calculate interior dimensions (needed for both IP and vanilla)
 				int interiorMin = minExtent + 1;
@@ -95,9 +99,8 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 						clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
 						if (getBlockNBTLogic(world, basePos, "immersivePortalCreated")) {
 							removeTrackedImmersivePortal(world, x, y, z);
-							if (linkedBE != null)
-								linkedBE.getPersistentData().putBoolean("immersivePortalCreated", false);
 						}
+						setPortalVisualActive(world, basePos, false);
 						return "Waiting for Linked Portal";
 					}
 				}
@@ -105,7 +108,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				// Track whether IP actually created a portal (so we skip vanilla teleportation)
 				boolean ipPortalActive = false;
 
-				if (useImmersivePortals && ImmersivePortalsIntegration.isImmersivePortalsLoaded()) {
+				if (immersiveMode) {
 					// Immersive Portals is enabled — NEVER use quantum portal blocks.
 					// IP portal only spawns when:
 					// 1. Portal is linked to another portal
@@ -123,23 +126,6 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					if (canCreateIP) {
 						// Clear any leftover quantum portal blocks from before IP was enabled
 						clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
-						// Ambient particles while immersive portals are enabled.
-						if (world instanceof ServerLevel _level) {
-							// Spawn particles across the full width and height of the portal interior
-							boolean northSouth = "north".equals(rotation) || "south".equals(rotation);
-
-							// Spawn particles every 2 blocks for a more sparse effect
-							for (int h = 1; h <= fillHeight; h += 2) {
-								for (int i = interiorMin; i <= interiorMax; i += 2) {
-									if (_level.random.nextFloat() < 0.5f) continue; // 50% chance to skip
-									double particleX = northSouth ? x + i + 0.5 : x + 0.5;
-									double particleY = y + h + 0.5;
-									double particleZ = northSouth ? z + 0.5 : z + i + 0.5;
-									_level.sendParticles(ParticleTypes.PORTAL, particleX, particleY, particleZ, 1, 0.5,
-											0.5, 0.5, 0.01);
-								}
-							}
-						}
 
 						String targetDim = be != null ? be.getPersistentData().getString("linkedDim") : "minecraft:overworld";
 						double tx = be != null ? be.getPersistentData().getDouble("linkedX") : x;
@@ -163,7 +149,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 							);
 							net.createteleporters.CreateteleportersMod.LOGGER.info("IP portal creation result: {}", created);
 							if (created && be != null) {
-								be.getPersistentData().putBoolean("immersivePortalCreated", true);
+								setImmersivePortalCreated(world, basePos, true);
 								be.getPersistentData().putInt("immersivePortalCompatVersion", IMMERSIVE_PORTAL_ORIENTATION_COMPAT_VERSION);
 								ipPortalActive = true;
 							}
@@ -178,6 +164,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 						}
 						// Ensure no quantum portal blocks remain
 						clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
+						setPortalVisualActive(world, basePos, false);
 					}
 				} else {
 					// Config may have been turned off while IP portals were active.
@@ -198,16 +185,11 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 								new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
 								"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight + " ~ createteleporters:quantum_portal_block[color=" + portalColor + "]");
 					}
+					setPortalVisualActive(world, basePos, true);
 
 				}
+				setPortalVisualActive(world, basePos, !immersiveMode || ipPortalActive);
 				
-				// Drain fluid
-				if (world instanceof ILevelExtension _ext) {
-					IFluidHandler _fluidHandler = _ext.getCapability(Capabilities.FluidHandler.BLOCK, basePos, null);
-					if (_fluidHandler != null)
-						_fluidHandler.drain(4, IFluidHandler.FluidAction.EXECUTE);
-				}
-
 				// Build AABB based on portal interior extents
 				AABB portalArea;
 				int portalInnerHeight = portalHeight - 1;
@@ -232,6 +214,16 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					Math.max(portalArea.minZ, portalArea.maxZ) + ACTIVATION_HORIZONTAL_PADDING + EPS
 				);
 
+				// Trains consume more Telejuice while occupying the portal.
+				if (world instanceof ILevelExtension _ext) {
+					IFluidHandler _fluidHandler = _ext.getCapability(Capabilities.FluidHandler.BLOCK, basePos, null);
+					if (_fluidHandler != null) {
+						boolean trainPresent = !SableAeronauticsIntegration.getEntities(world, portalArea,
+							e -> e instanceof CarriageContraptionEntity).isEmpty();
+						_fluidHandler.drain(trainPresent ? 20 : 4, IFluidHandler.FluidAction.EXECUTE);
+					}
+				}
+
 				// Get teleportation target - prefer linked portal coordinates over item data
 				String targetDim;
 				double tx, ty, tz, yaw;
@@ -240,6 +232,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					ItemStack invStack = (itemFromBlockInventory(world, basePos, 0).copy());
 
 					if (invStack.isEmpty() || !(invStack.getItem() instanceof net.createteleporters.item.ADVTplinkItem)) {
+						setPortalVisualActive(world, basePos, false);
 						return "Missing Advanced TP Link";
 					}
 
@@ -251,6 +244,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					yaw = cd.getDouble("yawpo");
 				} else {
 					if (!isLinked) {
+						setPortalVisualActive(world, basePos, false);
 						return "Portal Not Linked";
 					}
 
@@ -258,6 +252,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 									   hasAdvancedTpLinkAtLinkedPortal(world, linkedBE);
 
 					if (!hasTpLink) {
+						setPortalVisualActive(world, basePos, false);
 						return "Missing Advanced TP Link";
 					}
 
@@ -267,6 +262,8 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					targetDim = linkedBE.getPersistentData().getString("linkedDim");
 					yaw = linkedBE.getPersistentData().getDouble("linkedYaw");
 				}
+				int effectColor = DyeColor.byName(QuantumPortalBlockBlock.getStoredPortalColorName(
+					world.getBlockEntity(basePos)), DyeColor.PURPLE).getTextureDiffuseColor();
 
 				// Check if Immersive Portals actually created a portal — if so, skip vanilla teleportation
 				// IP handles teleportation automatically when entities walk through portal entity
@@ -287,7 +284,12 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				// Vanilla teleportation (original code)
 				for (Entity entityiterator : SableAeronauticsIntegration.getEntities(world, portalArea, e -> true)) {
 					if (shouldIgnorePortalTeleport(entityiterator)) {
+						if (entityiterator instanceof net.minecraft.server.level.ServerPlayer player
+								&& entityiterator.getPersistentData().contains("TeleportCharge"))
+							PacketDistributor.sendToPlayer(player,
+								new CustomPortalEffectPayload(CustomPortalEffectPayload.CANCEL, effectColor, 0));
 						entityiterator.getPersistentData().remove("TeleportCharge");
+						entityiterator.getPersistentData().remove("TeleportChargeDuration");
 						continue;
 					}
 
@@ -310,21 +312,18 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 						// Start or continue charging
 						if (chargeTime <= 0) {
 							// First tick in portal - start charging
-							entityData.putInt("TeleportCharge", 10); // 10 ticks = 0.5 seconds
+							int chargeDuration = entityiterator instanceof net.minecraft.server.level.ServerPlayer
+								? calculatePlayerChargeTicks(entityiterator, targetDim, tx, ty, tz, world)
+								: 10;
+							entityData.putInt("TeleportCharge", chargeDuration);
+							entityData.putInt("TeleportChargeDuration", chargeDuration);
+							if (entityiterator instanceof net.minecraft.server.level.ServerPlayer player)
+								PacketDistributor.sendToPlayer(player,
+									new CustomPortalEffectPayload(CustomPortalEffectPayload.CHARGE, effectColor, chargeDuration + 1));
 						} else {
 							// Continue charging
 							chargeTime--;
 							entityData.putInt("TeleportCharge", chargeTime);
-							
-							// Apply vision effects during charge
-							if (entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-								// Nausea creates a swirling/warping vision effect
-								serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-									net.minecraft.world.effect.MobEffects.CONFUSION, 15, 1, false, false, false));
-								// Brief darkness for dramatic effect
-								serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-									net.minecraft.world.effect.MobEffects.DARKNESS, 10, 0, false, false, false));
-							}
 							
 							// Teleport when charge completes
 							if (chargeTime <= 0) {
@@ -338,6 +337,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 									}
 								}
 
+								ServerLevel arrivalLevel = null;
 								// Perform teleportation
 								if (world instanceof ServerLevel _level) {
 									ResourceLocation dimLoc = ResourceLocation.tryParse(targetDim);
@@ -347,6 +347,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 										if (targetLevel != null) {
 											// Teleport directly using API (more reliable than commands)
 											SableAeronauticsIntegration.teleportEntity(entityiterator, targetLevel, tx + 0.5, ty + 1, tz + 0.5, (float) yaw);
+											arrivalLevel = targetLevel;
 										} else {
 											// Target level not found, fall back to command
 											_level.getServer().getCommands().performPrefixedCommand(
@@ -355,6 +356,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 										}
 									} else {
 											SableAeronauticsIntegration.teleportEntity(entityiterator, _level, tx + 0.5, ty + 1, tz + 0.5, (float) yaw);
+											arrivalLevel = _level;
 									}
 								}
 								{
@@ -374,31 +376,15 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 								// Set teleportation cooldown (20 ticks = 1 second)
 								entityiterator.getPersistentData().putInt("PortalTeleportCooldown", 20);
 								entityData.remove("TeleportCharge"); // Reset charge counter
+								entityData.remove("TeleportChargeDuration");
 
-								// === ENHANCED TELEPORTATION EFFECTS ===
-								// Dramatic burst at source
-								if (world instanceof ServerLevel _level) {
-									_level.sendParticles(ParticleTypes.END_ROD, x + 0.5, y + 1, z + 0.5, 30, 0.6, 0.6, 0.6, 0.15);
-									_level.sendParticles(ParticleTypes.POOF, x + 0.5, y + 1, z + 0.5, 20, 0.4, 0.4, 0.4, 0.1);
-									_level.sendParticles(ParticleTypes.GLOW, x + 0.5, y + 1, z + 0.5, 15, 0.8, 0.8, 0.8, 0.08);
-								}
-
-								// Dramatic burst at destination
-								if (world instanceof ServerLevel _level) {
-									_level.sendParticles(ParticleTypes.END_ROD, tx + 0.5, ty + 1, tz + 0.5, 30, 0.6, 0.6, 0.6, 0.15);
-									_level.sendParticles(ParticleTypes.POOF, tx + 0.5, ty + 1, tz + 0.5, 20, 0.4, 0.4, 0.4, 0.1);
-									_level.sendParticles(ParticleTypes.GLOW, tx + 0.5, ty + 1, tz + 0.5, 15, 0.8, 0.8, 0.8, 0.08);
-								}
-
-								// Apply disorientation effect to players
-								if (entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-									// Brief nausea (swirl effect) for 2 seconds
-									serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-										net.minecraft.world.effect.MobEffects.CONFUSION, 40, 0, false, false));
-									// Very brief blindness for dramatic "re-materializing" effect
-									serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-										net.minecraft.world.effect.MobEffects.BLINDNESS, 8, 0, false, false));
-								}
+								if (world instanceof ServerLevel sourceLevel)
+									spawnTeleportBurst(sourceLevel, x + 0.5, y + 1, z + 0.5);
+								if (arrivalLevel != null)
+									spawnTeleportBurst(arrivalLevel, tx + 0.5, ty + 1, tz + 0.5);
+								if (entityiterator instanceof net.minecraft.server.level.ServerPlayer player)
+									PacketDistributor.sendToPlayer(player,
+										new CustomPortalEffectPayload(CustomPortalEffectPayload.ARRIVAL, effectColor, 15));
 
 								// Restore player's team after teleportation (Bug fix: preserve team assignment)
 								if (playerTeamName != null && entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
@@ -410,37 +396,29 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 									}
 								}
 
-								// Original particle effects (keeping for compatibility)
-								if (world instanceof ServerLevel _level)
-									_level.sendParticles(ParticleTypes.END_ROD, x, (y + 1), z, 20, 1.5, 1.5, 1.5, 0.1);
-								if (world instanceof ServerLevel _level)
-									_level.sendParticles(ParticleTypes.END_ROD, tx, ty, tz, 20, 1.5, 1.5, 1.5, 0.1);
-								if (world instanceof Level _level) {
-									if (!_level.isClientSide()) {
-										_level.playSound(null, BlockPos.containing(x, y + 1, z), net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
-									} else {
-										_level.playLocalSound(x, (y + 1), z, net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
-									}
-								}
-								if (world instanceof Level _level) {
-									if (!_level.isClientSide()) {
-										_level.playSound(null, BlockPos.containing(tx, ty, tz), net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5);
-									} else {
-										_level.playLocalSound(tx, ty, tz, net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, (float) 0.2, (float) 1.5, false);
-									}
-								}
+								if (world instanceof ServerLevel sourceLevel)
+									sourceLevel.playSound(null, BlockPos.containing(x, y + 1, z),
+										net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, 0.2f, 1.5f);
+								if (arrivalLevel != null)
+									arrivalLevel.playSound(null, BlockPos.containing(tx, ty, tz),
+										net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, 0.2f, 1.5f);
 							}
 						}
 					} else {
 						// Entity left portal before charging completed - reset charge
 						if (chargeTime > 0) {
+							if (entityiterator instanceof net.minecraft.server.level.ServerPlayer player)
+								PacketDistributor.sendToPlayer(player,
+									new CustomPortalEffectPayload(CustomPortalEffectPayload.CANCEL, effectColor, 0));
 							entityData.remove("TeleportCharge");
+							entityData.remove("TeleportChargeDuration");
 						}
 					}
 				}
 
 				return "Portal Ready";
 			} else {
+				setPortalVisualActive(world, basePos, false);
 				if (!world.isClientSide()) {
 					BlockPos _bp = basePos;
 					BlockEntity _blockEntity = world.getBlockEntity(_bp);
@@ -453,6 +431,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				return "Quantum Fluid Depleted";
 			}
 		} else {
+			setPortalVisualActive(world, basePos, false);
 			// Clear portal blocks when frame is invalid
 			String rotation = getBlockNBTString(world, BlockPos.containing(x, y, z), "rotation");
 			int portalWidth = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalWidth");
@@ -562,10 +541,41 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 		}
 
 		ImmersivePortalsIntegration.removeImmersivePortal(world, x, y, z);
-		BlockEntity be = world.getBlockEntity(basePos);
-		if (be != null) {
-			be.getPersistentData().putBoolean("immersivePortalCreated", false);
-		}
+		setImmersivePortalCreated(world, basePos, false);
+	}
+
+	private static void spawnTeleportBurst(ServerLevel level, double x, double y, double z) {
+		level.sendParticles(ParticleTypes.END_ROD, x, y, z, 36, 0.8, 1.1, 0.8, 0.18);
+		level.sendParticles(ParticleTypes.POOF, x, y, z, 22, 0.55, 0.75, 0.55, 0.12);
+		level.sendParticles(ParticleTypes.GLOW, x, y, z, 20, 1.0, 1.25, 1.0, 0.1);
+	}
+
+	private static void setPortalVisualActive(LevelAccessor world, BlockPos pos, boolean active) {
+		setSyncedFlag(world, pos, "portalVisualActive", active);
+	}
+
+	private static int calculatePlayerChargeTicks(Entity entity, String targetDim, double tx, double ty, double tz,
+			LevelAccessor world) {
+		double distance = Math.sqrt(entity.distanceToSqr(tx + 0.5, ty + 1, tz + 0.5));
+		boolean crossDimension = world instanceof Level level
+			&& !level.dimension().location().toString().equals(targetDim);
+		return Math.min(200, 10 + (int) (distance / 16.0) + (crossDimension ? 20 : 0));
+	}
+
+	private static void setImmersivePortalCreated(LevelAccessor world, BlockPos pos, boolean created) {
+		setSyncedFlag(world, pos, "immersivePortalCreated", created);
+	}
+
+	private static void setSyncedFlag(LevelAccessor world, BlockPos pos, String key, boolean value) {
+		if (world.isClientSide())
+			return;
+		BlockEntity blockEntity = world.getBlockEntity(pos);
+		if (blockEntity == null || blockEntity.getPersistentData().getBoolean(key) == value)
+			return;
+		blockEntity.getPersistentData().putBoolean(key, value);
+		blockEntity.setChanged();
+		if (world instanceof Level level)
+			level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), 3);
 	}
 
 	private static boolean getBlockNBTLogic(LevelAccessor world, BlockPos pos, String tag) {

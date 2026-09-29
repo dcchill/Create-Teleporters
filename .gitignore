@@ -15,3 +15,4 @@ run/
 
 # MacOS system files
 .DS_STORE
+.vscode/
