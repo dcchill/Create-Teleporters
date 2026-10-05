@@ -4,6 +4,7 @@ import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import com.simibubi.create.content.trains.track.TrackBlock;
 import com.simibubi.create.content.trains.track.TrackBlockEntity;
 import java.util.Collection;
+import net.createteleporters.integration.CreateTrainPortalIntegration;
 import net.createteleporters.integration.train.QuantumTrainPortals;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -14,10 +15,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = TrackBlock.class, remap = false)
 public abstract class PortalTrackMixin {
+	@Inject(method = "connectToPortal", at = @At("HEAD"), cancellable = true)
+	private void ctp$placeQuantumTracks(ServerLevel level, BlockPos pos, BlockState state, CallbackInfo ci) {
+		if (CreateTrainPortalIntegration.connectQuantumTrack(level, pos, state)) ci.cancel();
+	}
+
 	@Inject(method = "getConnected", at = @At("RETURN"))
 	private void ctp$nodes(BlockGetter reader, BlockPos pos, BlockState state, boolean linear, TrackNodeLocation from,
 		CallbackInfoReturnable<Collection<TrackNodeLocation.DiscoveredLocation>> cir) {

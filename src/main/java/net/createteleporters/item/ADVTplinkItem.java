@@ -17,7 +17,7 @@ public class ADVTplinkItem extends Item {
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level world, Player entity, InteractionHand hand) {
 		InteractionResultHolder<ItemStack> ar = super.use(world, entity, hand);
-		AdvTpLinkRightclickedProcedure.execute(entity);
+		AdvTpLinkRightclickedProcedure.execute(entity, hand);
 		return ar;
 	}
 }

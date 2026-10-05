@@ -17,7 +17,7 @@ public class TpLinkItem extends Item {
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level world, Player entity, InteractionHand hand) {
 		InteractionResultHolder<ItemStack> ar = super.use(world, entity, hand);
-		TpLinkRightclickedProcedure.execute(entity);
+		TpLinkRightclickedProcedure.execute(entity, hand);
 		return ar;
 	}
 }

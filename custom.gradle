@@ -26,10 +26,12 @@ dependencies {
     runtimeOnly name: "create-1.21.1-6.0.10"
     compileOnly fileTree(dir: createJarJarDependencyDir.get().asFile, include: ["*.jar"])
 
-    
-    // Immersive Portals compatibility (optional - requires mod to be installed at runtime)
-    // compileOnly fg.deobf("curse.maven:immersive-portals-for-forge-495466:5025474")
-    // runtimeOnly fg.deobf("curse.maven:immersive-portals-for-forge-495466:5025474")
+    // Development only: -PimmersivePortalTestJar=path/to/upstream-or-IPSable.jar
+    if (providers.gradleProperty('immersivePortalTestJar').isPresent()) {
+        runtimeOnly files(providers.gradleProperty('immersivePortalTestJar').get())
+        // Put the optional mod's own runtime dependencies (such as Cloth Config) here.
+        runtimeOnly fileTree(dir: 'build/immersivePortalTestDependencies', include: ['*.jar'])
+    }
 }
 
 tasks.named("compileJava").configure {

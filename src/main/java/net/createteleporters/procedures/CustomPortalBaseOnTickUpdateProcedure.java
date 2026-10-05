@@ -46,7 +46,6 @@ import net.createteleporters.block.QuantumPortalBlockBlock;
 import net.createteleporters.network.CustomPortalEffectPayload;
 
 public class CustomPortalBaseOnTickUpdateProcedure {
-	private static final int IMMERSIVE_PORTAL_ORIENTATION_COMPAT_VERSION = 1;
 
 	public static String execute(LevelAccessor world, double x, double y, double z) {
 		// Use scalable portal checker instead of fixed size
@@ -134,13 +133,12 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 
 						// Create Immersive Portals portal (only needs to be done once)
 						// But verify it actually exists first
-						boolean needsCreation = !getBlockNBTLogic(world, basePos, "immersivePortalCreated");
-						boolean needsOrientationRebuild = be != null && be.getPersistentData().getInt("immersivePortalCompatVersion") < IMMERSIVE_PORTAL_ORIENTATION_COMPAT_VERSION;
+						boolean needsCreation = !getBlockNBTLogic(world, basePos, "immersivePortalCreated")
+							|| world instanceof ServerLevel level && level.getGameTime() % 20 == 0
+								&& !ImmersivePortalsIntegration.hasImmersivePortal(world, x, y, z);
+						boolean needsOrientationRebuild = be != null && be.getPersistentData().getInt("immersivePortalCompatVersion") < ImmersivePortalsIntegration.COMPAT_VERSION;
 
 						if (needsCreation || needsOrientationRebuild) {
-							if (!needsCreation) {
-								removeTrackedImmersivePortal(world, x, y, z);
-							}
 							net.createteleporters.CreateteleportersMod.LOGGER.info("Creating new IP portal...");
 							boolean created = ImmersivePortalsIntegration.createImmersivePortal(
 								world, x, y, z, rotation,
@@ -149,8 +147,6 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 							);
 							net.createteleporters.CreateteleportersMod.LOGGER.info("IP portal creation result: {}", created);
 							if (created && be != null) {
-								setImmersivePortalCreated(world, basePos, true);
-								be.getPersistentData().putInt("immersivePortalCompatVersion", IMMERSIVE_PORTAL_ORIENTATION_COMPAT_VERSION);
 								ipPortalActive = true;
 							}
 						} else {
@@ -541,7 +537,6 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 		}
 
 		ImmersivePortalsIntegration.removeImmersivePortal(world, x, y, z);
-		setImmersivePortalCreated(world, basePos, false);
 	}
 
 	private static void spawnTeleportBurst(ServerLevel level, double x, double y, double z) {
@@ -560,10 +555,6 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 		boolean crossDimension = world instanceof Level level
 			&& !level.dimension().location().toString().equals(targetDim);
 		return Math.min(200, 10 + (int) (distance / 16.0) + (crossDimension ? 20 : 0));
-	}
-
-	private static void setImmersivePortalCreated(LevelAccessor world, BlockPos pos, boolean created) {
-		setSyncedFlag(world, pos, "immersivePortalCreated", created);
 	}
 
 	private static void setSyncedFlag(LevelAccessor world, BlockPos pos, String key, boolean value) {

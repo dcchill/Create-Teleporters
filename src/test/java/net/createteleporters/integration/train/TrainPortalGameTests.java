@@ -18,6 +18,19 @@ import com.simibubi.create.content.trains.track.TrackBlockEntity;
 import com.simibubi.create.content.trains.track.TrackShape;
 import com.simibubi.create.content.trains.track.TrackPropagator;
 import net.createteleporters.init.CreateteleportersModBlocks;
+import net.createteleporters.init.CreateteleportersModFluids;
+import net.createteleporters.block.CustomPortalBaseBlock;
+import net.createteleporters.block.entity.CustomPortalBaseBlockEntity;
+import net.createteleporters.util.CustomPortalTeleportMode;
+import com.simibubi.create.Create;
+import com.simibubi.create.api.contraption.train.PortalTrackProvider;
+import com.simibubi.create.content.trains.track.BezierConnection;
+import net.createmod.catnip.data.Couple;
+import net.createmod.catnip.math.BlockFace;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.neoforged.neoforge.fluids.FluidStack;
 import io.netty.buffer.Unpooled;
 import java.util.List;
 import java.util.UUID;
@@ -42,6 +55,172 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @GameTestHolder("createteleporters")
 @PrefixGameTestTemplate(false)
 public final class TrainPortalGameTests {
+	@GameTest(template = "train_test", timeoutTicks = 5000)
+	public static void quantumTrackPlacement(GameTestHelper helper) {
+		BlockPos base = helper.absolutePos(new BlockPos(100, 2, 100));
+		forceEndpointChunks(helper, base, true);
+		forceEndpointChunks(helper, base.offset(12, 0, 12), true);
+		helper.runAfterDelay(20, () -> placementCase(helper, 0));
+	}
+
+	private static void placementCase(GameTestHelper helper, int index) {
+		if (index == 64) { blockedPlacementCase(helper, 0); return; }
+		Direction[] rotations = { Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST };
+		Direction sourceRotation = rotations[index % 4];
+		Direction targetRotation = rotations[index / 4 % 4];
+		boolean targetFirst = index / 16 % 2 == 0;
+		boolean beforeActivation = index / 32 == 0;
+		ServerLevel level = helper.getLevel();
+		BlockPos sourceBase = helper.absolutePos(new BlockPos(100, 2, 100));
+		BlockPos targetBase = sourceBase.offset(12, 0, 12);
+		clearPlacementArea(level, sourceBase);
+		portalFrame(level, sourceBase, sourceRotation, targetBase);
+		portalFrame(level, targetBase, targetRotation, sourceBase);
+		BlockPos sourcePortal = sourceBase.relative(sourceRotation.getClockWise()).above();
+		BlockPos targetPortal = targetBase.relative(targetRotation.getClockWise()).above();
+		Direction entry = sourceRotation.getOpposite();
+		Direction exitSide = entry.getAxis() == targetRotation.getClockWise().getAxis() ? entry.getClockWise() : entry;
+		BlockPos source = sourcePortal.relative(entry.getOpposite());
+		BlockPos target = targetPortal.relative(exitSide);
+		BlockState sourceRail = straightRail(entry).setValue(BlockStateProperties.WATERLOGGED, true);
+		BlockState targetRail = straightRail(exitSide);
+		Runnable placeFirst = () -> level.setBlock(targetFirst ? target : source, targetFirst ? targetRail : sourceRail, 3);
+		Runnable placeSecond = () -> {
+			try {
+				BlockPos firstPos = targetFirst ? target : source, missingPos = targetFirst ? source : target;
+				check(level.getBlockState(firstPos).equals(targetFirst ? targetRail : sourceRail), "Waiting endpoint must remain a flat rail, case " + index);
+				check(!(level.getBlockState(missingPos).getBlock() instanceof TrackBlock), "Must not generate a destination rail, case " + index);
+				check(!(level.getBlockEntity(firstPos) instanceof TrackBlockEntity be) || be.boundLocation == null, "Waiting endpoint must remain unbound, case " + index);
+			} catch (AssertionError failure) { helper.fail(failure.getMessage()); return; }
+			level.setBlock(targetFirst ? source : target, targetFirst ? sourceRail : targetRail, 3);
+			for (int i = 1; i <= 3; i++) {
+				level.setBlock(source.relative(entry.getOpposite(), i), straightRail(entry), 3);
+				level.setBlock(target.relative(exitSide, i), straightRail(exitSide), 3);
+			}
+		};
+		Runnable activate = () -> {
+			for (BlockPos base : List.of(sourceBase, targetBase)) {
+				((CustomPortalBaseBlockEntity) level.getBlockEntity(base)).getFluidTank()
+					.setFluid(new FluidStack(CreateteleportersModFluids.QUANTUM_FLUID.get(), 32000));
+			}
+		};
+		if (beforeActivation) {
+			placeFirst.run();
+			helper.runAfterDelay(20, () -> { placeSecond.run(); activate.run(); });
+		} else {
+			activate.run();
+			helper.runAfterDelay(20, placeFirst);
+			helper.runAfterDelay(40, placeSecond);
+		}
+		helper.runAfterDelay(60, () -> {
+			try {
+				String context = "placement case " + index + " (" + sourceRotation + " -> " + targetRotation + ")";
+				check(level.getBlockEntity(source) instanceof TrackBlockEntity, context + ": source must remain a track");
+				check(level.getBlockEntity(target) instanceof TrackBlockEntity, context + ": mapped exit must become a track");
+				TrackBlockEntity first = (TrackBlockEntity) level.getBlockEntity(source);
+				TrackBlockEntity second = (TrackBlockEntity) level.getBlockEntity(target);
+				check(first.boundLocation != null && first.boundLocation.getFirst().equals(level.dimension()) && first.boundLocation.getSecond().equals(target), context + ": source binding");
+				check(second.boundLocation != null && second.boundLocation.getFirst().equals(level.dimension()) && second.boundLocation.getSecond().equals(source), context + ": reciprocal binding");
+				check(first.getBlockState().getBlock() == sourceRail.getBlock() && second.getBlockState().getBlock() == targetRail.getBlock(), context + ": track materials");
+				check(first.getBlockState().getValue(BlockStateProperties.WATERLOGGED)
+					&& !second.getBlockState().getValue(BlockStateProperties.WATERLOGGED), context + ": preserve endpoint properties");
+				check(first.getPersistentData().getLong("CTPTrainBase") == sourceBase.asLong()
+					&& second.getPersistentData().getLong("CTPTrainBase") == targetBase.asLong(), context + ": stamped bases");
+				TrackNodeLocation a = QuantumTrainPortals.endpoint(level, source, first.getBlockState());
+				TrackNodeLocation b = QuantumTrainPortals.endpoint(level, target, second.getBlockState());
+				TrackGraph graph = Create.RAILWAYS.trackNetworks.values().stream()
+					.filter(g -> g.locateNode(a) != null && g.locateNode(b) != null).findFirst().orElseThrow(() -> new AssertionError(context + ": shared graph"));
+				TrackNode entrance = graph.locateNode(a), departure = graph.locateNode(b);
+				TrackEdge portal = graph.getConnectionsFrom(entrance).get(departure);
+				check(portal != null && portal.isInterDimensional() && portal.getLength() == 0, context + ": zero-length portal edge");
+				TrackEdge approach = graph.getConnectionsFrom(entrance).values().stream().filter(e -> !e.isInterDimensional()).findFirst().orElseThrow();
+				TrackEdge leaving = graph.getConnectionsFrom(departure).values().stream().filter(e -> !e.isInterDimensional()).findFirst().orElseThrow();
+				TrackEdge incoming = graph.getConnectionsFrom(approach.node2).get(approach.node1);
+				TravellingPoint probe = point(incoming, incoming.getLength() - 0.5);
+				probe.travel(graph, 1, probe.follow(point(leaving, 0.5)));
+				check(probe.edge == leaving && Math.abs(probe.position - 0.5) < 1e-6, context + ": cross portal");
+				probe.travel(graph, -1, probe.follow(point(incoming, incoming.getLength() - 0.5)));
+				check(probe.edge == incoming && Math.abs(probe.position - (incoming.getLength() - 0.5)) < 1e-6, context + ": reverse passage");
+				placementCase(helper, index + 1);
+			} catch (AssertionError failure) { helper.fail(failure.getMessage()); }
+		});
+	}
+
+	private static BlockState straightRail(Direction direction) {
+		return AllBlocks.TRACK.getDefaultState().setValue(TrackBlock.SHAPE, direction.getAxis() == Direction.Axis.X ? TrackShape.XO : TrackShape.ZO);
+	}
+
+	private static void portalFrame(ServerLevel level, BlockPos base, Direction rotation, BlockPos linkedBase) {
+		Direction horizontal = rotation.getAxis() == Direction.Axis.X ? Direction.SOUTH : Direction.EAST;
+		for (int x = -2; x <= 2; x++) for (int y = 0; y <= 4; y++) {
+			// Placing the controller creates its own dummy blocks and requires those spots to be empty.
+			BlockState block = y == 0 && Math.abs(x) <= 1 ? Blocks.AIR.defaultBlockState()
+				: y == 0 || y == 4 || Math.abs(x) == 2 ? CreateteleportersModBlocks.QUANTUM_CASING.get().defaultBlockState() : Blocks.AIR.defaultBlockState();
+			level.setBlock(base.relative(horizontal, x).above(y), block, 2);
+		}
+		level.setBlock(base, CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get().defaultBlockState().setValue(CustomPortalBaseBlock.FACING, rotation), 2);
+		CompoundTag tag = level.getBlockEntity(base).getPersistentData();
+		tag.putString("rotation", rotation.getName());
+		tag.putString(CustomPortalTeleportMode.TAG, CustomPortalTeleportMode.PORTAL_TO_PORTAL);
+		tag.putBoolean("isLinked", true);
+		tag.putString("linkedDim", level.dimension().location().toString());
+		tag.putDouble("linkedX", linkedBase.getX()); tag.putDouble("linkedY", linkedBase.getY()); tag.putDouble("linkedZ", linkedBase.getZ());
+	}
+
+	private static void clearPlacementArea(ServerLevel level, BlockPos base) {
+		for (BlockPos pos : BlockPos.betweenClosed(base.offset(-5, 0, -5), base.offset(17, 5, 17))) level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+	}
+
+	private static void blockedPlacementCase(GameTestHelper helper, int index) {
+		if (index == 9) {
+			BlockPos base = helper.absolutePos(new BlockPos(100, 2, 100));
+			clearPlacementArea(helper.getLevel(), base);
+			forceEndpointChunks(helper, base, false);
+			forceEndpointChunks(helper, base.offset(12, 0, 12), false);
+			helper.succeed(); return;
+		}
+		ServerLevel level = helper.getLevel();
+		BlockPos sourceBase = helper.absolutePos(new BlockPos(100, 2, 100)), targetBase = sourceBase.offset(12, 0, 12);
+		clearPlacementArea(level, sourceBase);
+		portalFrame(level, sourceBase, Direction.NORTH, targetBase);
+		portalFrame(level, targetBase, Direction.NORTH, sourceBase);
+		for (BlockPos base : List.of(sourceBase, targetBase)) ((CustomPortalBaseBlockEntity) level.getBlockEntity(base)).getFluidTank()
+			.setFluid(new FluidStack(CreateteleportersModFluids.QUANTUM_FLUID.get(), 32000));
+		BlockPos source = sourceBase.east().above().north(), target = targetBase.east().above().south();
+		helper.runAfterDelay(20, () -> {
+			try {
+				BlockState blocked = switch (index) {
+					case 0 -> Blocks.STONE.defaultBlockState();
+					case 1 -> straightRail(Direction.EAST);
+					case 2 -> AllBlocks.TRACK.getDefaultState().setValue(TrackBlock.SHAPE, TrackShape.AS);
+					case 3 -> AllBlocks.TRACK.getDefaultState().setValue(TrackBlock.SHAPE, TrackShape.CR_O);
+					case 4 -> AllBlocks.TRACK.getDefaultState().setValue(TrackBlock.SHAPE, TrackShape.TN).setValue(TrackBlock.HAS_BE, true);
+					case 8 -> Blocks.AIR.defaultBlockState();
+					default -> straightRail(Direction.SOUTH).setValue(TrackBlock.HAS_BE, true);
+				};
+				level.setBlock(target, blocked, 3);
+				if (index >= 4 && index < 8) {
+					TrackBlockEntity be = (TrackBlockEntity) level.getBlockEntity(target);
+					if (index == 4 || index == 5) be.bind(level.dimension(), target.offset(30, 0, 0));
+					if (index == 6) be.tilt.smoothingAngle = java.util.Optional.of(10.0);
+					if (index == 7) be.getConnections().put(target.south(3), new BezierConnection(Couple.create(target, target.south(3)),
+						Couple.create(Vec3.atCenterOf(target), Vec3.atCenterOf(target.south(3))), Couple.create(new Vec3(0, 0, 1), new Vec3(0, 0, -1)),
+						Couple.create(new Vec3(0, 1, 0), new Vec3(0, 1, 0)), true, false, TrackMaterial.ANDESITE));
+				}
+				check(PortalTrackProvider.getOtherSide(level, new BlockFace(source, Direction.SOUTH)) == null, "Incompatible exit " + index + " must be rejected");
+				// Prevent the invalid endpoint from attempting its own portal placement during this check.
+				level.setBlock(source, straightRail(Direction.SOUTH), 3);
+				((TrackBlock) level.getBlockState(source).getBlock()).tick(level.getBlockState(source), level, source, level.random);
+				check(level.getBlockState(source).equals(straightRail(Direction.SOUTH)), "Blocked placement must preserve the source rail");
+				check(level.getBlockState(target).equals(blocked), "Blocked placement must preserve the exit rail/block");
+				check(!(level.getBlockState(target.west()).getBlock() instanceof TrackBlock)
+					&& !(level.getBlockState(target.above()).getBlock() instanceof TrackBlock), "Blocked placement must not move to another lane or height");
+				level.removeBlock(source, false); level.removeBlock(target, false);
+				blockedPlacementCase(helper, index + 1);
+			} catch (AssertionError failure) { helper.fail(failure.getMessage()); }
+		});
+	}
+
 	@GameTest(template = "train_test")
 	public static void portalGraphAndPersistence(GameTestHelper helper) {
 		Fixture f = fixture();

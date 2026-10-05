@@ -38,3 +38,31 @@ ___**Warning: Upgrading your old world with the new Remastered Version may cause
 ## ![](https://media.forgecdn.net/attachments/description/null/description_c56999ea-8ae6-40fd-9b37-1e4e6e0a15fa.png)
 
 <span style="font-size: 24px; font-family: arial, helvetica, sans-serif;"><img src="https://media.forgecdn.net/attachments/description/null/description_73d9c7b6-8844-4ee4-95d1-c9b8d908ba72.png" width="319" height="285"></span>
+
+
+## Development regression checks
+
+Train portal endpoints must be placed at both linked portals in the corresponding
+lane and height. Compatible flat tracks are converted and bound together; an empty
+or incompatible exit leaves the waiting track intact without generating a rail.
+
+Use JDK 21. Train checks run with `./gradlew.bat -PtrainPortalTests runGameTestServer`.
+To exercise the optional Immersive Portals integration, put its runtime dependencies
+(such as the NeoForge Cloth Config jar) in `build/immersivePortalTestDependencies`, then run:
+
+```powershell
+.\gradlew.bat "-PimmersivePortalTestJar=path/to/immersive-portals.jar" runGameTestServer
+```
+
+Use the upstream NeoForge 1.21.1 Immersive Portals jar.
+The property also works with `runClient` for visual checks. Test sources and these
+runtime jars are excluded from a normal build. The Immersive checks cover all 16
+rotation combinations, scaled floor and reciprocal transforms, neighboring pairs,
+version-1 migration, NBT reload, missing entities, deactivation, destruction, and
+rollback when cluster completion fails. The test world is `build/ip-gametest`.
+
+Verified server regressions with Immersive Portals 6.0.7, Cloth Config 15.0.140,
+NeoForge 21.1.228, Create 6.0.10, and Minecraft 1.21.1. All 16 rotation cases and
+the lifecycle checks passed. Client rendering was not visually checked; inspect
+both sides of east/west and north/south frames against marked destination floors.
+Moving Sable sublevels are outside these stationary-frame checks.

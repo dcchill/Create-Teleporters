@@ -78,7 +78,7 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 	@Override
 	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
 		guiGraphics.drawString(this.font, Component.translatable("gui.createteleporters.custom_teleporter_gui.label_tp_link"), 45, 20, -1, false);
-		guiGraphics.drawString(this.font, CustomPortalTeleportMode.displayName(menu.getTeleportMode()), modeRowX() + 36, 47, 0xFFF6E9FF, true);
+		guiGraphics.drawString(this.font, CustomPortalTeleportMode.displayName(menu.getTeleportMode()), modeRowX() + 36, 37, -1, false);
 		guiGraphics.drawString(this.font, CustomPortalBaseOnTickUpdateProcedure.execute(world, x, y, z), 0, 70, -12829636, false);
 		guiGraphics.drawString(this.font, Component.translatable("gui.createteleporters.custom_teleporter_gui.label_entity_teleporter"), -1, -22, -12829636, false);
 	}
@@ -86,7 +86,7 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 	@Override
 	public void init() {
 		super.init();
-		modeButton = addRenderableWidget(new Button(leftPos + modeRowX(), topPos + 45, 28, 12, modeLabel(), button ->
+		modeButton = addRenderableWidget(new Button(leftPos + modeRowX(), topPos + 35, 28, 12, modeLabel(), button ->
 			PacketDistributor.sendToServer(new CustomTeleporterGuiButtonMessage(1, x, y, z)), narration -> narration.get()) {
 			@Override
 			public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
@@ -123,7 +123,7 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 		int labelWidth = Math.max(
 			font.width(CustomPortalTeleportMode.displayName(CustomPortalTeleportMode.COORDINATE)),
 			font.width(CustomPortalTeleportMode.displayName(CustomPortalTeleportMode.PORTAL_TO_PORTAL)));
-		return (imageWidth - 36 - labelWidth) / 2;
+		return 29;
 	}
 	private static void drawSwitchShape(GuiGraphics graphics, int x, int y, int width, int height, int color) {
 		graphics.fill(x + 2, y, x + width - 2, y + height, color);

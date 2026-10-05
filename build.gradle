@@ -22,7 +22,7 @@ neoForge {
         }
         gameTestServer {
             type = "gameTestServer"
-            gameDirectory = file('build/train-gametest')
+            gameDirectory = file(providers.gradleProperty('immersivePortalTestJar').isPresent() ? 'build/ip-gametest' : 'build/train-gametest')
             systemProperty 'neoforge.enabledGameTestNamespaces', 'createteleporters'
         }
 
@@ -45,6 +45,11 @@ sourceSets.test.java.setSrcDirs([])
 sourceSets.test.resources.setSrcDirs([])
 if (providers.gradleProperty('trainPortalTests').isPresent()) {
     sourceSets.main.java.srcDir 'src/test/java'
+}
+if (providers.gradleProperty('immersivePortalTestJar').isPresent()) {
+    sourceSets.main.java.srcDir 'src/immersiveTest/java'
+}
+if (providers.gradleProperty('trainPortalTests').isPresent() || providers.gradleProperty('immersivePortalTestJar').isPresent()) {
     sourceSets.main.resources.srcDir 'src/test/resources'
 }
 
