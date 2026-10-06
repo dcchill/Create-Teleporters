@@ -32,18 +32,18 @@ public class PocketDimensionRemoteRightclickedProcedure {
 			return;
 		if (itemstack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getBoolean("notFirstUse") == false) {
 			if (Level.OVERWORLD == (entity.level().dimension())) {
-				// Use floored coordinates for consistent position tracking
+				
 				long bindX = (long) Math.floor(entity.getX());
 				long bindY = (long) Math.floor(entity.getY());
 				long bindZ = (long) Math.floor(entity.getZ());
 				
-				// Check if position was previously bound and warn the player
+				
 				if (PocketDimensionTracker.get(world).isPositionBound(bindX, bindY, bindZ)) {
 					if (entity instanceof Player _player && !_player.level().isClientSide())
 						_player.displayClientMessage(Component.literal("Rebinding existing pocket dimension..."), true);
 				}
 				
-				// Bind/overwrite this position
+				
 				PocketDimensionTracker.get(world).bindPosition(bindX, bindY, bindZ);
 				{
 					final String _tagName = "dimX";
@@ -67,7 +67,7 @@ public class PocketDimensionRemoteRightclickedProcedure {
 					final boolean _tagValue = true;
 					CustomData.update(DataComponents.CUSTOM_DATA, itemstack, tag -> tag.putBoolean(_tagName, _tagValue));
 				}
-				// Generate pocket dimension structure immediately
+				
 				PocketGenProcedure.generateStructure(world, entity.getX() * 4 * 16, Math.abs(entity.getY()), entity.getZ() * 4 * 16);
 				CreateteleportersModVariables.MapVariables.get(world).shouldGen = true;
 				CreateteleportersModVariables.MapVariables.get(world).syncData(world);

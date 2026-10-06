@@ -27,7 +27,7 @@ public class CustomPortalBaseBlockAddedProcedure {
 				level.sendBlockUpdated(basePos, bs, bs, 3);
 		}
 
-		// Define offsets based on facing
+		
 		BlockPos offset1;
 		BlockPos offset2;
 		boolean eastWest = facing == Direction.EAST || facing == Direction.WEST;
@@ -39,26 +39,26 @@ public class CustomPortalBaseBlockAddedProcedure {
 			offset2 = basePos.offset(-1, 0, 0);
 		}
 
-		// Check if both sides are clear
+		
 		if (!canReplace(world, offset1) || !canReplace(world, offset2)) {
-			// Not enough space → cancel placement
+			
 			Block.dropResources(blockstate, (Level) world, basePos);
 			world.destroyBlock(basePos, false);
 			return;
 		}
 
-		// Place dummy blocks
+		
 		world.setBlock(offset1, CreateteleportersModBlocks.CUSTOM_PORTAL_BASE_DUMMY_BLOCK.get().defaultBlockState(), 3);
 		world.setBlock(offset2, CreateteleportersModBlocks.CUSTOM_PORTAL_BASE_DUMMY_BLOCK.get().defaultBlockState(), 3);
 
-		// Assign main block NBT to both dummy blocks
+		
 		setMainData(world, offset1, x, y, z);
 		setMainData(world, offset2, x, y, z);
 	}
 
 	private static boolean canReplace(LevelAccessor world, BlockPos pos) {
 		BlockState state = world.getBlockState(pos);
-		// Compatible with 1.21.1 — checks for air or replaceable behavior
+		
 		return state.canBeReplaced() || state.isAir();
 	}
 

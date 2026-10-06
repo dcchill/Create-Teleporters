@@ -124,7 +124,7 @@ public final class QuantumTrainPortals {
 			var a = graph.locateNode(first); var b = graph.locateNode(second);
 			return a != null && b != null && graph.getConnectionsFrom(a).get(b) != null && graph.getConnectionsFrom(a).get(b).isInterDimensional();
 		});
-		if (!connected) return; // Retain the legacy metadata so the upgrade can retry.
+		if (!connected) return; 
 		tag.remove(LEGACY); tag.remove(COUNTERPART);
 		otherTag.remove(LEGACY); otherTag.remove(COUNTERPART);
 		track.setChanged(); other.setChanged();
@@ -143,7 +143,7 @@ public final class QuantumTrainPortals {
 		BlockPos basePos = BlockPos.of(track.getPersistentData().getLong(BASE));
 		var base = level.getBlockEntity(basePos);
 		if (base != null && base.getPersistentData().getBoolean("portalActive") && matchesLink(track, base.getPersistentData())) {
-			// Changing only destination mode closes entry without tearing up the rails.
+			
 			return;
 		}
 		boolean relinked = base != null && base.getPersistentData().getBoolean("portalActive")

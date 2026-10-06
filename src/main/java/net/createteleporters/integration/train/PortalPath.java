@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Set;
 
-/** A bounded, directed track walk. World-space distance is meaningless across a portal. */
+
 public final class PortalPath {
 	private PortalPath() { }
 	public record Crossing(TrackNodeLocation entrance, TrackNodeLocation exit) { }

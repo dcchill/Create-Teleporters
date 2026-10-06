@@ -20,7 +20,7 @@ public class CustomPortalBaseBlockDestroyedByPlayerProcedure {
 		BlockEntity blockEntity = world.getBlockEntity(basePos);
 		CustomPortalBaseOnTickUpdateProcedure.releasePortalChunks(world, basePos);
 		
-		// Get portal dimensions from NBT
+		
 		int portalHeight = 0;
 		int minExtent = -2;
 		int maxExtent = 2;
@@ -33,7 +33,7 @@ public class CustomPortalBaseBlockDestroyedByPlayerProcedure {
 			maxExtent = nbt.getInt("portalMaxExtent");
 			rotation = nbt.getString("rotation");
 			
-			// Deactivate the portal
+			
 			if (!world.isClientSide()) {
 				nbt.putBoolean("portalActive", false);
 				if (world instanceof Level _level)
@@ -41,7 +41,7 @@ public class CustomPortalBaseBlockDestroyedByPlayerProcedure {
 			}
 		}
 
-		// If using Immersive Portals, remove this portal and the linked portal cluster.
+		
 		if (CTPConfigConfiguration.IMMERSIVE_PORTALS_COMPAT.get()
 				&& ImmersivePortalsIntegration.isImmersivePortalsLoaded()
 				&& world instanceof ServerLevel sourceLevel) {
@@ -67,21 +67,21 @@ public class CustomPortalBaseBlockDestroyedByPlayerProcedure {
 			}
 		}
 		
-		// Remove dummy blocks (always at offset +/- 1 from base on bottom row)
+		
 		if ("east".equals(rotation) || "west".equals(rotation)) {
-			world.removeBlock(basePos.offset(0, 0, 1), false);  // Remove dummy at +1
-			world.removeBlock(basePos.offset(0, 0, -1), false); // Remove dummy at -1
+			world.removeBlock(basePos.offset(0, 0, 1), false);  
+			world.removeBlock(basePos.offset(0, 0, -1), false); 
 		} else {
-			world.removeBlock(basePos.offset(1, 0, 0), false);  // Remove dummy at +1
-			world.removeBlock(basePos.offset(-1, 0, 0), false); // Remove dummy at -1
+			world.removeBlock(basePos.offset(1, 0, 0), false);  
+			world.removeBlock(basePos.offset(-1, 0, 0), false); 
 		}
 		
-		// Remove quantum portal blocks using stored dimensions
+		
 		if (world instanceof ServerLevel _level && portalHeight > 0) {
-			int fillHeight = portalHeight - 1; // Height of portal interior (excludes bottom row)
+			int fillHeight = portalHeight - 1; 
 			
 			if ("east".equals(rotation) || "west".equals(rotation)) {
-				// Horizontal axis is Z - portal spans along Z axis
+				
 				for (int dy = 1; dy <= fillHeight; dy++) {
 					for (int dz = minExtent + 1; dz <= maxExtent - 1; dz++) {
 						BlockPos pos = basePos.offset(0, dy, dz);
@@ -90,7 +90,7 @@ public class CustomPortalBaseBlockDestroyedByPlayerProcedure {
 					}
 				}
 			} else if ("north".equals(rotation) || "south".equals(rotation)) {
-				// Vertical axis is X - portal spans along X axis
+				
 				for (int dy = 1; dy <= fillHeight; dy++) {
 					for (int dx = minExtent + 1; dx <= maxExtent - 1; dx++) {
 						BlockPos pos = basePos.offset(dx, dy, 0);
@@ -99,7 +99,7 @@ public class CustomPortalBaseBlockDestroyedByPlayerProcedure {
 					}
 				}
 			} else {
-				// Fallback to old 3x3 removal if no dimensions stored
+				
 				for (int dy = 1; dy <= 3; dy++) {
 					for (int dz = -1; dz <= 1; dz++) {
 						BlockPos pos = basePos.offset(0, dy, dz);

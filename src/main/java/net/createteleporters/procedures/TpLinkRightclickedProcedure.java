@@ -36,7 +36,7 @@ public class TpLinkRightclickedProcedure {
         Vec3 backwards = from.subtract(to);
         BlockHitResult miss = BlockHitResult.miss(to, Direction.getNearest(backwards.x, backwards.y, backwards.z), BlockPos.containing(to));
         ClipContext context = new ClipContext(from, to, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, entity);
-        // A normal Level.clip can synchronously generate chunks along a long ray.
+        
         BlockHitResult hit = BlockGetter.traverseBlocks(from, to, context, (clip, pos) -> {
             if (level.isOutsideBuildHeight(pos)) return miss;
             var chunk = level.getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4);

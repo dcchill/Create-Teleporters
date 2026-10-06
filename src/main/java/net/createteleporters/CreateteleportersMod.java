@@ -52,8 +52,8 @@ public class CreateteleportersMod {
 	public static final String MODID = "createteleporters";
 
 	public CreateteleportersMod(IEventBus modEventBus) {
-		// Start of user code block mod constructor
-		// End of user code block mod constructor
+		
+		
 		NeoForge.EVENT_BUS.register(this);
 		modEventBus.addListener(this::registerNetworking);
 
@@ -69,12 +69,12 @@ public class CreateteleportersMod {
 		CreateteleportersModFluids.REGISTRY.register(modEventBus);
 		CreateteleportersModFluidTypes.REGISTRY.register(modEventBus);
 
-		// Start of user code block mod init
-		// End of user code block mod init
+		
+		
 	}
 
-	// Start of user code block mod methods
-	// End of user code block mod methods
+	
+	
 	private static boolean networkingRegistered = false;
 	private static final Map<CustomPacketPayload.Type<?>, NetworkMessage<?>> MESSAGES = new HashMap<>();
 

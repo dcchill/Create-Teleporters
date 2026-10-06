@@ -37,6 +37,6 @@ public class CreateteleportersModBlocks {
 	public static final DeferredBlock<Block> CUSTOM_PORTAL = REGISTRY.register("custom_portal", CustomPortalBlock::new);
 	public static final DeferredBlock<Block> CUSTOM_PORTAL_ON = REGISTRY.register("custom_portal_on", CustomPortalOnBlock::new);
 	public static final DeferredBlock<Block> BLOCK_TELEPORTER = REGISTRY.register("block_teleporter", BlockTeleporterBlock::new);
-	// Start of user code block custom blocks
-	// End of user code block custom blocks
+	
+	
 }

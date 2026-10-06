@@ -17,7 +17,7 @@ public class EntityTeleporterEntityWalksOnTheBlockProcedure {
 		BlockPos pos = BlockPos.containing(x, y, z);
 		boolean isCharging = false;
 
-		// Expanded detection box: half block below to one block above
+		
 		AABB detectionBox = new AABB(x, y - 0.5, z, x + 1, y + 1.5, z + 1);
 
 		List<Entity> entities = world.getEntitiesOfClass(Entity.class, detectionBox, e ->

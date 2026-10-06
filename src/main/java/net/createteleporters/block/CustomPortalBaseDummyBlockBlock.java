@@ -75,7 +75,7 @@ public class CustomPortalBaseDummyBlockBlock extends Block implements EntityBloc
 		return blockEntity != null && blockEntity.triggerEvent(eventID, eventParam);
 	}
 
-	// Optional helper method (not called automatically)
+	
 	public static void destroyConnectedDummies(Level world, BlockPos basePos) {
 		Direction facing = world.getBlockState(basePos).getValue(BlockStateProperties.HORIZONTAL_FACING);
 
@@ -88,7 +88,7 @@ public class CustomPortalBaseDummyBlockBlock extends Block implements EntityBloc
 			world.destroyBlock(pos2, false);
 	}
 
-	// This runs when the dummy is actually broken by a player
+	
 @Override
 public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
     if (!level.isClientSide) {

@@ -13,7 +13,7 @@ public abstract class PortalCubeParticleMixin {
 	@ModifyArg(method = "render", at = @At(value = "INVOKE",
 		target = "Lcom/mojang/blaze3d/vertex/VertexConsumer;setColor(FFFF)Lcom/mojang/blaze3d/vertex/VertexConsumer;"), index = 3)
 	private float ctp$portalOpacity(float alpha) {
-		// Hot cubes are locomotive smoke; only the portal effect becomes translucent.
+		
 		return hot ? alpha : alpha * 0.8f;
 	}
 }

@@ -38,7 +38,7 @@ public class PocketGenProcedure {
 			return;
 		if (CreateteleportersModVariables.MapVariables.get(world).shouldGen == true) {
 			if ((entity.level().dimension()) == ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("createteleporters:pocket_dimension"))) {
-				// Generate structure at player location
+				
 				generateStructure(world, entity.getX(), entity.getY(), entity.getZ());
 				
 				CreateteleportersModVariables.MapVariables.get(world).shouldGen = false;
@@ -54,7 +54,7 @@ public class PocketGenProcedure {
 		if (world instanceof ServerLevel _serverworld) {
 			StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("createteleporters", "pocketdimensionwalls"));
 			if (template != null) {
-				// Calculate spawn position - structure spawns centered on player
+				
 				int spawnX = (int) Math.floor(x - 7.5);
 				int spawnY = (int) Math.floor(y - 3);
 				int spawnZ = (int) Math.floor(z - 7.5);

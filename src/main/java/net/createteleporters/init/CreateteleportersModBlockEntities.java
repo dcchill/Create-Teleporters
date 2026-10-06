@@ -40,8 +40,8 @@ public class CreateteleportersModBlockEntities {
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<?>> CUSTOM_PORTAL_ON = register("custom_portal_on", CreateteleportersModBlocks.CUSTOM_PORTAL_ON, CustomPortalOnBlockEntity::new);
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<?>> BLOCK_TELEPORTER = register("block_teleporter", CreateteleportersModBlocks.BLOCK_TELEPORTER, BlockTeleporterBlockEntity::new);
 
-	// Start of user code block custom block entities
-	// End of user code block custom block entities
+	
+	
 	private static DeferredHolder<BlockEntityType<?>, BlockEntityType<?>> register(String registryname, DeferredHolder<Block, Block> block, BlockEntityType.BlockEntitySupplier<?> supplier) {
 		return REGISTRY.register(registryname, () -> BlockEntityType.Builder.of(supplier, block.get()).build(null));
 	}

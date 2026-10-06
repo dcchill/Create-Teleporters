@@ -45,7 +45,7 @@ public final class PortalCarriageState {
 		if (survivor == null) return;
 		final Carriage.DimensionalCarriageEntity accessible = survivor;
 
-		// Let Create serialize anything outside each split portion before collapsing it.
+		
 		for (var dce : entities().values()) if (dce != accessible) dce.updatePassengerLoadout();
 		entities().entrySet().removeIf(entry -> {
 			if (entry.getValue() == accessible) return false;
@@ -91,7 +91,7 @@ public final class PortalCarriageState {
 		}
 		Carriage.DimensionalCarriageEntity existing = entities().remove(crossing.entrance().dimension);
 		if (existing != null) {
-			// The existing entity stays at its physical end even when travelling backwards.
+			
 			ResourceKey<Level> key = existing.positionAnchor != null && existing.positionAnchor.distanceToSqr(crossing.exit().getLocation())
 				< existing.positionAnchor.distanceToSqr(crossing.entrance().getLocation()) ? exit : entrance;
 			entities().put(key, existing);
@@ -137,7 +137,7 @@ public final class PortalCarriageState {
 	}
 	public static Carriage.DimensionalCarriageEntity forEntity(Carriage carriage, CarriageContraptionEntity entity) {
 		var entities = ((PortalCarriage) carriage).ctp$entities();
-		// createEntity assigns the weak reference before calling setCarriage.
+		
 		for (var entry : entities.entrySet()) {
 			if (entry.getValue().entity.get() == entity) {
 				if (!entity.level().isClientSide) setEntitySide(entry.getValue(), entry.getKey());

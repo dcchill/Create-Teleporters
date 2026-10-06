@@ -42,7 +42,7 @@ public class ImmersivePortalsIntegration {
         return isImmersivePortalsLoaded;
     }
 
-    /** Creates one bi-way, bi-faced cluster shared by both linked controllers. */
+    
     public static boolean createImmersivePortal(LevelAccessor world, double x, double y, double z,
             String rotation, int portalWidth, int portalHeight, int minExtent, int maxExtent,
             String targetDim, double targetX, double targetY, double targetZ) {
@@ -50,7 +50,7 @@ public class ImmersivePortalsIntegration {
         PortalFrame source = frame(level, BlockPos.containing(x, y, z), true);
         ResourceLocation dim = ResourceLocation.tryParse(targetDim);
         ServerLevel targetLevel = dim == null ? null : level.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, dim));
-        // Controller chunks can load before their saved portal entities. Wait rather than duplicate them.
+        
         if (!level.areEntitiesLoaded(new ChunkPos(BlockPos.containing(x, y, z)).toLong())
                 || targetLevel != null && !targetLevel.areEntitiesLoaded(new ChunkPos(BlockPos.containing(targetX, targetY, targetZ)).toLong())) return false;
         PortalFrame target = targetLevel == null ? null : frame(targetLevel, BlockPos.containing(targetX, targetY, targetZ), true);
@@ -75,7 +75,7 @@ public class ImmersivePortalsIntegration {
             String rootTag = "ctp_root_" + newId;
             Vec3 center = source.center;
             double scale = target.size / (double) source.size;
-            // RotationArgument reads yaw then pitch; every frame must remain upright.
+            
             String command = String.format(Locale.ROOT,
                 "portal euler make_portal %.3f %.3f %.3f %.1f 0 %d %d %.16f {Tags:[\"%s\"],portalTag:\"%s%s\",NoGravity:1b}",
                 center.x, center.y, center.z, getPortalNormal(source.rotation).toYRot(),
@@ -108,7 +108,7 @@ public class ImmersivePortalsIntegration {
         }
     }
 
-    /** Called periodically, after the existing portal chunk tickets have loaded both endpoints. */
+    
     public static boolean hasImmersivePortal(LevelAccessor world, double x, double y, double z) {
         if (!isImmersivePortalsLoaded() || !(world instanceof ServerLevel level)) return false;
         PortalFrame source = frame(level, BlockPos.containing(x, y, z), true);
@@ -191,7 +191,7 @@ public class ImmersivePortalsIntegration {
     }
 
     private static List<Entity> ownedPortals(ServerLevel level, String id) throws ReflectiveOperationException {
-        // ponytail: scan loaded entities once per second; index clusters if portal counts become large.
+        
         List<Entity> portals = new ArrayList<>();
         for (ServerLevel dimension : level.getServer().getAllLevels()) for (Entity entity : dimension.getAllEntities()) {
             if (!entity.isRemoved() && isPortal(entity) && (OWNER_PREFIX + id).equals(entity.getClass().getField("portalTag").get(entity))) portals.add(entity);
@@ -201,7 +201,7 @@ public class ImmersivePortalsIntegration {
 
     private static void removeLegacy(PortalFrame frame) throws ReflectiveOperationException {
         if (frame == null) return;
-        // Old saves have no ownership tag. Restrict migration to the exact stored frame center.
+        
         List<Entity> portals = frame.level.getEntities((Entity) null, new AABB(frame.center, frame.center).inflate(0.05),
             e -> isPortal(e) && e.position().distanceToSqr(frame.center) < 1e-6);
         for (Entity portal : portals) {

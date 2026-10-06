@@ -28,7 +28,7 @@ public class CreateTeleportersPonderScenes {
 		builder.world().showSection(util.select().layer(0), Direction.UP);
 		builder.idle(30);
 		
-		// Show the portal controller block
+		
 		builder.world().showSection(util.select().position(2, 1, 2), Direction.UP);
 		builder.idle(30);
 		
@@ -61,7 +61,7 @@ public class CreateTeleportersPonderScenes {
 		builder.world().showSection(util.select().layer(0), Direction.UP);
 		builder.idle(20);
 		
-		// Show frame construction early
+		
 		builder.world().showSection(util.select().layersFrom(1), Direction.DOWN);
 		builder.idle(40);
 		
@@ -91,7 +91,7 @@ public class CreateTeleportersPonderScenes {
 		builder.world().showSection(util.select().layer(0), Direction.UP);
 		builder.idle(20);
 		
-		// Show structure sooner
+		
 		builder.world().showSection(util.select().layersFrom(1), Direction.DOWN);
 		builder.idle(40);
 		

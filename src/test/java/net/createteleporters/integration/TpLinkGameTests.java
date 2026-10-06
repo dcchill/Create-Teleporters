@@ -45,7 +45,7 @@ public final class TpLinkGameTests {
                 check(item == CreateteleportersModItems.ADV_TPLINK.get()
                     ? data.getString("dimension").equals(level.dimension().location().toString()) : !data.contains("dimension"), "Advanced link saves the dimension");
 
-                // Start just inside the first loaded/unloaded boundary; looking east must not generate terrain.
+                
                 int chunkX = base.getX() >> 4, chunkZ = base.getZ() >> 4;
                 while (level.getChunkSource().getChunkNow(chunkX, chunkZ) != null && chunkX < (base.getX() >> 4) + 160) chunkX++;
                 check(level.getChunkSource().getChunkNow(chunkX, chunkZ) == null, "Fixture needs an unloaded chunk along the ray");

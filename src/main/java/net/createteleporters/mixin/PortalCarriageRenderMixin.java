@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-/** Shared by the ordinary renderer and Flywheel's carriage visual. */
+
 @Mixin(value = CarriageContraptionEntityRenderer.class, remap = false)
 public abstract class PortalCarriageRenderMixin {
 	@Redirect(method = "translateBogey", at = @At(value = "INVOKE", target = "Lnet/createmod/catnip/animation/LerpedFloat;getValue(F)F", ordinal = 0))

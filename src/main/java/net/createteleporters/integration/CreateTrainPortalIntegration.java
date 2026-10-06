@@ -53,7 +53,7 @@ public final class CreateTrainPortalIntegration {
 
 	}
 
-	/** Returns true when quantum portal placement was handled, including a blocked exit. */
+	
 	public static boolean connectQuantumTrack(ServerLevel level, BlockPos pos, BlockState state) {
 		TrackShape shape = state.getValue(TrackBlock.SHAPE);
 		if (shape != TrackShape.XO && shape != TrackShape.ZO) return false;
@@ -68,8 +68,8 @@ public final class CreateTrainPortalIntegration {
 			if (target == level && targetPos.equals(pos)) return true;
 			BlockState existing = target.getBlockState(targetPos);
 			if (!(existing.getBlock() instanceof TrackBlock)) {
-				// Create's clockwise turn is not reciprocal for perpendicular portals.
-				// Use the placed endpoint only if its normal exit maps back to this waiting track.
+				
+				
 				BlockFace reverseEntry = new BlockFace(exit.face().getConnectedPos().relative(exit.face().getFace()), exit.face().getFace().getOpposite());
 				if (isCompatibleTrack(target, reverseEntry.getPos(), reverseEntry.getFace())) {
 					PortalTrackProvider.Exit reverseExit = PortalTrackProvider.getOtherSide(target, reverseEntry);
@@ -176,7 +176,7 @@ public final class CreateTrainPortalIntegration {
 		BlockPos targetPortalPos = toPortalPos(targetBasePos, targetRotation, localHorizontalOffset, localY);
 		CreateteleportersMod.LOGGER.info("Calculated target portal position: {}", targetPortalPos);
 		
-		// Keep the mapped lane and height even when another interior position is free.
+		
 		BlockState targetPortalState = targetLevel.getBlockState(targetPortalPos);
 		boolean isPortalBlock = targetPortalState.is(CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get());
 		CreateteleportersMod.LOGGER.info("Target portal block check - position: {}, is portal: {}, block: {}", 

@@ -46,7 +46,7 @@ public class PocketDimensionTracker extends SavedData {
 
 	public void bindPosition(long x, long y, long z) {
 		String posKey = x + "," + y + "," + z;
-		// Remove existing binding if present (allows rebinding)
+		
 		boundPositions.removeIf(tag -> tag.getAsString().equals(posKey));
 		boundPositions.add(StringTag.valueOf(posKey));
 	}

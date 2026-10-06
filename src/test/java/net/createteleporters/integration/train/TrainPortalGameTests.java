@@ -153,7 +153,7 @@ public final class TrainPortalGameTests {
 	private static void portalFrame(ServerLevel level, BlockPos base, Direction rotation, BlockPos linkedBase) {
 		Direction horizontal = rotation.getAxis() == Direction.Axis.X ? Direction.SOUTH : Direction.EAST;
 		for (int x = -2; x <= 2; x++) for (int y = 0; y <= 4; y++) {
-			// Placing the controller creates its own dummy blocks and requires those spots to be empty.
+			
 			BlockState block = y == 0 && Math.abs(x) <= 1 ? Blocks.AIR.defaultBlockState()
 				: y == 0 || y == 4 || Math.abs(x) == 2 ? CreateteleportersModBlocks.QUANTUM_CASING.get().defaultBlockState() : Blocks.AIR.defaultBlockState();
 			level.setBlock(base.relative(horizontal, x).above(y), block, 2);
@@ -208,7 +208,7 @@ public final class TrainPortalGameTests {
 						Couple.create(new Vec3(0, 1, 0), new Vec3(0, 1, 0)), true, false, TrackMaterial.ANDESITE));
 				}
 				check(PortalTrackProvider.getOtherSide(level, new BlockFace(source, Direction.SOUTH)) == null, "Incompatible exit " + index + " must be rejected");
-				// Prevent the invalid endpoint from attempting its own portal placement during this check.
+				
 				level.setBlock(source, straightRail(Direction.SOUTH), 3);
 				((TrackBlock) level.getBlockState(source).getBlock()).tick(level.getBlockState(source), level, source, level.random);
 				check(level.getBlockState(source).equals(straightRail(Direction.SOUTH)), "Blocked placement must preserve the source rail");
@@ -354,7 +354,7 @@ public final class TrainPortalGameTests {
 		});
 	}
 	private static void forceEndpointChunks(GameTestHelper helper, BlockPos endpoint, boolean forced) {
-		// Carriage anchors can extend into neighboring chunks as the wheels cross.
+		
 		for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++)
 			helper.getLevel().setChunkForced((endpoint.getX() >> 4) + x, (endpoint.getZ() >> 4) + z, forced);
 	}
@@ -407,7 +407,7 @@ public final class TrainPortalGameTests {
 				net.minecraft.server.network.CommonListenerCookie.createInitial(profile, false)) {
 				@Override public void send(net.minecraft.network.protocol.Packet<?> packet) { }
 			};
-			// Register lookup only: the in-game test connection has no mod payload handshake.
+			
 			var playerMapField = net.minecraft.server.players.PlayerList.class.getDeclaredField("playersByUUID");
 			playerMapField.setAccessible(true);
 			@SuppressWarnings("unchecked")

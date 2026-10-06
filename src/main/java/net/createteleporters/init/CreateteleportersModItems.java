@@ -45,8 +45,8 @@ public class CreateteleportersModItems {
 	public static final DeferredItem<Item> CUSTOM_PORTAL_ON = block(CreateteleportersModBlocks.CUSTOM_PORTAL_ON);
 	public static final DeferredItem<Item> BLOCK_TELEPORTER = block(CreateteleportersModBlocks.BLOCK_TELEPORTER);
 
-	// Start of user code block custom items
-	// End of user code block custom items
+	
+	
 	private static DeferredItem<Item> block(DeferredHolder<Block, Block> block) {
 		return REGISTRY.register(block.getId().getPath(), () -> new BlockItem(block.get(), new Item.Properties()));
 	}

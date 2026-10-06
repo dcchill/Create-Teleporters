@@ -2,7 +2,7 @@ package net.createteleporters.integration.train;
 
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 
-/** Metadata belongs to an endpoint, not to every edge touching that endpoint. */
+
 public interface PortalNode {
 	TrackNodeLocation ctp$getCounterpart();
 	void ctp$setCounterpart(TrackNodeLocation counterpart);

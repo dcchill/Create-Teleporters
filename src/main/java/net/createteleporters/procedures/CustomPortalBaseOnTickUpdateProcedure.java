@@ -47,35 +47,35 @@ import net.createteleporters.network.CustomPortalEffectPayload;
 public class CustomPortalBaseOnTickUpdateProcedure {
 
 	public static String execute(LevelAccessor world, double x, double y, double z) {
-		// Use scalable portal checker instead of fixed size
+		
 		ScalablePortalCheckerProcedure.execute(world, x, y, z);
 		BlockPos basePos = BlockPos.containing(x, y, z);
 		CustomPortalTeleportMode.getOrMigrate(world, basePos);
 		ensurePortalChunksLoaded(world, basePos);
 
 		if (getBlockNBTLogic(world, basePos, "portalActive")) {
-			// Get portal dimensions from NBT
+			
 				int portalWidth = getBlockNBTInt(world, basePos, "portalWidth");
 				int portalHeight = getBlockNBTInt(world, basePos, "portalHeight");
 				int minExtent = getBlockNBTInt(world, basePos, "portalMinExtent");
 				int maxExtent = getBlockNBTInt(world, basePos, "portalMaxExtent");
 				String rotation = getBlockNBTString(world, basePos, "rotation");
 
-				// Check if Immersive Portals compatibility is enabled
+				
 				boolean coordinateMode = CustomPortalTeleportMode.isCoordinateMode(world, basePos);
 				boolean useImmersivePortals = !coordinateMode && CTPConfigConfiguration.IMMERSIVE_PORTALS_COMPAT.get();
 				boolean immersiveMode = useImmersivePortals && ImmersivePortalsIntegration.isImmersivePortalsLoaded();
 				
-				// Calculate interior dimensions (needed for both IP and vanilla)
+				
 				int interiorMin = minExtent + 1;
 				int interiorMax = maxExtent - 1;
 				int fillHeight = portalHeight - 1;
 
-				// Check if this portal is linked to another portal
+				
 				BlockEntity linkedBE = world.getBlockEntity(basePos);
 				boolean isLinked = linkedBE != null && linkedBE.getPersistentData().getBoolean("isLinked");
 
-				// For linked portals, only create portals when BOTH sides are valid
+				
 				if (isLinked && !coordinateMode) {
 					int linkedX = linkedBE.getPersistentData().getInt("linkedX");
 					int linkedY = linkedBE.getPersistentData().getInt("linkedY");
@@ -92,7 +92,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					boolean remoteActive = remoteBE != null && remoteBE.getPersistentData().getBoolean("portalActive");
 
 					if (!remoteActive) {
-						// Linked portal not ready yet — wait
+						
 						clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
 						if (getBlockNBTLogic(world, basePos, "immersivePortalCreated")) {
 							removeTrackedImmersivePortal(world, x, y, z);
@@ -102,26 +102,26 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					}
 				}
 
-				// Track whether IP actually created a portal (so we skip vanilla teleportation)
+				
 				boolean ipPortalActive = false;
 
 				if (immersiveMode) {
-					// Immersive Portals is enabled — NEVER use quantum portal blocks.
-					// IP portal only spawns when:
-					// 1. Portal is linked to another portal
-					// 2. At least one portal in the link has an Advanced TP Link
+					
+					
+					
+					
 					BlockEntity be = world.getBlockEntity(BlockPos.containing(x, y, z));
 					boolean canCreateIP = false;
 
 					if (isLinked) {
-						// Check if either portal has the Advanced TP Link
+						
 						boolean hasTpLink = hasAdvancedTpLink(world, basePos) ||
 										   hasAdvancedTpLinkAtLinkedPortal(world, linkedBE);
 						canCreateIP = hasTpLink;
 					}
 
 					if (canCreateIP) {
-						// Clear any leftover quantum portal blocks from before IP was enabled
+						
 						clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
 
 						String targetDim = be != null ? be.getPersistentData().getString("linkedDim") : "minecraft:overworld";
@@ -129,8 +129,8 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 						double ty = be != null ? be.getPersistentData().getDouble("linkedY") : y;
 						double tz = be != null ? be.getPersistentData().getDouble("linkedZ") : z;
 
-						// Create Immersive Portals portal (only needs to be done once)
-						// But verify it actually exists first
+						
+						
 						boolean needsCreation = !getBlockNBTLogic(world, basePos, "immersivePortalCreated")
 							|| world instanceof ServerLevel level && level.getGameTime() % 20 == 0
 								&& !ImmersivePortalsIntegration.hasImmersivePortal(world, x, y, z);
@@ -151,22 +151,22 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 							ipPortalActive = true;
 						}
 					} else {
-						// IP requirements not met (not linked or missing TP Link) — remove any existing IP portal.
-						// Do NOT spawn quantum portal blocks; IP compat is active.
+						
+						
 						if (getBlockNBTLogic(world, basePos, "immersivePortalCreated")) {
 							removeTrackedImmersivePortal(world, x, y, z);
 						}
-						// Ensure no quantum portal blocks remain
+						
 						clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
 						setPortalVisualActive(world, basePos, false);
 					}
 				} else {
-					// Config may have been turned off while IP portals were active.
-					// Remove existing IP portals and switch back to quantum portal blocks.
+					
+					
 					removeTrackedImmersivePortal(world, x, y, z);
 
-					// Use vanilla quantum portal blocks
-					// Fill portal interior only (not the frame)
+					
+					
 					String portalColor = QuantumPortalBlockBlock.getStoredPortalColorName(world.getBlockEntity(basePos));
 					if ("east".equals(rotation) || "west".equals(rotation)) {
 						if (world instanceof ServerLevel _level)
@@ -184,7 +184,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				}
 				setPortalVisualActive(world, basePos, !immersiveMode || ipPortalActive);
 				
-				// Build AABB based on portal interior extents
+				
 				AABB portalArea;
 				int portalInnerHeight = portalHeight - 1;
 
@@ -194,7 +194,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					portalArea = new AABB(x + interiorMin, y + 1, z, x + interiorMax + 1, y + portalInnerHeight + 1, z + 1);
 				}
 
-				// tiny epsilon to avoid strict boundary misses
+				
 				final double EPS = 1e-6;
 				final double ACTIVATION_HORIZONTAL_PADDING = 0.25;
 				final double ACTIVATION_LOWER_PADDING = 0.75;
@@ -207,7 +207,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					Math.max(portalArea.minY, portalArea.maxY) + ACTIVATION_UPPER_PADDING + EPS,
 					Math.max(portalArea.minZ, portalArea.maxZ) + ACTIVATION_HORIZONTAL_PADDING + EPS
 				);
-				// Get teleportation target - prefer linked portal coordinates over item data
+				
 				String targetDim;
 				double tx, ty, tz, yaw;
 
@@ -248,10 +248,10 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				int effectColor = DyeColor.byName(QuantumPortalBlockBlock.getStoredPortalColorName(
 					world.getBlockEntity(basePos)), DyeColor.PURPLE).getTextureDiffuseColor();
 
-				// Check if Immersive Portals actually created a portal — if so, skip vanilla teleportation
-				// IP handles teleportation automatically when entities walk through portal entity
+				
+				
 				if (ipPortalActive) {
-					// IP handles teleportation - just maintain cooldown to prevent loops
+					
 					for (Entity entityiterator : SableAeronauticsIntegration.getEntities(world, portalArea, e -> true)) {
 						CompoundTag entityData = entityiterator.getPersistentData();
 						if (entityData.contains("PortalTeleportCooldown")) {
@@ -264,7 +264,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					return "Portal Ready (IP)";
 				}
 
-				// Vanilla teleportation (original code)
+				
 				for (Entity entityiterator : SableAeronauticsIntegration.getEntities(world, portalArea, e -> true)) {
 					if (shouldIgnorePortalTeleport(entityiterator)) {
 						if (entityiterator instanceof net.minecraft.server.level.ServerPlayer player
@@ -276,25 +276,25 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 						continue;
 					}
 
-					// Decrement teleportation cooldown if present
+					
 					CompoundTag entityData = entityiterator.getPersistentData();
 					if (entityData.contains("PortalTeleportCooldown")) {
 						int cooldown = entityData.getInt("PortalTeleportCooldown");
 						if (cooldown > 0) {
 							entityData.putInt("PortalTeleportCooldown", cooldown - 1);
-							continue; // Skip this entity, still on cooldown
+							continue; 
 						}
 					}
 
-					// Check if entity is charging up for teleport
+					
 					int chargeTime = entityData.contains("TeleportCharge") ? entityData.getInt("TeleportCharge") : 0;
 					
-					// use the entity's feet (minY of bounding box) to prevent premature triggers
+					
 					double feetY = SableAeronauticsIntegration.getEntityFeetY(world, portalArea, entityiterator);
 					if (feetY + 1e-6 >= (y + 1 - ACTIVATION_LOWER_PADDING) && feetY <= (y + portalInnerHeight + 1 + ACTIVATION_UPPER_PADDING) + 1e-6) {
-						// Start or continue charging
+						
 						if (chargeTime <= 0) {
-							// First tick in portal - start charging
+							
 							int chargeDuration = entityiterator instanceof net.minecraft.server.level.ServerPlayer
 								? calculatePlayerChargeTicks(entityiterator, targetDim, tx, ty, tz, world)
 								: 10;
@@ -304,13 +304,13 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 								PacketDistributor.sendToPlayer(player,
 									new CustomPortalEffectPayload(CustomPortalEffectPayload.CHARGE, effectColor, chargeDuration + 1));
 						} else {
-							// Continue charging
+							
 							chargeTime--;
 							entityData.putInt("TeleportCharge", chargeTime);
 							
-							// Teleport when charge completes
+							
 							if (chargeTime <= 0) {
-								// Save player's team before teleportation (Bug fix: preserve team assignment)
+								
 								String playerTeamName = null;
 								if (entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
 									Scoreboard scoreboard = serverPlayer.getScoreboard();
@@ -321,18 +321,18 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 								}
 
 								ServerLevel arrivalLevel = null;
-								// Perform teleportation
+								
 								if (world instanceof ServerLevel _level) {
 									ResourceLocation dimLoc = ResourceLocation.tryParse(targetDim);
 									if (dimLoc != null) {
 										ResourceKey<Level> targetDimKey = ResourceKey.create(Registries.DIMENSION, dimLoc);
 										ServerLevel targetLevel = _level.getServer().getLevel(targetDimKey);
 										if (targetLevel != null) {
-											// Teleport directly using API (more reliable than commands)
+											
 												SableAeronauticsIntegration.teleportEntity(entityiterator, targetLevel, tx + 0.5, ty + 1, tz + 0.5, (float) yaw);
 												arrivalLevel = entityiterator.level() == targetLevel ? targetLevel : null;
 										} else {
-											// Target level not found, fall back to command
+											
 											_level.getServer().getCommands().performPrefixedCommand(
 												new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null),
 												"execute in " + targetDim + " run tp " + entityiterator.getStringUUID() + " " + (tx + 0.5) + " " + (ty + 1) + " " + (tz + 0.5));
@@ -362,9 +362,9 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 									}
 								}
 
-								// Set teleportation cooldown (20 ticks = 1 second)
+								
 								entityiterator.getPersistentData().putInt("PortalTeleportCooldown", 20);
-								entityData.remove("TeleportCharge"); // Reset charge counter
+								entityData.remove("TeleportCharge"); 
 								entityData.remove("TeleportChargeDuration");
 
 								if (world instanceof ServerLevel sourceLevel)
@@ -375,10 +375,10 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 									PacketDistributor.sendToPlayer(player,
 										new CustomPortalEffectPayload(CustomPortalEffectPayload.ARRIVAL, effectColor, 15));
 
-								// Restore player's team after teleportation (Bug fix: preserve team assignment)
+								
 								if (playerTeamName != null && entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
 									Scoreboard scoreboard = serverPlayer.getScoreboard();
-									// Get the team by name and re-add the player
+									
 									net.minecraft.world.scores.PlayerTeam playerTeam = scoreboard.getPlayerTeam(playerTeamName);
 									if (playerTeam != null) {
 										scoreboard.addPlayerToTeam(serverPlayer.getScoreboardName(), playerTeam);
@@ -394,7 +394,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 							}
 						}
 					} else {
-						// Entity left portal before charging completed - reset charge
+						
 						if (chargeTime > 0) {
 							if (entityiterator instanceof net.minecraft.server.level.ServerPlayer player)
 								PacketDistributor.sendToPlayer(player,
@@ -406,47 +406,46 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				}
 
 				return "Portal Ready";
-		}
 		} else {
 			setPortalVisualActive(world, basePos, false);
-			// Clear portal blocks when frame is invalid
+			
 			String rotation = getBlockNBTString(world, BlockPos.containing(x, y, z), "rotation");
 			int portalWidth = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalWidth");
 			int portalHeight = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalHeight");
 			int minExtent = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalMinExtent");
 			int maxExtent = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalMaxExtent");
 
-			// Check if Immersive Portals compatibility is enabled
+			
 			boolean useImmersivePortals = CTPConfigConfiguration.IMMERSIVE_PORTALS_COMPAT.get();
 
 			if (useImmersivePortals && ImmersivePortalsIntegration.isImmersivePortalsLoaded()) {
-				// Remove Immersive Portals portal
+				
 				removeTrackedImmersivePortal(world, x, y, z);
 				clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
 			} else if (portalWidth > 0 && portalHeight > 0) {
-				// If compatibility was disabled, ensure old IP portals are removed.
+				
 				removeTrackedImmersivePortal(world, x, y, z);
 
-				// Use interior dimensions (not the frame)
+				
 				int interiorMin = minExtent + 1;
 				int interiorMax = maxExtent - 1;
 				int fillHeight = portalHeight - 1;
 
 				if ("east".equals(rotation) || "west".equals(rotation)) {
-					// Horizontal axis is Z, X stays same as base
+					
 					if (world instanceof ServerLevel _level)
 						_level.getServer().getCommands().performPrefixedCommand(
 							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
 							"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax + " air replace createteleporters:quantum_portal_block");
 				} else if ("north".equals(rotation) || "south".equals(rotation)) {
-					// Horizontal axis is X, Z stays same as base
+					
 					if (world instanceof ServerLevel _level)
 						_level.getServer().getCommands().performPrefixedCommand(
 							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
 							"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight + " ~ air replace createteleporters:quantum_portal_block");
 				}
 			} else {
-				// Fallback to old 5x5 clearing
+				
 				if ("east".equals(rotation) || "west".equals(rotation)) {
 					if (world instanceof ServerLevel _level)
 						_level.getServer().getCommands().performPrefixedCommand(
@@ -460,7 +459,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				}
 			}
 		}
-		// Return detailed error message if portal is not active
+		
 		String errorReason = getBlockNBTString(world, BlockPos.containing(x, y, z), "portalError");
 		if (!errorReason.isEmpty()) {
 			return errorReason;

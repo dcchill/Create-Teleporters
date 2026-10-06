@@ -129,7 +129,7 @@ public class CustomPortalBaseBlock extends Block implements EntityBlock {
 	@Override
 	public void neighborChanged(BlockState blockstate, Level world, BlockPos pos, Block neighborBlock, BlockPos fromPos, boolean moving) {
 		super.neighborChanged(blockstate, world, pos, neighborBlock, fromPos, moving);
-		// Always check portal frame when neighbors change (no redstone required)
+		
 		ScalablePortalCheckerProcedure.execute(world, pos.getX(), pos.getY(), pos.getZ());
 	}
 
@@ -150,7 +150,7 @@ public class CustomPortalBaseBlock extends Block implements EntityBlock {
 	public InteractionResult useWithoutItem(BlockState blockstate, Level world, BlockPos pos, Player entity, BlockHitResult hit) {
 		super.useWithoutItem(blockstate, world, pos, entity, hit);
 		
-		// Try to bind portals if player is holding Advanced TP Link
+		
 		InteractionResult bindResult = BindCustomPortalProcedure.execute(world, pos.getX(), pos.getY(), pos.getZ(), entity, entity.getUsedItemHand());
 		if (bindResult.consumesAction()) {
 			return bindResult;

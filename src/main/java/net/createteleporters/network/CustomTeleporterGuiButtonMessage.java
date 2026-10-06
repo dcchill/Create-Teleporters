@@ -50,7 +50,7 @@ public record CustomTeleporterGuiButtonMessage(int buttonID, int x, int y, int z
 		if (world.isClientSide || !(entity.containerMenu instanceof CustomTeleporterGuiMenu menu)
 			|| menu.x != x || menu.y != y || menu.z != z || !menu.stillValid(entity)) return;
 		BlockPos pos = new BlockPos(x, y, z);
-		// security measure to prevent arbitrary chunk generation
+		
 		if (!world.hasChunkAt(new BlockPos(x, y, z)))
 			return;
 		if (buttonID == 0) {

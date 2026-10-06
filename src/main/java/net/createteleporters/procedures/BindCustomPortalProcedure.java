@@ -49,7 +49,7 @@ public class BindCustomPortalProcedure {
 			return InteractionResult.PASS;
 		}
 
-		// Check if player is sneaking - clear link data
+		
 		if (entity.isShiftKeyDown()) {
 			CompoundTag linkData = heldItem.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
 			boolean hadData = linkData.contains("savedX") || linkData.contains("linkedX");
@@ -73,12 +73,12 @@ public class BindCustomPortalProcedure {
 			return InteractionResult.SUCCESS;
 		}
 
-		// Get the ADVTplink's custom data
+		
 		CompoundTag linkData = heldItem.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
 		
-		// Check if the link already has saved coordinates
+		
 		if (linkData.contains("savedX") && linkData.contains("savedY") && linkData.contains("savedZ") && linkData.contains("savedDim")) {
-			// Link has coordinates - try to bind to this portal
+			
 			double savedX = linkData.getDouble("savedX");
 			double savedY = linkData.getDouble("savedY");
 			double savedZ = linkData.getDouble("savedZ");
@@ -88,10 +88,10 @@ public class BindCustomPortalProcedure {
 			ResourceLocation savedDimLoc = ResourceLocation.tryParse(savedDim);
 			ServerLevel savedLevel = savedDimLoc == null ? null : serverPlayer.server.getLevel(ResourceKey.create(Registries.DIMENSION, savedDimLoc));
 			
-			// Verify the saved location is still a valid custom portal base
+			
 			if (savedLevel == null || !(savedLevel.getBlockState(savedPos).getBlock() instanceof CustomPortalBaseBlock)) {
 				serverPlayer.sendSystemMessage(Component.literal("The linked portal is no longer valid!"));
-				// Clear the invalid link data
+				
 				linkData.remove("savedX");
 				linkData.remove("savedY");
 				linkData.remove("savedZ");
@@ -100,23 +100,23 @@ public class BindCustomPortalProcedure {
 				return InteractionResult.SUCCESS;
 			}
 			
-			// Bind this portal to the saved portal
+			
 			BlockEntity thisBE = world.getBlockEntity(pos);
 			BlockEntity savedBE = savedLevel.getBlockEntity(savedPos);
 			
 			if (thisBE != null && savedBE != null) {
-				// Get current dimension
+				
 				String currentDim = ((Level) world).dimension().location().toString();
 				
-				// Get rotation from both portals for proper yaw calculation
+				
 				String thisRotation = thisBE.getPersistentData().getString("rotation");
 				String savedRotation = savedBE.getPersistentData().getString("rotation");
 				
-				// Calculate yaw for teleportation direction
+				
 				double thisYaw = getYawFromRotation(thisRotation);
 				double savedYaw = getYawFromRotation(savedRotation);
 				
-				// Store binding data on both portals
+				
 				thisBE.getPersistentData().putDouble("linkedX", savedX);
 				thisBE.getPersistentData().putDouble("linkedY", savedY);
 				thisBE.getPersistentData().putDouble("linkedZ", savedZ);
@@ -133,14 +133,14 @@ public class BindCustomPortalProcedure {
 				
 				serverPlayer.sendSystemMessage(Component.literal("Portals linked successfully!"));
 				
-				// Clear the link data from the item
+				
 				linkData.remove("savedX");
 				linkData.remove("savedY");
 				linkData.remove("savedZ");
 				linkData.remove("savedDim");
 				heldItem.set(DataComponents.CUSTOM_DATA, CustomData.of(linkData));
 				
-				// Send update to client
+				
 				if (world instanceof Level level) {
 					level.sendBlockUpdated(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
 					savedLevel.sendBlockUpdated(savedPos, savedLevel.getBlockState(savedPos), savedLevel.getBlockState(savedPos), 3);
@@ -149,7 +149,7 @@ public class BindCustomPortalProcedure {
 				return InteractionResult.SUCCESS;
 			}
 		} else {
-			// Link doesn't have coordinates - save this portal's coordinates to the link
+			
 			String currentDim = ((Level) world).dimension().location().toString();
 			
 			linkData.putDouble("savedX", x);

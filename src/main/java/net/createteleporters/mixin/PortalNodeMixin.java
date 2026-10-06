@@ -21,7 +21,7 @@ public abstract class PortalNodeMixin implements PortalNode {
 	@Inject(method = "write", at = @At("RETURN"))
 	private void ctp$write(DimensionPalette dimensions, CallbackInfoReturnable<CompoundTag> cir) {
 		if (ctp$counterpart != null) {
-			// Copy the position alone: writing the paired endpoint would recurse.
+			
 			TrackNodeLocation copy = new TrackNodeLocation(ctp$counterpart.getLocation()).in(ctp$counterpart.dimension);
 			copy.yOffsetPixels = ctp$counterpart.yOffsetPixels;
 			cir.getReturnValue().put("CTPPortal", copy.write(dimensions));

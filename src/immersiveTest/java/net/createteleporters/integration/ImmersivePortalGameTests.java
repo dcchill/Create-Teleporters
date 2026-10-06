@@ -30,7 +30,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 
-/** Runs against either optional runtime jar; no Immersive Portals compile dependency. */
+
 @GameTestHolder("createteleporters")
 public final class ImmersivePortalGameTests {
     private static final String ID = "immersivePortalClusterId";
@@ -65,7 +65,7 @@ public final class ImmersivePortalGameTests {
         Frame source = frame(level, BASE, directions[index % 4], -2, 4);
         Frame target = frame(targetLevel, BASE.offset(24, 9, 24), directions[index / 4], -2, 2);
         link(source, target);
-        // Comma-decimal locales must not alter command numbers.
+        
         Locale previous = Locale.getDefault();
         Locale.setDefault(Locale.GERMANY);
         helper.runAfterDelay(20, () -> checked(helper, () -> {
@@ -90,7 +90,7 @@ public final class ImmersivePortalGameTests {
             verify(a, b); verify(neighborA, neighborB);
             String neighborId = id(neighborA);
             String originalId = id(a);
-            // Reload both controller saves and all four entity saves.
+            
             List<CompoundTag> saved = new ArrayList<>();
             for (Entity portal : owned(a)) { CompoundTag tag = new CompoundTag(); portal.save(tag); saved.add(tag); portal.discard(); }
             for (Frame frame : List.of(a, b)) {
@@ -104,7 +104,7 @@ public final class ImmersivePortalGameTests {
                     check(restored != null && level.addFreshEntity(restored), "Portal entity NBT reload");
                 }
                 verify(a, b);
-                // Convert the saved cluster into a legacy, unowned version-1 cluster.
+                
                 for (Entity portal : owned(a)) portal.getClass().getField("portalTag").set(portal, null);
                 for (Frame frame : List.of(a, b)) {
                     data(frame).remove(ID); data(frame).putInt("immersivePortalCompatVersion", 1);
@@ -115,7 +115,7 @@ public final class ImmersivePortalGameTests {
                     check(portalsAt(a).size() == 2 && portalsAt(b).size() == 2, "Migration must remove all legacy entities");
                     check(id(neighborA).equals(neighborId), "Migration must preserve adjacent ownership");
                     verify(neighborA, neighborB);
-                    // Removing one owned entity must repair the cluster on the existence check.
+                    
                     owned(a).getFirst().discard();
                     helper.runAfterDelay(25, () -> checked(helper, () -> {
                         verify(a, b); verify(neighborA, neighborB);
@@ -144,14 +144,14 @@ public final class ImmersivePortalGameTests {
         tickets(oldA.level, oldA.base, true); tickets(b.level, b.base, true);
         Frame a = frame(oldA.level, oldA.base, Direction.NORTH, -2, 2);
         link(a, b);
-        // Destination validation must happen before spawning anything.
+        
         data(b).putString("rotation", "invalid");
         check(!create(a, b) && portalsAt(a).isEmpty(), "Invalid destination must not spawn a portal");
         data(b).putString("rotation", "east");
         net.createteleporters.procedures.ScalablePortalCheckerProcedure.execute(a.level, a.base.getX(), a.base.getY(), a.base.getZ());
         var command = a.level.getServer().getCommands().getDispatcher().getRoot().getChild("portal");
         var completion = command.getChild("complete_bi_way_bi_faced_portal");
-        // Temporarily remove only completion to exercise rollback after the root was spawned.
+        
         for (String name : List.of("children", "literals")) {
             var field = com.mojang.brigadier.tree.CommandNode.class.getDeclaredField(name);
             field.setAccessible(true);

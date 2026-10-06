@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class QuantumPortalBlockBlock extends IronBarsBlock {
-	private static final int TRAIN_PORTAL_SEARCH_RADIUS = 24;
 	private static final int PORTAL_BASE_SEARCH_RADIUS = 23;
 	private static final String PORTAL_COLOR_TAG = "portalColor";
 	public static final EnumProperty<DyeColor> COLOR = EnumProperty.create("color", DyeColor.class);
@@ -104,12 +103,12 @@ public class QuantumPortalBlockBlock extends IronBarsBlock {
 	}
 
 	private static void scheduleAdjacentCreateTracks(Level world, BlockPos pos) {
-		if (!(world instanceof ServerLevel serverLevel)) {
+		if (!(world instanceof ServerLevel serverLevel) || !hasAdjacentCreateTrack(serverLevel, pos)) {
 			return;
 		}
 
 		String readyLinkKey = getReadyLinkedPortalRefreshKey(serverLevel, pos);
-		if (readyLinkKey == null || !hasAdjacentCreateTrack(serverLevel, pos)) {
+		if (readyLinkKey == null) {
 			return;
 		}
 
@@ -148,32 +147,18 @@ public class QuantumPortalBlockBlock extends IronBarsBlock {
 	}
 
 	private static String getReadyLinkedPortalRefreshKey(ServerLevel sourceLevel, BlockPos portalPos) {
-		BlockPos min = portalPos.offset(-TRAIN_PORTAL_SEARCH_RADIUS, -TRAIN_PORTAL_SEARCH_RADIUS, -TRAIN_PORTAL_SEARCH_RADIUS);
-		BlockPos max = portalPos.offset(TRAIN_PORTAL_SEARCH_RADIUS, TRAIN_PORTAL_SEARCH_RADIUS, TRAIN_PORTAL_SEARCH_RADIUS);
-
-		for (BlockPos cursor : BlockPos.betweenClosed(min, max)) {
-			if (!sourceLevel.getBlockState(cursor).is(CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get())) {
-				continue;
-			}
-
-			BlockEntity blockEntity = sourceLevel.getBlockEntity(cursor);
-			if (blockEntity == null) {
-				continue;
-			}
-
-			CompoundTag nbt = blockEntity.getPersistentData();
-			if (!nbt.getBoolean("isLinked") || !nbt.getBoolean("portalActive")) {
-				continue;
-			}
-			if (!isPortalInteriorBlock(cursor, portalPos, nbt)) {
-				continue;
-			}
-			if (isLinkedTargetActive(sourceLevel, nbt)) {
-				return cursor.asLong() + "|" + nbt.getString("linkedDim") + "|" + nbt.getDouble("linkedX") + "|" + nbt.getDouble("linkedY") + "|" + nbt.getDouble("linkedZ");
-			}
+		
+		BlockPos basePos = findPortalBase(sourceLevel, portalPos);
+		BlockEntity controller = basePos == null ? null : sourceLevel.getBlockEntity(basePos);
+		if (controller == null) {
+			return null;
 		}
 
-		return null;
+		CompoundTag nbt = controller.getPersistentData();
+		if (!nbt.getBoolean("isLinked") || !nbt.getBoolean("portalActive") || !isLinkedTargetActive(sourceLevel, nbt)) {
+			return null;
+		}
+		return basePos.asLong() + "|" + nbt.getString("linkedDim") + "|" + nbt.getDouble("linkedX") + "|" + nbt.getDouble("linkedY") + "|" + nbt.getDouble("linkedZ");
 	}
 
 	private static String getBoundCreatePortalTrackKey(Level world, BlockPos trackPos) {

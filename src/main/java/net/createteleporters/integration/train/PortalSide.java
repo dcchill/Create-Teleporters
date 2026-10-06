@@ -6,7 +6,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 
-/** Keys used only inside Create's carriage-portion map; these are not world dimensions. */
+
 public final class PortalSide {
 	private static final String PREFIX = "train_side/";
 	private PortalSide() { }

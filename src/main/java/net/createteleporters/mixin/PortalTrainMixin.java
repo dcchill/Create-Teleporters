@@ -54,7 +54,7 @@ public abstract class PortalTrainMixin {
 	}
 	@Inject(method = "collideWithOtherTrains", at = @At("HEAD"), cancellable = true)
 	private void ctp$noCrossPortalCollisionLine(Level level, Carriage carriage, CallbackInfo ci) {
-		// Match Create's inter-dimension collision rule: never cast a line between portal ends.
+		
 		if (PortalCarriageState.of(carriage).active()) ci.cancel();
 	}
 	@Redirect(method = "findCollidingTrain", at = @At(value = "INVOKE", target = "Lcom/simibubi/create/content/trains/entity/Carriage;getLeadingPoint()Lcom/simibubi/create/content/trains/entity/TravellingPoint;"))

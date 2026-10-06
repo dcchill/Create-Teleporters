@@ -38,20 +38,20 @@ public class ScalablePortalCheckerProcedure {
 			return;
 		}
 
-		// Check if we have enough fluid (at least 256 mB)
+		
 		if (256 > drainTankSimulate(world, BlockPos.containing(x, y, z), 256, null)) {
 			storeErrorReason(world, BlockPos.containing(x, y, z), "Incorrect Portal Frame");
 			setPortalActive(world, BlockPos.containing(x, y, z), false);
 			return;
 		}
 
-		// Find the valid portal dimensions
+		
 		PortalDimensions dims = findValidPortalDimensions(world, BlockPos.containing(x, y, z), isHorizontal);
 
 		if (dims != null) {
-			// Store the portal dimensions for later use
+			
 			storePortalDimensions(world, BlockPos.containing(x, y, z), dims.width, dims.height, dims.minExtent, dims.maxExtent);
-			storeErrorReason(world, BlockPos.containing(x, y, z), ""); // Clear error on success
+			storeErrorReason(world, BlockPos.containing(x, y, z), ""); 
 			setPortalActive(world, BlockPos.containing(x, y, z), true);
 		} else {
 			setPortalActive(world, BlockPos.containing(x, y, z), false);
@@ -64,17 +64,17 @@ public class ScalablePortalCheckerProcedure {
 	 * Where q=quantum casing, d=dummy, c=base
 	 */
 	private static PortalDimensions findValidPortalDimensions(LevelAccessor world, BlockPos basePos, boolean horizontal) {
-		// The base must have dummy blocks on both sides on the bottom row
+		
 		BlockPos leftDummyPos = horizontal ? basePos.offset(0, 0, -1) : basePos.offset(-1, 0, 0);
 		BlockPos rightDummyPos = horizontal ? basePos.offset(0, 0, 1) : basePos.offset(1, 0, 0);
 
 		if (!isDummyBlock(world, leftDummyPos) || !isDummyBlock(world, rightDummyPos)) {
 			storeErrorReason(world, basePos, "Incorrect Portal Frame");
-			return null; // Must have dummy blocks on both sides
+			return null; 
 		}
 
-		// Scan left/bottom from the left dummy to find quantum casing extent
-		int minExtent = -1; // Start at left dummy position
+		
+		int minExtent = -1; 
 		for (int i = 2; i <= 23; i++) {
 			BlockPos checkPos = horizontal ? basePos.offset(0, 0, -i) : basePos.offset(-i, 0, 0);
 			if (world.getBlockState(checkPos).getBlock() == CreateteleportersModBlocks.QUANTUM_CASING.get()) {
@@ -84,8 +84,8 @@ public class ScalablePortalCheckerProcedure {
 			}
 		}
 
-		// Scan right/top from the right dummy to find quantum casing extent
-		int maxExtent = 1; // Start at right dummy position
+		
+		int maxExtent = 1; 
 		for (int i = 2; i <= 23; i++) {
 			BlockPos checkPos = horizontal ? basePos.offset(0, 0, i) : basePos.offset(i, 0, 0);
 			if (world.getBlockState(checkPos).getBlock() == CreateteleportersModBlocks.QUANTUM_CASING.get()) {
@@ -95,27 +95,27 @@ public class ScalablePortalCheckerProcedure {
 			}
 		}
 
-		// Calculate total width (must be at least 5: 1q + 1d + 1c + 1d + 1q)
+		
 		int totalWidth = maxExtent - minExtent + 1;
 		if (totalWidth < 5 || totalWidth > 23) {
 			storeErrorReason(world, basePos, "Incorrect Portal Frame");
 			return null;
 		}
 
-		// Find the first valid top row (first height where all blocks across are quantum casing)
-		// The interior (row below top) must be air/portal blocks, NOT quantum casing
+		
+		
 		int maxHeight = 0;
 		for (int h = 1; h <= 23; h++) {
-			// Check both sides at this height
+			
 			BlockPos leftPos = horizontal ? basePos.offset(0, h, minExtent) : basePos.offset(minExtent, h, 0);
 			BlockPos rightPos = horizontal ? basePos.offset(0, h, maxExtent) : basePos.offset(maxExtent, h, 0);
 
-			// Both sides must be quantum casing
+			
 			if (world.getBlockState(leftPos).getBlock() != CreateteleportersModBlocks.QUANTUM_CASING.get() || world.getBlockState(rightPos).getBlock() != CreateteleportersModBlocks.QUANTUM_CASING.get()) {
 				break;
 			}
 
-			// Check if this row is a complete top row (all quantum casing across)
+			
 			boolean isCompleteRow = true;
 			for (int w = minExtent; w <= maxExtent; w++) {
 				BlockPos checkPos = horizontal ? basePos.offset(0, h, w) : basePos.offset(w, h, 0);
@@ -126,8 +126,8 @@ public class ScalablePortalCheckerProcedure {
 			}
 
 			if (isCompleteRow) {
-				// Verify the interior (row below) has air/portal blocks, not QC
-				// This ensures we found the actual frame top, not a random QC row
+				
+				
 				boolean interiorIsValid = true;
 				if (h > 1) {
 					for (int w = minExtent + 1; w < maxExtent; w++) {
@@ -141,34 +141,34 @@ public class ScalablePortalCheckerProcedure {
 
 				if (interiorIsValid) {
 					maxHeight = h;
-					break; // Found the actual top row
+					break; 
 				} else {
-					// Interior has QC - this is not a valid portal frame
+					
 					storeErrorReason(world, basePos, "Incorrect Portal Frame");
 					return null;
 				}
 			}
 		}
 
-		// Minimum height is 5 (base row + 4 more rows = height offset of 4)
-		int actualHeight = maxHeight + 1; // Convert offset to actual block count (for comparison only)
+		
+		int actualHeight = maxHeight + 1; 
 		if (actualHeight < 5) {
 			storeErrorReason(world, basePos, "Incorrect Portal Frame");
 			return null;
 		}
 
-		// Restrict valid portal frame to perfect square dimensions
+		
 		if (totalWidth != actualHeight) {
 			storeErrorReason(world, basePos, "Incorrect Portal Frame");
 			return null;
 		}
 
-		// Verify all interior blocks are air or portal blocks (not frame blocks)
+		
 		for (int h = 1; h < maxHeight; h++) {
 			for (int w = minExtent + 1; w < maxExtent; w++) {
 				BlockPos interiorPos = horizontal ? basePos.offset(0, h, w) : basePos.offset(w, h, 0);
 				net.minecraft.world.level.block.state.BlockState state = world.getBlockState(interiorPos);
-				// Allow air, custom portal blocks, quantum portal block (filled interior), or the base/dummy at bottom
+				
 				if (!state.isAir() && state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL.get() && state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get()
 						&& state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL_ON.get() && state.getBlock() != CreateteleportersModBlocks.CUSTOM_PORTAL_BASE_DUMMY_BLOCK.get()
 						&& state.getBlock() != CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get()) {
@@ -178,7 +178,7 @@ public class ScalablePortalCheckerProcedure {
 			}
 		}
 
-		// Store maxHeight as the offset (what downstream code expects), not actualHeight
+		
 		return new PortalDimensions(totalWidth, maxHeight, minExtent, maxExtent);
 	}
 

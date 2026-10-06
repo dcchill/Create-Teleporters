@@ -31,7 +31,7 @@ public abstract class PortalCarriageEntityMixin implements PortalCarriageEntity 
 	private CubeParticleData ctp$portalParticleColor(float red, float green, float blue, float scale, int age, boolean hot,
 		Carriage.DimensionalCarriageEntity portion) {
 		Level level = ((CarriageContraptionEntity) (Object) this).level();
-		// The pivot borders the track and the portal on this carriage portion's side.
+		
 		for (BlockPos pos : portion.pivot.allAdjacent()) {
 			var state = level.getBlockState(pos);
 			if (state.getBlock() instanceof QuantumPortalBlockBlock) {
