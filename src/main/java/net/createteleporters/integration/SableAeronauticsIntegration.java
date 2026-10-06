@@ -432,18 +432,18 @@ public final class SableAeronauticsIntegration {
 		return entities;
 	}
 
-	public static double getEntityFeetY(LevelAccessor world, AABB localReferenceBox, Entity entity) {
+	public static AABB getEntityBounds(LevelAccessor world, AABB localReferenceBox, Entity entity) {
 		AABB entityBox = entity.getBoundingBox();
 		if (entityBox.intersects(localReferenceBox) || !isSableAvailable() || !(world instanceof Level level)) {
-			return entityBox.minY;
+			return entityBox;
 		}
 
 		Object subLevel = getContainingSubLevel(level, localReferenceBox.getCenter());
 		if (subLevel == null) {
-			return entityBox.minY;
+			return entityBox;
 		}
 
-		return transformAabbToLocal(subLevel, entityBox).minY;
+		return transformAabbToLocal(subLevel, entityBox);
 	}
 
 	public static Vec3 resolveWorldPosition(LevelAccessor world, double x, double y, double z) {

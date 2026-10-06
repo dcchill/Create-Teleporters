@@ -1,7 +1,6 @@
 package net.createteleporters.procedures;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.LevelAccessor;
@@ -60,7 +59,8 @@ public class QuantumPortalBlockOnTickUpdateProcedure {
 		}
 
 		String rotation = nbt.getString("rotation");
-		return isPortalInteriorBlock(basePos, portalPos, nbt, rotation) && isStoredFrameStillValid(world, basePos, nbt, rotation);
+		// The controller validates the whole frame every tick; interiors only check ownership.
+		return isPortalInteriorBlock(basePos, portalPos, nbt, rotation);
 	}
 
 	private static boolean containsStoredPortalDimensions(CompoundTag nbt) {
@@ -88,82 +88,6 @@ public class QuantumPortalBlockOnTickUpdateProcedure {
 		}
 
 		return false;
-	}
-
-	private static boolean isStoredFrameStillValid(LevelAccessor world, BlockPos basePos, CompoundTag nbt, String rotation) {
-		if (!isEastWest(rotation) && !isNorthSouth(rotation)) {
-			return false;
-		}
-
-		int portalHeight = nbt.getInt("portalHeight");
-		int minExtent = nbt.getInt("portalMinExtent");
-		int maxExtent = nbt.getInt("portalMaxExtent");
-
-		if (portalHeight < 4 || maxExtent - minExtent + 1 < 5 || portalHeight + 1 != maxExtent - minExtent + 1) {
-			return false;
-		}
-
-		if (blockAt(world, offset(basePos, rotation, -1, 0)) != CreateteleportersModBlocks.CUSTOM_PORTAL_BASE_DUMMY_BLOCK.get()) {
-			return false;
-		}
-		if (blockAt(world, offset(basePos, rotation, 1, 0)) != CreateteleportersModBlocks.CUSTOM_PORTAL_BASE_DUMMY_BLOCK.get()) {
-			return false;
-		}
-
-		for (int horizontal = minExtent; horizontal <= maxExtent; horizontal++) {
-			Block bottomBlock = blockAt(world, offset(basePos, rotation, horizontal, 0));
-			if (horizontal == 0) {
-				if (bottomBlock != CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get()) {
-					return false;
-				}
-			} else if (horizontal == -1 || horizontal == 1) {
-				if (bottomBlock != CreateteleportersModBlocks.CUSTOM_PORTAL_BASE_DUMMY_BLOCK.get()) {
-					return false;
-				}
-			} else if (bottomBlock != CreateteleportersModBlocks.QUANTUM_CASING.get()) {
-				return false;
-			}
-
-			if (blockAt(world, offset(basePos, rotation, horizontal, portalHeight)) != CreateteleportersModBlocks.QUANTUM_CASING.get()) {
-				return false;
-			}
-		}
-
-		for (int y = 1; y < portalHeight; y++) {
-			if (blockAt(world, offset(basePos, rotation, minExtent, y)) != CreateteleportersModBlocks.QUANTUM_CASING.get()
-					|| blockAt(world, offset(basePos, rotation, maxExtent, y)) != CreateteleportersModBlocks.QUANTUM_CASING.get()) {
-				return false;
-			}
-
-			for (int horizontal = minExtent + 1; horizontal < maxExtent; horizontal++) {
-				Block interiorBlock = blockAt(world, offset(basePos, rotation, horizontal, y));
-				if (!isAllowedInteriorBlock(interiorBlock)) {
-					return false;
-				}
-			}
-		}
-
-		return true;
-	}
-
-	private static Block blockAt(LevelAccessor world, BlockPos pos) {
-		return world.getBlockState(pos).getBlock();
-	}
-
-	private static boolean isAllowedInteriorBlock(Block block) {
-		return block == Blocks.AIR
-				|| block == CreateteleportersModBlocks.CUSTOM_PORTAL.get()
-				|| block == CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get()
-				|| block == CreateteleportersModBlocks.CUSTOM_PORTAL_ON.get()
-				|| block == CreateteleportersModBlocks.CUSTOM_PORTAL_BASE_DUMMY_BLOCK.get()
-				|| block == CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get();
-	}
-
-	private static BlockPos offset(BlockPos basePos, String rotation, int horizontal, int y) {
-		if (isEastWest(rotation)) {
-			return basePos.offset(0, y, horizontal);
-		}
-		return basePos.offset(horizontal, y, 0);
 	}
 
 	private static boolean isEastWest(String rotation) {

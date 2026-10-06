@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
@@ -22,8 +23,8 @@ import net.neoforged.neoforge.client.event.ViewportEvent;
 @EventBusSubscriber(modid = CreateteleportersMod.MODID, value = Dist.CLIENT)
 public final class CustomPortalEffects {
 	private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
-		CreateteleportersMod.MODID, "textures/block/p_portal.png");
-	private static final RenderType RENDER_TYPE = RenderType.entityTranslucentEmissive(TEXTURE, false);
+		CreateteleportersMod.MODID, "block/p_portal");
+	private static final RenderType RENDER_TYPE = RenderType.entityTranslucentEmissive(TextureAtlas.LOCATION_BLOCKS, false);
 	private static byte phase = CustomPortalEffectPayload.CANCEL;
 	private static int age = 1;
 	private static int duration = 1;
@@ -82,7 +83,7 @@ public final class CustomPortalEffects {
 		poseStack.pushPose();
 		poseStack.translate(px, py, pz);
 		MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
-		VertexConsumer consumer = buffers.getBuffer(RENDER_TYPE);
+		VertexConsumer consumer = minecraft.getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(TEXTURE).wrap(buffers.getBuffer(RENDER_TYPE));
 		for (int plane = 0; plane < 3; plane++) {
 			for (int i = 0; i < 16; i++) {
 				float spin = progress * (phase == CustomPortalEffectPayload.CHARGE ? -2.2f : 2.6f);
@@ -137,7 +138,7 @@ public final class CustomPortalEffects {
 		poseStack.translate(look.x(), look.y(), look.z());
 		poseStack.mulPose(event.getCamera().rotation());
 		MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
-		VertexConsumer consumer = buffers.getBuffer(RENDER_TYPE);
+		VertexConsumer consumer = minecraft.getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(TEXTURE).wrap(buffers.getBuffer(RENDER_TYPE));
 		consumer.addVertex(poseStack.last(), -3, -3, 0).setColor(red, green, blue, alpha).setUv(0, 0)
 			.setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(poseStack.last(), 0, 0, 1);
 		consumer.addVertex(poseStack.last(), 3, -3, 0).setColor(red, green, blue, alpha).setUv(1, 0)

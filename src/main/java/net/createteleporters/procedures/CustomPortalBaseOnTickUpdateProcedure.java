@@ -12,6 +12,10 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.Clearable;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.component.CustomData;
@@ -38,6 +42,7 @@ import net.minecraft.world.scores.Team;
 import net.minecraft.world.scores.Scoreboard;
 
 import net.createteleporters.configuration.CTPConfigConfiguration;
+import net.createteleporters.init.CreateteleportersModBlocks;
 import net.createteleporters.integration.ImmersivePortalsIntegration;
 import net.createteleporters.integration.SableAeronauticsIntegration;
 import net.createteleporters.util.CustomPortalTeleportMode;
@@ -69,7 +74,6 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				
 				int interiorMin = minExtent + 1;
 				int interiorMax = maxExtent - 1;
-				int fillHeight = portalHeight - 1;
 
 				
 				BlockEntity linkedBE = world.getBlockEntity(basePos);
@@ -167,18 +171,9 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 
 					
 					
-					String portalColor = QuantumPortalBlockBlock.getStoredPortalColorName(world.getBlockEntity(basePos));
-					if ("east".equals(rotation) || "west".equals(rotation)) {
-						if (world instanceof ServerLevel _level)
-							_level.getServer().getCommands().performPrefixedCommand(
-								new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
-								"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax + " createteleporters:quantum_portal_block[color=" + portalColor + "]");
-					} else if ("north".equals(rotation) || "south".equals(rotation)) {
-						if (world instanceof ServerLevel _level)
-							_level.getServer().getCommands().performPrefixedCommand(
-								new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
-								"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight + " ~ createteleporters:quantum_portal_block[color=" + portalColor + "]");
-					}
+					DyeColor portalColor = DyeColor.byName(QuantumPortalBlockBlock.getStoredPortalColorName(world.getBlockEntity(basePos)), DyeColor.PURPLE);
+					updateQuantumPortalBlocks(world, basePos, rotation, portalHeight, minExtent, maxExtent,
+						CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get().defaultBlockState().setValue(QuantumPortalBlockBlock.COLOR, portalColor));
 					setPortalVisualActive(world, basePos, true);
 
 				}
@@ -194,19 +189,6 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					portalArea = new AABB(x + interiorMin, y + 1, z, x + interiorMax + 1, y + portalInnerHeight + 1, z + 1);
 				}
 
-				
-				final double EPS = 1e-6;
-				final double ACTIVATION_HORIZONTAL_PADDING = 0.25;
-				final double ACTIVATION_LOWER_PADDING = 0.75;
-				final double ACTIVATION_UPPER_PADDING = 0.25;
-				portalArea = new AABB(
-					Math.min(portalArea.minX, portalArea.maxX) - ACTIVATION_HORIZONTAL_PADDING - EPS,
-					Math.min(portalArea.minY, portalArea.maxY) - ACTIVATION_LOWER_PADDING - EPS,
-					Math.min(portalArea.minZ, portalArea.maxZ) - ACTIVATION_HORIZONTAL_PADDING - EPS,
-					Math.max(portalArea.minX, portalArea.maxX) + ACTIVATION_HORIZONTAL_PADDING + EPS,
-					Math.max(portalArea.minY, portalArea.maxY) + ACTIVATION_UPPER_PADDING + EPS,
-					Math.max(portalArea.minZ, portalArea.maxZ) + ACTIVATION_HORIZONTAL_PADDING + EPS
-				);
 				
 				String targetDim;
 				double tx, ty, tz, yaw;
@@ -290,8 +272,8 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					int chargeTime = entityData.contains("TeleportCharge") ? entityData.getInt("TeleportCharge") : 0;
 					
 					
-					double feetY = SableAeronauticsIntegration.getEntityFeetY(world, portalArea, entityiterator);
-					if (feetY + 1e-6 >= (y + 1 - ACTIVATION_LOWER_PADDING) && feetY <= (y + portalInnerHeight + 1 + ACTIVATION_UPPER_PADDING) + 1e-6) {
+					AABB entityBounds = SableAeronauticsIntegration.getEntityBounds(world, portalArea, entityiterator);
+					if (isInsidePortal(portalArea, entityBounds)) {
 						
 						if (chargeTime <= 0) {
 							
@@ -415,49 +397,8 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 			int minExtent = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalMinExtent");
 			int maxExtent = getBlockNBTInt(world, BlockPos.containing(x, y, z), "portalMaxExtent");
 
-			
-			boolean useImmersivePortals = CTPConfigConfiguration.IMMERSIVE_PORTALS_COMPAT.get();
-
-			if (useImmersivePortals && ImmersivePortalsIntegration.isImmersivePortalsLoaded()) {
-				
-				removeTrackedImmersivePortal(world, x, y, z);
-				clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
-			} else if (portalWidth > 0 && portalHeight > 0) {
-				
-				removeTrackedImmersivePortal(world, x, y, z);
-
-				
-				int interiorMin = minExtent + 1;
-				int interiorMax = maxExtent - 1;
-				int fillHeight = portalHeight - 1;
-
-				if ("east".equals(rotation) || "west".equals(rotation)) {
-					
-					if (world instanceof ServerLevel _level)
-						_level.getServer().getCommands().performPrefixedCommand(
-							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
-							"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax + " air replace createteleporters:quantum_portal_block");
-				} else if ("north".equals(rotation) || "south".equals(rotation)) {
-					
-					if (world instanceof ServerLevel _level)
-						_level.getServer().getCommands().performPrefixedCommand(
-							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
-							"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight + " ~ air replace createteleporters:quantum_portal_block");
-				}
-			} else {
-				
-				if ("east".equals(rotation) || "west".equals(rotation)) {
-					if (world instanceof ServerLevel _level)
-						_level.getServer().getCommands().performPrefixedCommand(
-							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
-							"fill ~ ~1 ~-1 ~ ~3 ~1 air replace createteleporters:quantum_portal_block");
-				} else if ("north".equals(rotation) || "south".equals(rotation)) {
-					if (world instanceof ServerLevel _level)
-						_level.getServer().getCommands().performPrefixedCommand(
-							new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, _level, 4, "", Component.literal(""), _level.getServer(), null).withSuppressedOutput(),
-							"fill ~-1 ~1 ~ ~1 ~3 ~ air replace createteleporters:quantum_portal_block");
-				}
-			}
+			removeTrackedImmersivePortal(world, x, y, z);
+			clearQuantumPortalBlocks(world, x, y, z, rotation, portalWidth, portalHeight, minExtent, maxExtent);
 		}
 		
 		String errorReason = getBlockNBTString(world, BlockPos.containing(x, y, z), "portalError");
@@ -469,45 +410,35 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 
 	private static void clearQuantumPortalBlocks(LevelAccessor world, double x, double y, double z, String rotation,
 			int portalWidth, int portalHeight, int minExtent, int maxExtent) {
-		if (!(world instanceof ServerLevel level)) {
-			return;
+		if (portalWidth <= 0 || portalHeight <= 0) {
+			portalHeight = 4;
+			minExtent = -2;
+			maxExtent = 2;
 		}
+		updateQuantumPortalBlocks(world, BlockPos.containing(x, y, z), rotation, portalHeight, minExtent, maxExtent, Blocks.AIR.defaultBlockState());
+	}
 
-		if (portalWidth > 0 && portalHeight > 0) {
-			int interiorMin = minExtent + 1;
-			int interiorMax = maxExtent - 1;
-			int fillHeight = portalHeight - 1;
-
-			if ("east".equals(rotation) || "west".equals(rotation)) {
-				level.getServer().getCommands().performPrefixedCommand(
-						new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, level, 4, "",
-								Component.literal(""), level.getServer(), null).withSuppressedOutput(),
-						"fill ~ ~1 ~" + interiorMin + " ~ ~" + fillHeight + " ~" + interiorMax
-								+ " air replace createteleporters:quantum_portal_block");
-				return;
+	private static int updateQuantumPortalBlocks(LevelAccessor world, BlockPos basePos, String rotation,
+			int portalHeight, int minExtent, int maxExtent, BlockState targetState) {
+		if (!(world instanceof ServerLevel level)) return 0;
+		boolean eastWest = "east".equals(rotation) || "west".equals(rotation);
+		if (!eastWest && !"north".equals(rotation) && !"south".equals(rotation)) return 0;
+		int changed = 0;
+		for (int y = 1; y < portalHeight; y++) {
+			for (int horizontal = minExtent + 1; horizontal < maxExtent; horizontal++) {
+				BlockPos pos = eastWest ? basePos.offset(0, y, horizontal) : basePos.offset(horizontal, y, 0);
+				BlockState current = level.getBlockState(pos);
+				boolean isPortal = current.is(CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get());
+				if (targetState.isAir() && !isPortal) continue;
+				// Preserve pane connections when only the portal color changes.
+				BlockState replacement = isPortal && !targetState.isAir()
+					? current.setValue(QuantumPortalBlockBlock.COLOR, targetState.getValue(QuantumPortalBlockBlock.COLOR)) : targetState;
+				if (current == replacement) continue;
+				Clearable.tryClear(level.getBlockEntity(pos));
+				if (level.setBlock(pos, Block.updateFromNeighbourShapes(replacement, level, pos), 3)) changed++;
 			}
-
-			if ("north".equals(rotation) || "south".equals(rotation)) {
-				level.getServer().getCommands().performPrefixedCommand(
-						new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, level, 4, "",
-								Component.literal(""), level.getServer(), null).withSuppressedOutput(),
-						"fill ~" + interiorMin + " ~1 ~ ~" + interiorMax + " ~" + fillHeight
-								+ " ~ air replace createteleporters:quantum_portal_block");
-				return;
-			}
 		}
-
-		if ("east".equals(rotation) || "west".equals(rotation)) {
-			level.getServer().getCommands().performPrefixedCommand(
-					new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, level, 4, "",
-							Component.literal(""), level.getServer(), null).withSuppressedOutput(),
-					"fill ~ ~1 ~-1 ~ ~3 ~1 air replace createteleporters:quantum_portal_block");
-		} else if ("north".equals(rotation) || "south".equals(rotation)) {
-			level.getServer().getCommands().performPrefixedCommand(
-					new CommandSourceStack(CommandSource.NULL, new Vec3(x, y, z), Vec2.ZERO, level, 4, "",
-							Component.literal(""), level.getServer(), null).withSuppressedOutput(),
-					"fill ~-1 ~1 ~ ~1 ~3 ~ air replace createteleporters:quantum_portal_block");
-		}
+		return changed;
 	}
 
 	private static void removeTrackedImmersivePortal(LevelAccessor world, double x, double y, double z) {
@@ -717,6 +648,11 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 			case "west" -> new BlockPos(0, 0, -1);
 			default -> new BlockPos(1, 0, 0);
 		};
+	}
+
+	private static boolean isInsidePortal(AABB portalArea, AABB entityBounds) {
+		return entityBounds.intersects(portalArea) && entityBounds.minY >= portalArea.minY
+			&& entityBounds.minY < portalArea.maxY;
 	}
 
 	private static boolean shouldIgnorePortalTeleport(Entity entity) {

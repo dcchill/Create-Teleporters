@@ -9,6 +9,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 
 import net.createteleporters.init.CreateteleportersModBlocks;
 
@@ -195,10 +196,14 @@ public class ScalablePortalCheckerProcedure {
 	private static void storePortalDimensions(LevelAccessor world, BlockPos pos, int width, int height, int minExtent, int maxExtent) {
 		BlockEntity blockEntity = world.getBlockEntity(pos);
 		if (blockEntity != null) {
-			blockEntity.getPersistentData().putInt("portalWidth", width);
-			blockEntity.getPersistentData().putInt("portalHeight", height);
-			blockEntity.getPersistentData().putInt("portalMinExtent", minExtent);
-			blockEntity.getPersistentData().putInt("portalMaxExtent", maxExtent);
+			CompoundTag nbt = blockEntity.getPersistentData();
+			if (nbt.getInt("portalWidth") == width && nbt.getInt("portalHeight") == height
+					&& nbt.getInt("portalMinExtent") == minExtent && nbt.getInt("portalMaxExtent") == maxExtent) return;
+			nbt.putInt("portalWidth", width);
+			nbt.putInt("portalHeight", height);
+			nbt.putInt("portalMinExtent", minExtent);
+			nbt.putInt("portalMaxExtent", maxExtent);
+			syncController(world, blockEntity);
 		}
 	}
 
@@ -208,10 +213,9 @@ public class ScalablePortalCheckerProcedure {
 	private static void setPortalActive(LevelAccessor world, BlockPos pos, boolean active) {
 		if (!world.isClientSide()) {
 			BlockEntity _blockEntity = world.getBlockEntity(pos);
-			if (_blockEntity != null)
-				_blockEntity.getPersistentData().putBoolean("portalActive", active);
-			if (world instanceof Level _level)
-				_level.sendBlockUpdated(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
+			if (_blockEntity == null || _blockEntity.getPersistentData().getBoolean("portalActive") == active) return;
+			_blockEntity.getPersistentData().putBoolean("portalActive", active);
+			syncController(world, _blockEntity);
 		}
 	}
 
@@ -237,7 +241,16 @@ public class ScalablePortalCheckerProcedure {
 	private static void storeErrorReason(LevelAccessor world, BlockPos pos, String reason) {
 		BlockEntity blockEntity = world.getBlockEntity(pos);
 		if (blockEntity != null) {
+			if (reason.equals(blockEntity.getPersistentData().getString("portalError"))) return;
 			blockEntity.getPersistentData().putString("portalError", reason);
+			syncController(world, blockEntity);
+		}
+	}
+
+	private static void syncController(LevelAccessor world, BlockEntity controller) {
+		controller.setChanged();
+		if (world instanceof Level level && !level.isClientSide()) {
+			level.sendBlockUpdated(controller.getBlockPos(), controller.getBlockState(), controller.getBlockState(), 3);
 		}
 	}
 

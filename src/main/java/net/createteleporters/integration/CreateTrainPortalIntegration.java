@@ -20,6 +20,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.createteleporters.CreateteleportersMod;
 import net.createteleporters.init.CreateteleportersModBlocks;
 import net.createteleporters.util.CustomPortalTeleportMode;
+import java.util.List;
 
 
 /**
@@ -98,107 +99,107 @@ public final class CreateTrainPortalIntegration {
 	}
 
 	private static PortalTrackProvider.Exit resolveExit(ServerLevel level, BlockFace entryFace, boolean requireTrack) {
-		CreateteleportersMod.LOGGER.info("=== TRAIN PORTAL TELEPORT ATTEMPT ===");
-		CreateteleportersMod.LOGGER.info("Entry face: {} at {}", entryFace.getFace(), entryFace.getPos());
-		CreateteleportersMod.LOGGER.info("Entry track block: {}", level.getBlockState(entryFace.getPos()).getBlock());
+		CreateteleportersMod.LOGGER.debug("=== TRAIN PORTAL TELEPORT ATTEMPT ===");
+		CreateteleportersMod.LOGGER.debug("Entry face: {} at {}", entryFace.getFace(), entryFace.getPos());
+		CreateteleportersMod.LOGGER.debug("Entry track block: {}", level.getBlockState(entryFace.getPos()).getBlock());
 		
 		BlockPos sourcePortalPos = entryFace.getConnectedPos();
-		CreateteleportersMod.LOGGER.info("Source portal position: {}", sourcePortalPos);
+		CreateteleportersMod.LOGGER.debug("Source portal position: {}", sourcePortalPos);
 		
 		PortalBaseData sourceBase = findLinkedActivePortalBaseForPortalBlock(level, sourcePortalPos);
 		if (sourceBase == null) {
-			CreateteleportersMod.LOGGER.warn("FAILED: No active portal base found for portal block at {}", sourcePortalPos);
+			CreateteleportersMod.LOGGER.debug("FAILED: No active portal base found for portal block at {}", sourcePortalPos);
 			return null;
 		}
-		CreateteleportersMod.LOGGER.info("Found source portal base at {}", sourceBase.basePos);
+		CreateteleportersMod.LOGGER.debug("Found source portal base at {}", sourceBase.basePos);
 		if (CustomPortalTeleportMode.isCoordinateMode(level, sourceBase.basePos)) {
-			CreateteleportersMod.LOGGER.warn("Train portal at {} requires Portal to portal mode", sourceBase.basePos);
+			CreateteleportersMod.LOGGER.debug("Train portal at {} requires Portal to portal mode", sourceBase.basePos);
 			return null;
 		}
 
 		PortalTargetData targetData = resolveLinkedPortalTarget(sourceBase);
 		if (targetData == null) {
-			CreateteleportersMod.LOGGER.warn("FAILED: Train portal tracks require an active portal-to-portal link at {}", sourceBase.basePos);
+			CreateteleportersMod.LOGGER.debug("FAILED: Train portal tracks require an active portal-to-portal link at {}", sourceBase.basePos);
 			return null;
 		}
 
 		ResourceLocation targetDimLoc = targetData.dimension();
-		CreateteleportersMod.LOGGER.info("Target resolved from {} - dimension: {}, base position: {}",
+		CreateteleportersMod.LOGGER.debug("Target resolved from {} - dimension: {}, base position: {}",
 			targetData.source(), targetDimLoc, targetData.basePos());
 		if (targetDimLoc == null) {
-			CreateteleportersMod.LOGGER.warn("FAILED: Invalid target dimension for portal at {}", sourcePortalPos);
+			CreateteleportersMod.LOGGER.debug("FAILED: Invalid target dimension for portal at {}", sourcePortalPos);
 			return null;
 		}
 
 		ResourceKey<net.minecraft.world.level.Level> targetDim = ResourceKey.create(Registries.DIMENSION, targetDimLoc);
 		ServerLevel targetLevel = level.getServer().getLevel(targetDim);
-		CreateteleportersMod.LOGGER.info("Target dimension key: {}, level exists: {}", targetDim, targetLevel != null);
+		CreateteleportersMod.LOGGER.debug("Target dimension key: {}, level exists: {}", targetDim, targetLevel != null);
 		if (targetLevel == null) {
-			CreateteleportersMod.LOGGER.warn("FAILED: Target dimension {} not found", targetDimLoc);
+			CreateteleportersMod.LOGGER.debug("FAILED: Target dimension {} not found", targetDimLoc);
 			return null;
 		}
 
 		BlockPos targetBasePos = targetData.basePos();
 		if (targetLevel == level && targetBasePos.equals(sourceBase.basePos)) {
-			CreateteleportersMod.LOGGER.warn("FAILED: Portal at {} links back to itself", sourceBase.basePos);
+			CreateteleportersMod.LOGGER.debug("FAILED: Portal at {} links back to itself", sourceBase.basePos);
 			return null;
 		}
-		CreateteleportersMod.LOGGER.info("Target base position: {}", targetBasePos);
+		CreateteleportersMod.LOGGER.debug("Target base position: {}", targetBasePos);
 		
 		BlockEntity targetBE = targetLevel.getBlockEntity(targetBasePos);
-		CreateteleportersMod.LOGGER.info("Target block entity exists: {}, type: {}", 
+		CreateteleportersMod.LOGGER.debug("Target block entity exists: {}, type: {}",
 			targetBE != null, 
 			targetBE != null ? targetBE.getClass().getSimpleName() : "null");
 		if (targetBE == null) {
-			CreateteleportersMod.LOGGER.warn("FAILED: No block entity at target base position {}", targetBasePos);
+			CreateteleportersMod.LOGGER.debug("FAILED: No block entity at target base position {}", targetBasePos);
 			return null;
 		}
 
 		CompoundTag targetNbt = targetBE.getPersistentData();
 		if (CustomPortalTeleportMode.isCoordinateMode(targetLevel, targetBasePos)) {
-			CreateteleportersMod.LOGGER.warn("Destination train portal at {} requires Portal to portal mode", targetBasePos);
+			CreateteleportersMod.LOGGER.debug("Destination train portal at {} requires Portal to portal mode", targetBasePos);
 			return null;
 		}
 		boolean targetActive = targetNbt.getBoolean("portalActive");
-		CreateteleportersMod.LOGGER.info("Target portal active: {}", targetActive);
+		CreateteleportersMod.LOGGER.debug("Target portal active: {}", targetActive);
 		if (!targetActive) {
-			CreateteleportersMod.LOGGER.warn("FAILED: Target portal at {} is not active", targetBasePos);
+			CreateteleportersMod.LOGGER.debug("FAILED: Target portal at {} is not active", targetBasePos);
 			return null;
 		}
 		String sourceRotation = sourceBase.nbt.getString("rotation");
 		String targetRotation = targetNbt.getString("rotation");
-		CreateteleportersMod.LOGGER.info("Source rotation: '{}', Target rotation: '{}'", sourceRotation, targetRotation);
+		CreateteleportersMod.LOGGER.debug("Source rotation: '{}', Target rotation: '{}'", sourceRotation, targetRotation);
 
 		int localHorizontalOffset = getLocalHorizontalOffset(sourceBase.basePos, sourcePortalPos, sourceRotation);
 		int localY = sourcePortalPos.getY() - sourceBase.basePos.getY();
-		CreateteleportersMod.LOGGER.info("Local offset - horizontal: {}, y: {}", localHorizontalOffset, localY);
+		CreateteleportersMod.LOGGER.debug("Local offset - horizontal: {}, y: {}", localHorizontalOffset, localY);
 		
 		BlockPos targetPortalPos = toPortalPos(targetBasePos, targetRotation, localHorizontalOffset, localY);
-		CreateteleportersMod.LOGGER.info("Calculated target portal position: {}", targetPortalPos);
+		CreateteleportersMod.LOGGER.debug("Calculated target portal position: {}", targetPortalPos);
 		
 		
 		BlockState targetPortalState = targetLevel.getBlockState(targetPortalPos);
 		boolean isPortalBlock = targetPortalState.is(CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get());
-		CreateteleportersMod.LOGGER.info("Target portal block check - position: {}, is portal: {}, block: {}", 
+		CreateteleportersMod.LOGGER.debug("Target portal block check - position: {}, is portal: {}, block: {}",
 			targetPortalPos, isPortalBlock, targetPortalState.getBlock());
 		
 		if (!isPortalBlock || !isPortalInteriorBlock(targetBasePos, targetPortalPos, targetNbt)) return null;
 
 		Direction exitDirection = getCreateStyleExitDirection(entryFace.getFace(), targetRotation);
-		CreateteleportersMod.LOGGER.info("Create-style exit direction from entry face {} and target rotation {}: {}",
+		CreateteleportersMod.LOGGER.debug("Create-style exit direction from entry face {} and target rotation {}: {}",
 			entryFace.getFace(), targetRotation, exitDirection);
 
 		BlockFace exitTrackFace = toExitTrackFace(targetPortalPos, exitDirection);
-		CreateteleportersMod.LOGGER.info("Resolved exit track face: {}", exitTrackFace);
+		CreateteleportersMod.LOGGER.debug("Resolved exit track face: {}", exitTrackFace);
 		if (!isCompatibleTrack(targetLevel, exitTrackFace.getPos(), exitTrackFace.getFace())
 			&& (requireTrack || !targetLevel.getBlockState(exitTrackFace.getPos()).canBeReplaced())) {
-			CreateteleportersMod.LOGGER.warn("FAILED: No valid exit position found for portal at {}", targetPortalPos);
+			CreateteleportersMod.LOGGER.debug("FAILED: No valid exit position found for portal at {}", targetPortalPos);
 			return null;
 		}
 
-		CreateteleportersMod.LOGGER.info("SUCCESS: Train teleporting from {} to {} (track at {}, face {})", 
+		CreateteleportersMod.LOGGER.debug("SUCCESS: Train teleporting from {} to {} (track at {}, face {})",
 			sourcePortalPos, exitTrackFace.getConnectedPos(), exitTrackFace.getPos(), exitTrackFace.getFace());
-		CreateteleportersMod.LOGGER.info("=== END TELEPORT ATTEMPT ===");
+		CreateteleportersMod.LOGGER.debug("=== END TELEPORT ATTEMPT ===");
 		
 		return new PortalTrackProvider.Exit(targetLevel, exitTrackFace);
 	}
@@ -210,7 +211,7 @@ public final class CreateTrainPortalIntegration {
 
 		String targetDimString = sourceBase.nbt.getString("linkedDim").trim();
 		ResourceLocation targetDimLoc = ResourceLocation.tryParse(targetDimString);
-		CreateteleportersMod.LOGGER.info("Linked portal target dimension string: '{}', parsed: {}", targetDimString, targetDimLoc);
+		CreateteleportersMod.LOGGER.debug("Linked portal target dimension string: '{}', parsed: {}", targetDimString, targetDimLoc);
 		if (targetDimLoc == null) {
 			return null;
 		}
@@ -248,50 +249,26 @@ public final class CreateTrainPortalIntegration {
 	}
 
 	private static PortalBaseData findLinkedActivePortalBaseForPortalBlock(ServerLevel level, BlockPos portalPos) {
-		CreateteleportersMod.LOGGER.info("Searching for portal base near {}", portalPos);
-		BlockPos min = portalPos.offset(-SEARCH_RADIUS, -SEARCH_RADIUS, -SEARCH_RADIUS);
-		BlockPos max = portalPos.offset(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS);
 		PortalBaseData best = null;
 		int bestDistance = Integer.MAX_VALUE;
-		int basesFound = 0;
-		int linkedActiveBases = 0;
-		
-		for (BlockPos cursor : BlockPos.betweenClosed(min, max)) {
-			if (!level.getBlockState(cursor).is(CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get())) {
-				continue;
-			}
-			basesFound++;
-
-			BlockEntity be = level.getBlockEntity(cursor);
-			if (be == null) {
-				continue;
-			}
-
-			CompoundTag nbt = be.getPersistentData();
-			boolean isInterior = isPortalInteriorBlock(cursor, portalPos, nbt);
-			boolean isLinked = nbt.getBoolean("isLinked");
-			boolean isActive = nbt.getBoolean("portalActive");
-			
-			CreateteleportersMod.LOGGER.info("  Found base at {} - isInterior: {}, isLinked: {}, isActive: {}",
-				cursor, isInterior, isLinked, isActive);
-			
-			if (!isInterior) {
-				continue;
-			}
-			if (!isLinked || !isActive) {
-				continue;
-			}
-			
-			linkedActiveBases++;
-			int distance = cursor.distManhattan(portalPos);
-			if (distance < bestDistance) {
-				bestDistance = distance;
-				best = new PortalBaseData(cursor.immutable(), nbt);
+		// Only the two planes below the interior can contain its controller.
+		for (Iterable<BlockPos> plane : List.of(
+				BlockPos.betweenClosed(portalPos.offset(-SEARCH_RADIUS, -SEARCH_RADIUS, 0), portalPos.offset(SEARCH_RADIUS, -1, 0)),
+				BlockPos.betweenClosed(portalPos.offset(0, -SEARCH_RADIUS, -SEARCH_RADIUS), portalPos.offset(0, -1, SEARCH_RADIUS)))) {
+			for (BlockPos cursor : plane) {
+				if (!level.getBlockState(cursor).is(CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get())) continue;
+				BlockEntity be = level.getBlockEntity(cursor);
+				if (be == null) continue;
+				CompoundTag nbt = be.getPersistentData();
+				if (!nbt.getBoolean("isLinked") || !nbt.getBoolean("portalActive") || !isPortalInteriorBlock(cursor, portalPos, nbt)) continue;
+				int distance = cursor.distManhattan(portalPos);
+				// Preserve the old cube's Y/Z/X ordering when two controllers are equally close.
+				if (distance < bestDistance || (distance == bestDistance && cursor.compareTo(best.basePos) < 0)) {
+					bestDistance = distance;
+					best = new PortalBaseData(cursor.immutable(), nbt);
+				}
 			}
 		}
-		
-		CreateteleportersMod.LOGGER.info("Search complete - bases found: {}, linked+active: {}, best distance: {}",
-			basesFound, linkedActiveBases, bestDistance == Integer.MAX_VALUE ? "none" : bestDistance);
 		return best;
 	}
 
