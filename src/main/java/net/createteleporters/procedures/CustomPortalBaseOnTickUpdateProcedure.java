@@ -11,7 +11,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -55,8 +54,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 		ensurePortalChunksLoaded(world, basePos);
 
 		if (getBlockNBTLogic(world, basePos, "portalActive")) {
-			if (4 <= getFluidTankLevel(world, basePos, 1, null)) {
-				// Get portal dimensions from NBT
+			// Get portal dimensions from NBT
 				int portalWidth = getBlockNBTInt(world, basePos, "portalWidth");
 				int portalHeight = getBlockNBTInt(world, basePos, "portalHeight");
 				int minExtent = getBlockNBTInt(world, basePos, "portalMinExtent");
@@ -209,17 +207,6 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 					Math.max(portalArea.minY, portalArea.maxY) + ACTIVATION_UPPER_PADDING + EPS,
 					Math.max(portalArea.minZ, portalArea.maxZ) + ACTIVATION_HORIZONTAL_PADDING + EPS
 				);
-
-				// Trains consume more Telejuice while occupying the portal.
-				if (world instanceof ILevelExtension _ext) {
-					IFluidHandler _fluidHandler = _ext.getCapability(Capabilities.FluidHandler.BLOCK, basePos, null);
-					if (_fluidHandler != null) {
-						boolean trainPresent = !SableAeronauticsIntegration.getEntities(world, portalArea,
-							e -> e instanceof CarriageContraptionEntity).isEmpty();
-						_fluidHandler.drain(trainPresent ? 20 : 4, IFluidHandler.FluidAction.EXECUTE);
-					}
-				}
-
 				// Get teleportation target - prefer linked portal coordinates over item data
 				String targetDim;
 				double tx, ty, tz, yaw;
@@ -342,8 +329,8 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 										ServerLevel targetLevel = _level.getServer().getLevel(targetDimKey);
 										if (targetLevel != null) {
 											// Teleport directly using API (more reliable than commands)
-											SableAeronauticsIntegration.teleportEntity(entityiterator, targetLevel, tx + 0.5, ty + 1, tz + 0.5, (float) yaw);
-											arrivalLevel = targetLevel;
+												SableAeronauticsIntegration.teleportEntity(entityiterator, targetLevel, tx + 0.5, ty + 1, tz + 0.5, (float) yaw);
+												arrivalLevel = entityiterator.level() == targetLevel ? targetLevel : null;
 										} else {
 											// Target level not found, fall back to command
 											_level.getServer().getCommands().performPrefixedCommand(
@@ -351,10 +338,16 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 												"execute in " + targetDim + " run tp " + entityiterator.getStringUUID() + " " + (tx + 0.5) + " " + (ty + 1) + " " + (tz + 0.5));
 										}
 									} else {
-											SableAeronauticsIntegration.teleportEntity(entityiterator, _level, tx + 0.5, ty + 1, tz + 0.5, (float) yaw);
-											arrivalLevel = _level;
+												SableAeronauticsIntegration.teleportEntity(entityiterator, _level, tx + 0.5, ty + 1, tz + 0.5, (float) yaw);
+												arrivalLevel = entityiterator.level() == _level ? _level : null;
 									}
 								}
+								if (arrivalLevel == null) {
+									entityData.remove("TeleportCharge");
+									entityData.remove("TeleportChargeDuration");
+									continue;
+								}
+								drainTelejuice(world, basePos, 4);
 								{
 									Entity _ent = entityiterator;
 									_ent.setYRot((float) yaw);
@@ -413,19 +406,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				}
 
 				return "Portal Ready";
-			} else {
-				setPortalVisualActive(world, basePos, false);
-				if (!world.isClientSide()) {
-					BlockPos _bp = basePos;
-					BlockEntity _blockEntity = world.getBlockEntity(_bp);
-					BlockState _bs = world.getBlockState(_bp);
-					if (_blockEntity != null)
-						_blockEntity.getPersistentData().putBoolean("portalActive", false);
-					if (world instanceof Level _level)
-						_level.sendBlockUpdated(_bp, _bs, _bs, 3);
-				}
-				return "Quantum Fluid Depleted";
-			}
+		}
 		} else {
 			setPortalVisualActive(world, basePos, false);
 			// Clear portal blocks when frame is invalid
@@ -583,6 +564,14 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				return fluidHandler.getFluidInTank(tank).getAmount();
 		}
 		return 0;
+	}
+
+	public static boolean drainTelejuice(LevelAccessor level, BlockPos pos, int amount) {
+		if (level instanceof ILevelExtension ext) {
+			IFluidHandler fluidHandler = ext.getCapability(Capabilities.FluidHandler.BLOCK, pos, null);
+			return fluidHandler != null && fluidHandler.drain(amount, IFluidHandler.FluidAction.EXECUTE).getAmount() == amount;
+		}
+		return false;
 	}
 
 	private static String getBlockNBTString(LevelAccessor world, BlockPos pos, String tag) {
