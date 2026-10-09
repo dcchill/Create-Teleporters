@@ -53,6 +53,9 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
+		if (this.isHovering(-33, -21, 25, 93, mouseX, mouseY)) {
+			guiGraphics.renderTooltip(this.font, FluidDisplayProcedure.tooltip(world, x, y, z), mouseX, mouseY);
+		}
 	}
 
 	@Override

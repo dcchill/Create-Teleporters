@@ -7,8 +7,15 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 
 public class FluidDisplayProcedure {
+	public static Component tooltip(LevelAccessor world, double x, double y, double z) {
+		BlockPos pos = BlockPos.containing(x, y, z);
+		return Component.translatable("gui.createteleporters.tank_tooltip",
+			getFluidTankLevel(world, pos, 0, null), getFluidTankCapacity(world, pos, 0, null));
+	}
+
 	public static double execute(LevelAccessor world, double x, double y, double z) {
 		int capacity = getFluidTankCapacity(world, BlockPos.containing(x, y, z), 1, null);
 		if (capacity <= 0) {

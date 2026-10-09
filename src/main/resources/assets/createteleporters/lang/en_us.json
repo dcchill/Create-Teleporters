@@ -82,5 +82,6 @@
   "gui.createteleporters.custom_teleporter_gui.mode": "Mode: %s",
   "gui.createteleporters.custom_teleporter_gui.mode_coordinates": "Coordinates",
   "gui.createteleporters.custom_teleporter_gui.mode_portal_to_portal": "Portal to portal",
-  "gui.createteleporters.custom_teleporter_gui.mode_tooltip": "Click to switch destination type. Trains require Portal to portal mode at both ends. Both destinations remain stored."
+  "gui.createteleporters.custom_teleporter_gui.mode_tooltip": "Click to switch destination type. Trains require Portal to portal mode at both ends. Both destinations remain stored.",
+  "gui.createteleporters.tank_tooltip": "Telejuice: %s / %s mB"
 }

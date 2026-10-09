@@ -2,6 +2,9 @@ package net.createteleporters.mixin;
 
 import java.lang.ref.WeakReference;
 import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
+import com.simibubi.create.content.trains.entity.CarriageContraption;
+import com.simibubi.create.content.trains.track.TrackBlockEntity;
+import net.createteleporters.block.entity.CustomPortalBaseBlockEntity;
 import org.spongepowered.asm.mixin.Unique;
 import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -38,6 +41,23 @@ public abstract class PortalDimensionalCarriageMixin {
 	@Shadow public TrackNodeLocation pivot;
 	@Shadow public WeakReference<CarriageContraptionEntity> entity;
 	@Unique private CompoundTag ctp$driver;
+	@Inject(method = "updateRenderedCutoff", at = @At("HEAD"))
+	private void ctp$trainRipple(CallbackInfo ci) {
+		CarriageContraptionEntity train = entity.get();
+		if (train == null || !(train.level() instanceof ServerLevel level) || pivot == null
+			|| !(train.getContraption() instanceof CarriageContraption contraption) || contraption.bounds == null) return;
+		var portion = (Carriage.DimensionalCarriageEntity) (Object) this;
+		if (contraption.portalCutoffMin == portion.minAllowedLocalCoord()
+			&& contraption.portalCutoffMax == portion.maxAllowedLocalCoord()) return;
+		for (BlockPos pos : pivot.allAdjacent()) {
+			if (!(level.getBlockEntity(pos) instanceof TrackBlockEntity track) || !track.getPersistentData().contains("CTPTrainBase")) continue;
+			if (!(level.getBlockEntity(BlockPos.of(track.getPersistentData().getLong("CTPTrainBase"))) instanceof CustomPortalBaseBlockEntity controller)) continue;
+			var center = pivot.getLocation().add(0, 1.5 + contraption.bounds.getCenter().y, 0).subtract(net.minecraft.world.phys.Vec3.atLowerCornerOf(controller.getBlockPos()));
+			String rotation = controller.getPersistentData().getString("rotation");
+			controller.triggerTrainRipple("north".equals(rotation) || "south".equals(rotation) ? center.x : center.z, center.y);
+			break;
+		}
+	}
 	@Inject(method = "dismountPlayer", at = @At("HEAD"))
 	private void ctp$captureDriver(ServerLevel level, ServerPlayer player, Integer seat, boolean capture,
 		CallbackInfo ci) {

@@ -24,6 +24,7 @@ public class CustomPortalBaseRenderer implements BlockEntityRenderer<CustomPorta
 		CreateteleportersMod.MODID, "block/p_portal");
 	private static final int SEGMENTS = 12;
 	private static final float BORDER_OVERLAP = 1f / 16f;
+	private static final float SURFACE_DISPLACEMENT = PortalLiquidSurface.MAX_DISPLACEMENT;
 	private static final float[] BORDER_DEPTHS = {6.5f / 16, 9.5f / 16};
 
 	public CustomPortalBaseRenderer(BlockEntityRendererProvider.Context context) {
@@ -61,6 +62,8 @@ public class CustomPortalBaseRenderer implements BlockEntityRenderer<CustomPorta
 
 		poseStack.pushPose();
 		PoseStack.Pose pose = poseStack.last();
+		if (CustomPortalSurfaceClient.isEnabled())
+			LiquidPortalMesh.render(blockEntity, pose, buffers, partialTick);
 		VertexConsumer rim = buffers.getBuffer(RenderType.entityTranslucentEmissive(atlas, false));
 		for (int i = 0; i < SEGMENTS; i++) {
 			float a = i / (float) SEGMENTS;
@@ -99,13 +102,18 @@ public class CustomPortalBaseRenderer implements BlockEntityRenderer<CustomPorta
 		int y = blockEntity.getBlockPos().getY();
 		int z = blockEntity.getBlockPos().getZ();
 		return northSouth
-			? new AABB(x + min - BORDER_OVERLAP, y, z + BORDER_DEPTHS[0], x + max + BORDER_OVERLAP, y + top + 1, z + BORDER_DEPTHS[1])
-			: new AABB(x + BORDER_DEPTHS[0], y, z + min - BORDER_OVERLAP, x + BORDER_DEPTHS[1], y + top + 1, z + max + BORDER_OVERLAP);
+			? new AABB(x + min - BORDER_OVERLAP, y, z + BORDER_DEPTHS[0] - SURFACE_DISPLACEMENT, x + max + BORDER_OVERLAP, y + top + 1, z + BORDER_DEPTHS[1] + SURFACE_DISPLACEMENT)
+			: new AABB(x + BORDER_DEPTHS[0] - SURFACE_DISPLACEMENT, y, z + min - BORDER_OVERLAP, x + BORDER_DEPTHS[1] + SURFACE_DISPLACEMENT, y + top + 1, z + max + BORDER_OVERLAP);
 	}
 
 	@Override
 	public int getViewDistance() {
-		return 128;
+		return Math.max(128, Minecraft.getInstance().options.getEffectiveRenderDistance() * 24 + 32);
+	}
+
+	@Override
+	public boolean shouldRenderOffScreen(CustomPortalBaseBlockEntity blockEntity) {
+		return true;
 	}
 
 	private static float jag(long seed, int index, float time) {

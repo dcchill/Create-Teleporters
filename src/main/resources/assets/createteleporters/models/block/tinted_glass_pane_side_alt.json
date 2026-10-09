@@ -5,6 +5,8 @@
   },
   "elements": [
     {
+      "shade": false,
+      "neoforge_data": {"block_light": 15, "sky_light": 15, "ambient_occlusion": false},
       "from": [7, 0, 9],
       "to": [9, 16, 16],
       "faces": {

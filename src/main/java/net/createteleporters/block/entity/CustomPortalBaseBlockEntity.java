@@ -13,6 +13,8 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Direction;
@@ -22,18 +24,89 @@ import net.createteleporters.world.inventory.CustomTeleporterGuiMenu;
 import net.createteleporters.init.CreateteleportersModFluids;
 import net.createteleporters.init.CreateteleportersModBlockEntities;
 import net.createteleporters.util.CustomPortalTeleportMode;
+import net.createteleporters.client.CustomPortalSurfaceClient;
+import net.createteleporters.integration.SableAeronauticsIntegration;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
 
 import javax.annotation.Nullable;
 
 import java.util.stream.IntStream;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import io.netty.buffer.Unpooled;
 
 public class CustomPortalBaseBlockEntity extends RandomizableContainerBlockEntity implements WorldlyContainer {
 	private NonNullList<ItemStack> stacks = NonNullList.withSize(1, ItemStack.EMPTY);
+	private Set<UUID> portalOccupants = new HashSet<>();
+
+	public void triggerTrainRipple(double horizontal, double y) {
+		if (!(level instanceof ServerLevel serverLevel)) return;
+		CompoundTag data = getPersistentData();
+		if (!data.getBoolean("portalVisualActive") || data.getBoolean("immersivePortalCreated")) return;
+		int min = data.getInt("portalMinExtent") + 1, max = data.getInt("portalMaxExtent"), top = data.getInt("portalHeight");
+		if (max <= min || top <= 1) return;
+		float h = (float) Math.max(min, Math.min(max, horizontal));
+		float height = (float) Math.max(1, Math.min(top, y));
+		long now = serverLevel.getGameTime();
+		ListTag ripples = data.getList("portalTrainRipples", Tag.TAG_COMPOUND);
+		ripples.removeIf(tag -> now - ((CompoundTag) tag).getLong("Time") >= 48);
+		if (!ripples.isEmpty()) {
+			CompoundTag last = ripples.getCompound(ripples.size() - 1);
+			if (last.getLong("Time") == now && last.getFloat("Horizontal") == h && last.getFloat("Y") == height) return;
+		}
+		while (ripples.size() >= 8) ripples.remove(0);
+		CompoundTag ripple = new CompoundTag();
+		ripple.putLong("Time", now);
+		ripple.putFloat("Horizontal", h);
+		ripple.putFloat("Y", height);
+		ripples.add(ripple);
+		data.put("portalTrainRipples", ripples);
+		setChanged();
+		serverLevel.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
+	}
+
+	public void updateEntryRipple(List<Entity> entities, AABB opening, boolean northSouth) {
+		if (!(level instanceof ServerLevel serverLevel)) return;
+		Set<UUID> occupants = new HashSet<>();
+		boolean changed = false;
+		for (Entity entity : entities) {
+			AABB bounds = SableAeronauticsIntegration.getEntityBounds(level, opening, entity);
+			if (!bounds.intersects(opening)) continue;
+			occupants.add(entity.getUUID());
+			if (portalOccupants.contains(entity.getUUID())) continue;
+			var center = bounds.getCenter();
+			CompoundTag data = getPersistentData();
+			data.putLong("portalRippleTime", serverLevel.getGameTime());
+			data.putFloat("portalRippleHorizontal", (float) (northSouth ? center.x - worldPosition.getX() : center.z - worldPosition.getZ()));
+			data.putFloat("portalRippleY", (float) (center.y - worldPosition.getY()));
+			changed = true;
+		}
+		portalOccupants = occupants;
+		if (changed) {
+			setChanged();
+			serverLevel.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
+		}
+	}
 
 	public CustomPortalBaseBlockEntity(BlockPos position, BlockState state) {
 		super(CreateteleportersModBlockEntities.CUSTOM_PORTAL_BASE.get(), position, state);
+	}
+
+	@Override
+	public void onLoad() {
+		super.onLoad();
+		if (level != null && level.isClientSide()) CustomPortalSurfaceClient.track(this);
+	}
+
+	@Override
+	public void setRemoved() {
+		if (level != null && level.isClientSide()) CustomPortalSurfaceClient.remove(this);
+		super.setRemoved();
 	}
 
 	@Override
@@ -45,6 +118,7 @@ public class CustomPortalBaseBlockEntity extends RandomizableContainerBlockEntit
 		if (compound.get("fluidTank") instanceof CompoundTag compoundTag)
 			fluidTank.readFromNBT(lookupProvider, compoundTag);
 		CustomPortalTeleportMode.getOrMigrate(this);
+		if (level != null && level.isClientSide()) CustomPortalSurfaceClient.track(this);
 	}
 
 	@Override

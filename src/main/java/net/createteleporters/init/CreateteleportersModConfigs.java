@@ -7,6 +7,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.bus.api.SubscribeEvent;
 
 import net.createteleporters.configuration.CTPConfigConfiguration;
+import net.createteleporters.configuration.CTPClientConfiguration;
 import net.createteleporters.CreateteleportersMod;
 
 @EventBusSubscriber(modid = CreateteleportersMod.MODID, bus = EventBusSubscriber.Bus.MOD)
@@ -15,6 +16,7 @@ public class CreateteleportersModConfigs {
 	public static void register(FMLConstructModEvent event) {
 		event.enqueueWork(() -> {
 			ModList.get().getModContainerById("createteleporters").get().registerConfig(ModConfig.Type.COMMON, CTPConfigConfiguration.SPEC, "createteleportersconfig.toml");
+			ModList.get().getModContainerById("createteleporters").get().registerConfig(ModConfig.Type.CLIENT, CTPClientConfiguration.SPEC, "createteleporters-client.toml");
 		});
 	}
 }

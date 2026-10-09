@@ -42,7 +42,7 @@ public class QuantumPortalBlockBlock extends IronBarsBlock {
 	private static final Map<String, String> BOUND_TRAIN_TRACK_REFRESH_KEYS = new ConcurrentHashMap<>();
 
 	public QuantumPortalBlockBlock() {
-		super(BlockBehaviour.Properties.of().sound(SoundType.GLASS).strength(-1, 3600000).noOcclusion().hasPostProcess((bs, br, bp) -> true).emissiveRendering((bs, br, bp) -> true).isRedstoneConductor((bs, br, bp) -> false));
+		super(BlockBehaviour.Properties.of().sound(SoundType.GLASS).strength(-1, 3600000).lightLevel(state -> 15).noOcclusion().hasPostProcess((bs, br, bp) -> true).emissiveRendering((bs, br, bp) -> true).isRedstoneConductor((bs, br, bp) -> false));
 		this.registerDefaultState(this.defaultBlockState().setValue(COLOR, DyeColor.PURPLE));
 	}
 

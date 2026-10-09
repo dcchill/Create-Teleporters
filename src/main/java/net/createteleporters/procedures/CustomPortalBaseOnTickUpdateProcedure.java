@@ -31,7 +31,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
@@ -48,6 +47,7 @@ import net.createteleporters.integration.SableAeronauticsIntegration;
 import net.createteleporters.util.CustomPortalTeleportMode;
 import net.createteleporters.block.QuantumPortalBlockBlock;
 import net.createteleporters.network.CustomPortalEffectPayload;
+import net.createteleporters.block.entity.CustomPortalBaseBlockEntity;
 
 public class CustomPortalBaseOnTickUpdateProcedure {
 
@@ -229,12 +229,15 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				}
 				int effectColor = DyeColor.byName(QuantumPortalBlockBlock.getStoredPortalColorName(
 					world.getBlockEntity(basePos)), DyeColor.PURPLE).getTextureDiffuseColor();
+				var portalEntities = SableAeronauticsIntegration.getEntities(world, portalArea, e -> true);
+				if (linkedBE instanceof CustomPortalBaseBlockEntity controller)
+					controller.updateEntryRipple(portalEntities, portalArea, "north".equals(rotation) || "south".equals(rotation));
 
 				
 				
 				if (ipPortalActive) {
 					
-					for (Entity entityiterator : SableAeronauticsIntegration.getEntities(world, portalArea, e -> true)) {
+					for (Entity entityiterator : portalEntities) {
 						CompoundTag entityData = entityiterator.getPersistentData();
 						if (entityData.contains("PortalTeleportCooldown")) {
 							int cooldown = entityData.getInt("PortalTeleportCooldown");
@@ -247,7 +250,7 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				}
 
 				
-				for (Entity entityiterator : SableAeronauticsIntegration.getEntities(world, portalArea, e -> true)) {
+				for (Entity entityiterator : portalEntities) {
 					if (shouldIgnorePortalTeleport(entityiterator)) {
 						if (entityiterator instanceof net.minecraft.server.level.ServerPlayer player
 								&& entityiterator.getPersistentData().contains("TeleportCharge"))
@@ -349,10 +352,6 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 								entityData.remove("TeleportCharge"); 
 								entityData.remove("TeleportChargeDuration");
 
-								if (world instanceof ServerLevel sourceLevel)
-									spawnTeleportBurst(sourceLevel, x + 0.5, y + 1, z + 0.5);
-								if (arrivalLevel != null)
-									spawnTeleportBurst(arrivalLevel, tx + 0.5, ty + 1, tz + 0.5);
 								if (entityiterator instanceof net.minecraft.server.level.ServerPlayer player)
 									PacketDistributor.sendToPlayer(player,
 										new CustomPortalEffectPayload(CustomPortalEffectPayload.ARRIVAL, effectColor, 15));
@@ -450,13 +449,12 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 		ImmersivePortalsIntegration.removeImmersivePortal(world, x, y, z);
 	}
 
-	private static void spawnTeleportBurst(ServerLevel level, double x, double y, double z) {
-		level.sendParticles(ParticleTypes.END_ROD, x, y, z, 36, 0.8, 1.1, 0.8, 0.18);
-		level.sendParticles(ParticleTypes.POOF, x, y, z, 22, 0.55, 0.75, 0.55, 0.12);
-		level.sendParticles(ParticleTypes.GLOW, x, y, z, 20, 1.0, 1.25, 1.0, 0.1);
-	}
-
 	private static void setPortalVisualActive(LevelAccessor world, BlockPos pos, boolean active) {
+		if (!world.isClientSide() && active && world instanceof Level level) {
+			BlockEntity controller = world.getBlockEntity(pos);
+			if (controller != null && !controller.getPersistentData().getBoolean("portalVisualActive"))
+				controller.getPersistentData().putLong("portalOpeningTime", level.getGameTime());
+		}
 		setSyncedFlag(world, pos, "portalVisualActive", active);
 	}
 
