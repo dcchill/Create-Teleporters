@@ -3,6 +3,8 @@ package net.createteleporters.integration.ponder;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 
 import net.minecraft.core.Direction;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.createmod.catnip.math.Pointing;
@@ -151,6 +153,18 @@ public class CreateTeleportersPonderScenes {
 			.text("The portal activates automatically when both frames, fuel and the link are ready.")
 			.attachKeyFrame().pointAt(new Vec3(2.5, 3.5, 3.5)).placeNearTarget();
 		builder.idle(100);
+		var passenger = builder.world().createEntity(level -> {
+			Pig pig = new Pig(EntityType.PIG, level);
+			pig.setNoAi(true);
+			pig.setNoGravity(true);
+			pig.moveTo(2.5, 2, 3.5, 180, 0);
+			return pig;
+		});
+		PonderTeleportEffects.charge(builder, new Vec3(2.5, 2.4, 3.5));
+		builder.idle(20);
+		PonderTeleportEffects.flash(builder, new Vec3(2.5, 2.4, 3.5));
+		builder.world().modifyEntity(passenger, entity -> entity.discard());
+		builder.idle(40);
 	}
 
 	public static void customPortalCoordinates(SceneBuilder scene, SceneBuildingUtil util) {
@@ -177,5 +191,23 @@ public class CreateTeleportersPonderScenes {
 			.text("Insert the saved link into the controller's slot and supply at least 256 mB of Telejuice. Step through to reach the saved destination; travel consumes fuel here.")
 			.attachKeyFrame().pointAt(new Vec3(2.5, 1.5, 3.5)).placeNearTarget();
 		builder.idle(140);
+		var passenger = builder.world().createEntity(level -> {
+			Pig pig = new Pig(EntityType.PIG, level);
+			pig.setNoAi(true);
+			pig.setNoGravity(true);
+			pig.moveTo(2.5, 2, 3.5, 180, 0);
+			return pig;
+		});
+		PonderTeleportEffects.charge(builder, new Vec3(2.5, 2.4, 3.5));
+		builder.idle(20);
+		PonderTeleportEffects.flash(builder, new Vec3(2.5, 2.4, 3.5));
+		builder.world().modifyEntity(passenger, entity -> entity.setInvisible(true));
+		builder.idle(8);
+		PonderTeleportEffects.flash(builder, new Vec3(4.5, 1.4, 0.5));
+		builder.world().modifyEntity(passenger, entity -> {
+			entity.moveTo(4.5, 1, 0.5, 180, 0);
+			entity.setInvisible(false);
+		});
+		builder.idle(60);
 	}
 }

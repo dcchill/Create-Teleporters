@@ -33,5 +33,12 @@ public class CreateTeleportersPonderPlugin implements PonderPlugin {
 				BuiltInRegistries.BLOCK.getKey(CreateteleportersModBlocks.ENTITY_TELEPORTER_QUARTER.get()))
 				.addStoryBoard("entity_teleporter", EntityTeleporterPonderScenes::setup)
 				.addStoryBoard("entity_teleporter", EntityTeleporterPonderScenes::travel);
+
+		helper.forComponents(BuiltInRegistries.BLOCK.getKey(CreateteleportersModBlocks.ITEM_TP.get()))
+				.addStoryBoard("item_teleporter", ItemTeleporterPonderScenes::setup)
+				.addStoryBoard("item_teleporter", ItemTeleporterPonderScenes::transfer);
+		helper.forComponents(BuiltInRegistries.BLOCK.getKey(CreateteleportersModBlocks.BLOCK_TELEPORTER.get()))
+				.addStoryBoard("block_teleporter", BlockTeleporterPonderScenes::setup)
+				.addStoryBoard("block_teleporter", BlockTeleporterPonderScenes::transfer);
 	}
 }

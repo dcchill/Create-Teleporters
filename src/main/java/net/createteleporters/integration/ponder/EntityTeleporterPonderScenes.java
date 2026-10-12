@@ -81,8 +81,17 @@ public class EntityTeleporterPonderScenes {
 		builder.overlay().showText(100)
 			.text("Stand on the teleporter, or guide a mob onto it, and wait for it to charge. Dropped items do not start charging.")
 			.attachKeyFrame().pointAt(new Vec3(2.5, 2.5, 3.5)).placeNearTarget();
-		builder.idle(120);
-		builder.world().modifyEntity(passenger, entity -> entity.moveTo(5.5, 1, 3.5, 90, 0));
+		builder.idle(100);
+		PonderTeleportEffects.charge(builder, new Vec3(2.5, 2.4, 3.5));
+		builder.idle(20);
+		PonderTeleportEffects.flash(builder, new Vec3(2.5, 2.4, 3.5));
+		builder.world().modifyEntity(passenger, entity -> entity.setInvisible(true));
+		builder.idle(8);
+		PonderTeleportEffects.flash(builder, new Vec3(5.5, 1.4, 3.5));
+		builder.world().modifyEntity(passenger, entity -> {
+			entity.moveTo(5.5, 1, 3.5, 90, 0);
+			entity.setInvisible(false);
+		});
 		builder.world().modifyBlock(util.grid().at(2, 1, 3),
 			state -> state.setValue(EntityTeleporterBlock.BLOCKSTATE, 1), false);
 		builder.world().modifyBlockEntity(util.grid().at(2, 1, 3), EntityTeleporterBlockEntity.class,
