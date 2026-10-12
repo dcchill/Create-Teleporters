@@ -69,7 +69,8 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				
 				boolean coordinateMode = CustomPortalTeleportMode.isCoordinateMode(world, basePos);
 				boolean useImmersivePortals = !coordinateMode && CTPConfigConfiguration.IMMERSIVE_PORTALS_COMPAT.get();
-				boolean immersiveMode = useImmersivePortals && ImmersivePortalsIntegration.isImmersivePortalsLoaded();
+				boolean immersiveMode = useImmersivePortals && ImmersivePortalsIntegration.isImmersivePortalsLoaded()
+					&& ImmersivePortalsIntegration.hasMatchingProportions(world, basePos);
 				
 				
 				int interiorMin = minExtent + 1;
@@ -167,7 +168,10 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				} else {
 					
 					
-					removeTrackedImmersivePortal(world, x, y, z);
+					if (!removeTrackedImmersivePortal(world, x, y, z)) {
+						setPortalVisualActive(world, basePos, false);
+						return "Waiting for Immersive Portal Cleanup";
+					}
 
 					
 					
@@ -440,13 +444,13 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 		return changed;
 	}
 
-	private static void removeTrackedImmersivePortal(LevelAccessor world, double x, double y, double z) {
+	private static boolean removeTrackedImmersivePortal(LevelAccessor world, double x, double y, double z) {
 		BlockPos basePos = BlockPos.containing(x, y, z);
-		if (!getBlockNBTLogic(world, basePos, "immersivePortalCreated")) {
-			return;
+		if (!getBlockNBTLogic(world, basePos, "immersivePortalCreated") || !ImmersivePortalsIntegration.isImmersivePortalsLoaded()) {
+			return true;
 		}
 
-		ImmersivePortalsIntegration.removeImmersivePortal(world, x, y, z);
+		return ImmersivePortalsIntegration.removeImmersivePortal(world, x, y, z);
 	}
 
 	private static void setPortalVisualActive(LevelAccessor world, BlockPos pos, boolean active) {

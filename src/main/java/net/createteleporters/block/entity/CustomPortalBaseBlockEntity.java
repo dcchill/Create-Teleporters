@@ -20,6 +20,8 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 
+import net.createteleporters.init.CreateteleportersModItems;
+import net.createteleporters.util.CustomPortalSetup;
 import net.createteleporters.world.inventory.CustomTeleporterGuiMenu;
 import net.createteleporters.init.CreateteleportersModFluids;
 import net.createteleporters.init.CreateteleportersModBlockEntities;
@@ -180,7 +182,7 @@ public class CustomPortalBaseBlockEntity extends RandomizableContainerBlockEntit
 
 	@Override
 	public boolean canPlaceItem(int index, ItemStack stack) {
-		return true;
+		return !stack.is(CreateteleportersModItems.ADV_TPLINK.get()) || CustomPortalSetup.canInsertLink(this);
 	}
 
 	@Override

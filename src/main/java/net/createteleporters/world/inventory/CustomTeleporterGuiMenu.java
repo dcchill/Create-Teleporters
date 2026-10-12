@@ -15,6 +15,8 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.DataSlot;
+import net.createteleporters.block.entity.CustomPortalBaseBlockEntity;
+import net.createteleporters.util.CustomPortalSetup;
 import net.createteleporters.util.CustomPortalTeleportMode;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
@@ -51,6 +53,9 @@ public class CustomTeleporterGuiMenu extends AbstractContainerMenu implements Cr
 	private Entity boundEntity = null;
 	private BlockEntity boundBlockEntity = null;
 	private final DataSlot teleportMode = DataSlot.standalone();
+	private final DataSlot setupStatus = DataSlot.standalone();
+	private final DataSlot linkLocation = DataSlot.standalone();
+	private final DataSlot linkBlocked = DataSlot.standalone();
 
 	public CustomTeleporterGuiMenu(int id, Inventory inv, FriendlyByteBuf extraData) {
 		super(CreateteleportersModMenus.CUSTOM_TELEPORTER_GUI.get(), id);
@@ -100,7 +105,9 @@ public class CustomTeleporterGuiMenu extends AbstractContainerMenu implements Cr
 
 			@Override
 			public boolean mayPlace(ItemStack stack) {
-				return CreateteleportersModItems.ADV_TPLINK.get() == stack.getItem();
+				return CreateteleportersModItems.ADV_TPLINK.get() == stack.getItem()
+					&& (world.isClientSide ? linkBlocked.get() == 0 : !(boundBlockEntity instanceof CustomPortalBaseBlockEntity base)
+						|| CustomPortalSetup.canInsertLink(base));
 			}
 		}));
 		for (int si = 0; si < 3; ++si)
@@ -109,16 +116,27 @@ public class CustomTeleporterGuiMenu extends AbstractContainerMenu implements Cr
 		for (int si = 0; si < 9; ++si)
 			this.addSlot(new Slot(inv, si, 0 + 8 + si * 18, 0 + 151));
 		addDataSlot(teleportMode);
-		updateModeData();
+		addDataSlot(setupStatus);
+		addDataSlot(linkLocation);
+		addDataSlot(linkBlocked);
+		updateSetupData();
 	}
 
-	private void updateModeData() {
+	private void updateSetupData() {
 		if (world.isClientSide) return;
 		teleportMode.set(CustomPortalTeleportMode.PORTAL_TO_PORTAL.equals(CustomPortalTeleportMode.getOrMigrate(boundBlockEntity)) ? 1 : 0);
+		if (boundBlockEntity instanceof CustomPortalBaseBlockEntity base) {
+			setupStatus.set(CustomPortalSetup.status(base).ordinal());
+			linkLocation.set(CustomPortalSetup.linkLocation(base));
+			linkBlocked.set(CustomPortalSetup.canInsertLink(base) ? 0 : 1);
+		}
 	}
+	public net.minecraft.network.chat.Component getSetupStatus() { return CustomPortalSetup.Status.values()[setupStatus.get()].message(); }
+	public int getLinkLocation() { return linkLocation.get(); }
+	public boolean isLinkBlocked() { return linkBlocked.get() != 0; }
 	public String getTeleportMode() { return teleportMode.get() == 1 ? CustomPortalTeleportMode.PORTAL_TO_PORTAL : CustomPortalTeleportMode.COORDINATE; }
 	@Override
-	public void broadcastChanges() { updateModeData(); super.broadcastChanges(); }
+	public void broadcastChanges() { updateSetupData(); super.broadcastChanges(); }
 
 	@Override
 	public boolean stillValid(Player player) {

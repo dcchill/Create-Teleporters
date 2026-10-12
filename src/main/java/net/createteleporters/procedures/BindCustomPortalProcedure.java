@@ -22,6 +22,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 
+import net.createteleporters.util.CustomPortalTeleportMode;
 import net.createteleporters.init.CreateteleportersModBlocks;
 import net.createteleporters.init.CreateteleportersModItems;
 import net.createteleporters.block.CustomPortalBaseBlock;
@@ -85,6 +86,11 @@ public class BindCustomPortalProcedure {
 			String savedDim = linkData.getString("savedDim");
 			
 			BlockPos savedPos = BlockPos.containing(savedX, savedY, savedZ);
+			String currentDimension = ((Level) world).dimension().location().toString();
+			if (savedPos.equals(pos) && savedDim.equals(currentDimension)) {
+				serverPlayer.sendSystemMessage(Component.translatable("gui.createteleporters.custom_teleporter_gui.bind_self"));
+				return InteractionResult.SUCCESS;
+			}
 			ResourceLocation savedDimLoc = ResourceLocation.tryParse(savedDim);
 			ServerLevel savedLevel = savedDimLoc == null ? null : serverPlayer.server.getLevel(ResourceKey.create(Registries.DIMENSION, savedDimLoc));
 			
@@ -105,6 +111,12 @@ public class BindCustomPortalProcedure {
 			BlockEntity savedBE = savedLevel.getBlockEntity(savedPos);
 			
 			if (thisBE != null && savedBE != null) {
+				if (!CustomPortalTeleportMode.PORTAL_TO_PORTAL.equals(CustomPortalTeleportMode.getOrMigrate(thisBE))
+						|| !CustomPortalTeleportMode.PORTAL_TO_PORTAL.equals(CustomPortalTeleportMode.getOrMigrate(savedBE))) {
+					serverPlayer.sendSystemMessage(Component.translatable("gui.createteleporters.custom_teleporter_gui.bind_mode"));
+					return InteractionResult.SUCCESS;
+				}
+
 				
 				String currentDim = ((Level) world).dimension().location().toString();
 				
@@ -131,7 +143,9 @@ public class BindCustomPortalProcedure {
 				savedBE.getPersistentData().putDouble("linkedYaw", thisYaw);
 				savedBE.getPersistentData().putBoolean("isLinked", true);
 				
-				serverPlayer.sendSystemMessage(Component.literal("Portals linked successfully!"));
+				thisBE.setChanged();
+				savedBE.setChanged();
+				serverPlayer.sendSystemMessage(Component.translatable("gui.createteleporters.custom_teleporter_gui.bind_success"));
 				
 				
 				linkData.remove("savedX");

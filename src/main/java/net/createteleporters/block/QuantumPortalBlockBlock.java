@@ -8,6 +8,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.IronBarsBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.item.ItemStack;
@@ -33,6 +34,8 @@ import net.createteleporters.init.CreateteleportersModBlocks;
 import net.createteleporters.procedures.QuantumPortalBlockOnTickUpdateProcedure;
 
 import java.util.Map;
+import java.util.HashMap;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class QuantumPortalBlockBlock extends IronBarsBlock {
@@ -40,6 +43,7 @@ public class QuantumPortalBlockBlock extends IronBarsBlock {
 	private static final String PORTAL_COLOR_TAG = "portalColor";
 	public static final EnumProperty<DyeColor> COLOR = EnumProperty.create("color", DyeColor.class);
 	private static final Map<String, String> BOUND_TRAIN_TRACK_REFRESH_KEYS = new ConcurrentHashMap<>();
+	private static final Map<LevelAccessor, Map<BlockPos, BlockPos>> PORTAL_BASE_CACHE = new WeakHashMap<>();
 
 	public QuantumPortalBlockBlock() {
 		super(BlockBehaviour.Properties.of().sound(SoundType.GLASS).strength(-1, 3600000).lightLevel(state -> 15).noOcclusion().hasPostProcess((bs, br, bp) -> true).emissiveRendering((bs, br, bp) -> true).isRedstoneConductor((bs, br, bp) -> false));
@@ -92,6 +96,12 @@ public class QuantumPortalBlockBlock extends IronBarsBlock {
 		super.onPlace(blockstate, world, pos, oldState, moving);
 		world.scheduleTick(pos, this, 3);
 		scheduleAdjacentCreateTracks(world, pos);
+	}
+
+	@Override
+	public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean moving) {
+		super.onRemove(state, world, pos, newState, moving);
+		if (!newState.is(this)) removeCachedPortalBase(world, pos);
 	}
 
 	@Override
@@ -222,6 +232,7 @@ public class QuantumPortalBlockBlock extends IronBarsBlock {
 			int dz = portalPos.getZ() - basePos.getZ();
 			return portalPos.getX() == basePos.getX() && dz >= interiorMin && dz <= interiorMax;
 		}
+		if (!"north".equals(rotation) && !"south".equals(rotation)) return false;
 
 		int dx = portalPos.getX() - basePos.getX();
 		return portalPos.getZ() == basePos.getZ() && dx >= interiorMin && dx <= interiorMax;
@@ -240,16 +251,22 @@ public class QuantumPortalBlockBlock extends IronBarsBlock {
 		return DyeColor.PURPLE.getName();
 	}
 
-	private static BlockPos findPortalBase(Level world, BlockPos portalPos) {
+	public static BlockPos findPortalBase(LevelAccessor world, BlockPos portalPos) {
+		Map<BlockPos, BlockPos> cache = PORTAL_BASE_CACHE.computeIfAbsent(world, level -> new HashMap<>());
+		BlockPos cachedBase = cache.get(portalPos);
+		if (cachedBase != null && isControllerForPortalBlock(world, cachedBase, portalPos)) return cachedBase;
+		cache.remove(portalPos);
 		for (int yOffset = 1; yOffset < PORTAL_BASE_SEARCH_RADIUS; yOffset++) {
 			int baseY = portalPos.getY() - yOffset;
 			for (int horizontalOffset = -PORTAL_BASE_SEARCH_RADIUS; horizontalOffset <= PORTAL_BASE_SEARCH_RADIUS; horizontalOffset++) {
 				BlockPos xCandidate = new BlockPos(portalPos.getX() - horizontalOffset, baseY, portalPos.getZ());
 				if (isControllerForPortalBlock(world, xCandidate, portalPos)) {
+					cache.put(portalPos.immutable(), xCandidate);
 					return xCandidate;
 				}
 				BlockPos zCandidate = new BlockPos(portalPos.getX(), baseY, portalPos.getZ() - horizontalOffset);
 				if (isControllerForPortalBlock(world, zCandidate, portalPos)) {
+					cache.put(portalPos.immutable(), zCandidate);
 					return zCandidate;
 				}
 			}
@@ -257,7 +274,12 @@ public class QuantumPortalBlockBlock extends IronBarsBlock {
 		return null;
 	}
 
-	private static boolean isControllerForPortalBlock(Level world, BlockPos basePos, BlockPos portalPos) {
+	private static void removeCachedPortalBase(LevelAccessor world, BlockPos portalPos) {
+		Map<BlockPos, BlockPos> cache = PORTAL_BASE_CACHE.get(world);
+		if (cache != null) cache.remove(portalPos);
+	}
+
+	private static boolean isControllerForPortalBlock(LevelAccessor world, BlockPos basePos, BlockPos portalPos) {
 		if (!world.getBlockState(basePos).is(CreateteleportersModBlocks.CUSTOM_PORTAL_BASE.get())) {
 			return false;
 		}

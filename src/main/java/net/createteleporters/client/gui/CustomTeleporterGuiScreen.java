@@ -18,7 +18,6 @@ import net.minecraft.client.gui.GuiGraphics;
 
 import net.createteleporters.world.inventory.CustomTeleporterGuiMenu;
 import net.createteleporters.procedures.FluidDisplayProcedure;
-import net.createteleporters.procedures.CustomPortalBaseOnTickUpdateProcedure;
 import net.createteleporters.network.CustomTeleporterGuiButtonMessage;
 import net.createteleporters.init.CreateteleportersModScreens;
 
@@ -53,6 +52,9 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
+		if (portalMode() && menu.isLinkBlocked() && this.isHovering(24, 15, 18, 18, mouseX, mouseY)) {
+			guiGraphics.renderTooltip(this.font, Component.translatable("gui.createteleporters.custom_teleporter_gui.link_2"), mouseX, mouseY);
+		}
 		if (this.isHovering(-33, -21, 25, 93, mouseX, mouseY)) {
 			guiGraphics.renderTooltip(this.font, FluidDisplayProcedure.tooltip(world, x, y, z), mouseX, mouseY);
 		}
@@ -67,6 +69,9 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 		guiGraphics.blit(ResourceLocation.parse("createteleporters:textures/screens/empty_tank.png"), this.leftPos + -68, this.topPos + -22, 0, 0, 95, 95, 95, 95);
 		guiGraphics.blit(ResourceLocation.parse("createteleporters:textures/screens/tank_sprite.png"), this.leftPos + -68, this.topPos + -22, Mth.clamp((int) FluidDisplayProcedure.execute(world, x, y, z) * 95, 0, 1615), 0, 95, 95, 1710, 95);
 		RenderSystem.disableBlend();
+		if (portalMode() && menu.isLinkBlocked()) {
+			guiGraphics.fill(leftPos + 24, topPos + 15, leftPos + 42, topPos + 33, 0xAACC3333);
+		}
 	}
 
 	@Override
@@ -82,7 +87,10 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
 		guiGraphics.drawString(this.font, Component.translatable("gui.createteleporters.custom_teleporter_gui.label_tp_link"), 45, 20, -1, false);
 		guiGraphics.drawString(this.font, CustomPortalTeleportMode.displayName(menu.getTeleportMode()), modeRowX() + 36, 37, -1, false);
-		guiGraphics.drawString(this.font, CustomPortalBaseOnTickUpdateProcedure.execute(world, x, y, z), 0, 70, -12829636, false);
+		guiGraphics.pose().pushPose();
+		guiGraphics.pose().scale(0.75f, 0.75f, 1);
+		guiGraphics.drawWordWrap(this.font, menu.getSetupStatus(), 0, 92, 200, 0xFF3C3C3C);
+		guiGraphics.pose().popPose();
 		guiGraphics.drawString(this.font, Component.translatable("gui.createteleporters.custom_teleporter_gui.label_entity_teleporter"), -1, -22, -12829636, false);
 	}
 
@@ -119,6 +127,9 @@ public class CustomTeleporterGuiScreen extends AbstractContainerScreen<CustomTel
 		this.addRenderableWidget(imagebutton_check);
 	}
 
+	private boolean portalMode() {
+		return CustomPortalTeleportMode.PORTAL_TO_PORTAL.equals(menu.getTeleportMode());
+	}
 	private Component modeLabel() {
 		return Component.translatable("gui.createteleporters.custom_teleporter_gui.mode", CustomPortalTeleportMode.displayName(menu.getTeleportMode()));
 	}

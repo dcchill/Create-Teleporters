@@ -35,6 +35,7 @@ import net.createteleporters.init.CreateteleportersModFluidTypes;
 import net.createteleporters.init.CreateteleportersModBlocks;
 import net.createteleporters.init.CreateteleportersModBlockEntities;
 import net.createteleporters.integration.SableAeronauticsIntegration;
+import net.createteleporters.integration.CustomPortalDisplaySources;
 import com.simibubi.create.Create;
 import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
 import com.simibubi.create.content.contraptions.actors.trainControls.ControlsServerHandler;
@@ -59,6 +60,7 @@ public class CreateteleportersMod {
 
 		CreateteleportersModBlocks.REGISTRY.register(modEventBus);
 		CreateteleportersModBlockEntities.REGISTRY.register(modEventBus);
+		CustomPortalDisplaySources.register(modEventBus);
 		CreateteleportersModItems.REGISTRY.register(modEventBus);
 
 		CreateteleportersModTabs.REGISTRY.register(modEventBus);

@@ -55,7 +55,7 @@ public class ImmersivePortalsIntegration {
                 || targetLevel != null && !targetLevel.areEntitiesLoaded(new ChunkPos(BlockPos.containing(targetX, targetY, targetZ)).toLong())) return false;
         PortalFrame target = targetLevel == null ? null : frame(targetLevel, BlockPos.containing(targetX, targetY, targetZ), true);
         if (source == null || target == null || source.controller == target.controller
-                || !linksTo(source, target) || !linksTo(target, source)) {
+                || !linksTo(source, target) || !linksTo(target, source) || !sameProportions(source, target)) {
             removeImmersivePortal(level, x, y, z);
             return false;
         }
@@ -74,12 +74,12 @@ public class ImmersivePortalsIntegration {
 
             String rootTag = "ctp_root_" + newId;
             Vec3 center = source.center;
-            double scale = target.size / (double) source.size;
+            double scale = target.width / (double) source.width;
             
             String command = String.format(Locale.ROOT,
                 "portal euler make_portal %.3f %.3f %.3f %.1f 0 %d %d %.16f {Tags:[\"%s\"],portalTag:\"%s%s\",NoGravity:1b}",
                 center.x, center.y, center.z, getPortalNormal(source.rotation).toYRot(),
-                source.size, source.size, scale, rootTag, OWNER_PREFIX, newId);
+                source.width, source.height, scale, rootTag, OWNER_PREFIX, newId);
             level.getServer().getCommands().performPrefixedCommand(commandSource(level, center), command);
             Entity portal = level.getEntities((Entity) null, new AABB(center, center).inflate(0.05),
                 e -> isPortal(e) && e.getTags().contains(rootTag)).stream().findFirst().orElseThrow();
@@ -109,13 +109,24 @@ public class ImmersivePortalsIntegration {
     }
 
     
+    public static boolean hasMatchingProportions(LevelAccessor world, BlockPos base) {
+        if (!(world instanceof ServerLevel level)) return false;
+        PortalFrame source = frame(level, base, true);
+        PortalFrame target = source == null ? null : linkedFrame(source.controller, true);
+        return target != null && sameProportions(source, target);
+    }
+
+    private static boolean sameProportions(PortalFrame source, PortalFrame target) {
+        return source.width * target.height == target.width * source.height;
+    }
+
     public static boolean hasImmersivePortal(LevelAccessor world, double x, double y, double z) {
         if (!isImmersivePortalsLoaded() || !(world instanceof ServerLevel level)) return false;
         PortalFrame source = frame(level, BlockPos.containing(x, y, z), true);
         if (source == null) return false;
         PortalFrame target = linkedFrame(source.controller, true);
         String id = source.controller.getPersistentData().getString(CLUSTER_ID);
-        if (target == null || id.isEmpty() || !linksTo(target, source)
+        if (target == null || !sameProportions(source, target) || id.isEmpty() || !linksTo(target, source)
                 || !id.equals(target.controller.getPersistentData().getString(CLUSTER_ID))) return false;
         if (!source.level.areEntitiesLoaded(new ChunkPos(source.base).toLong())
                 || !target.level.areEntitiesLoaded(new ChunkPos(target.base).toLong())) return true;
@@ -180,10 +191,10 @@ public class ImmersivePortalsIntegration {
                     || !to.level.dimension().equals(portal.getClass().getMethod("getDestDim").invoke(portal))
                     || vector(portal, "getDestPos").distanceToSqr(to.center) > 1e-6
                     || vector(portal, "getAxisH").distanceToSqr(new Vec3(0, 1, 0)) > 1e-6
-                    || Math.abs((Double) portal.getClass().getMethod("getWidth").invoke(portal) - from.size) > 1e-6
-                    || Math.abs((Double) portal.getClass().getMethod("getHeight").invoke(portal) - from.size) > 1e-6
+                    || Math.abs((Double) portal.getClass().getMethod("getWidth").invoke(portal) - from.width) > 1e-6
+                    || Math.abs((Double) portal.getClass().getMethod("getHeight").invoke(portal) - from.height) > 1e-6
                     || ((Vec3) portal.getClass().getMethod("transformLocalVec", Vec3.class)
-                        .invoke(portal, new Vec3(0, 1, 0))).distanceToSqr(new Vec3(0, to.size / (double) from.size, 0)) > 1e-6
+                        .invoke(portal, new Vec3(0, 1, 0))).distanceToSqr(new Vec3(0, to.width / (double) from.width, 0)) > 1e-6
                     || Math.abs(vector(portal, "getNormal").dot(Vec3.atLowerCornerOf(getPortalNormal(from.rotation).getNormal()))) < 0.999
                     || !(Boolean) portal.getClass().getMethod("isPortalValid").invoke(portal)) return false;
         }
@@ -255,14 +266,14 @@ public class ImmersivePortalsIntegration {
         if (!List.of("north", "south", "east", "west").contains(rotation)
                 || !tag.contains("portalMinExtent") || !tag.contains("portalMaxExtent") || !tag.contains("portalHeight")) return null;
         int min = tag.getInt("portalMinExtent"), max = tag.getInt("portalMaxExtent"), height = tag.getInt("portalHeight");
-        if (min > -2 || max < 2 || height < 4 || height > 22 || max - min != height) return null;
+        if (min > -2 || max < 2 || height < 4 || height > 22 || max - min < 4 || max - min > 22) return null;
         if (active && (!tag.getBoolean("portalActive") || CustomPortalTeleportMode.isCoordinateMode(level, base))) return null;
         double horizontal = (min + max + 1) / 2.0;
         double y = base.getY() + 1 + (height - 1) / 2.0;
         Vec3 center = rotation.equals("north") || rotation.equals("south")
             ? new Vec3(base.getX() + horizontal, y, base.getZ() + 0.5)
             : new Vec3(base.getX() + 0.5, y, base.getZ() + horizontal);
-        return new PortalFrame(level, base, center, height - 1, rotation, controller);
+        return new PortalFrame(level, base, center, max - min - 1, height - 1, rotation, controller);
     }
 
     private static Direction getPortalNormal(String rotation) {
@@ -290,5 +301,5 @@ public class ImmersivePortalsIntegration {
         if (controller.getLevel() instanceof ServerLevel level) level.sendBlockUpdated(controller.getBlockPos(), controller.getBlockState(), controller.getBlockState(), 3);
     }
 
-    private record PortalFrame(ServerLevel level, BlockPos base, Vec3 center, int size, String rotation, BlockEntity controller) {}
+    private record PortalFrame(ServerLevel level, BlockPos base, Vec3 center, int width, int height, String rotation, BlockEntity controller) {}
 }

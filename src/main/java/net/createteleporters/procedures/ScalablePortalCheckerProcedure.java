@@ -25,7 +25,7 @@ import net.createteleporters.init.CreateteleportersModBlocks;
  * Maximum size: 23 wide x 23 tall (21x21 interior)
  * The base can be anywhere on the bottom row (must have dummy on each side)
  *
- * Note: Portal frames must be perfect squares.
+ * Width and height are independent; rectangular frames are supported.
  */
 public class ScalablePortalCheckerProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z) {
@@ -41,7 +41,7 @@ public class ScalablePortalCheckerProcedure {
 
 		
 		if (256 > drainTankSimulate(world, BlockPos.containing(x, y, z), 256, null)) {
-			storeErrorReason(world, BlockPos.containing(x, y, z), "Incorrect Portal Frame");
+			storeErrorReason(world, BlockPos.containing(x, y, z), "Add Telejuice (at least 256 mB)");
 			setPortalActive(world, BlockPos.containing(x, y, z), false);
 			return;
 		}
@@ -153,16 +153,12 @@ public class ScalablePortalCheckerProcedure {
 
 		
 		int actualHeight = maxHeight + 1; 
-		if (actualHeight < 5) {
+		if (actualHeight < 5 || actualHeight > 23) {
 			storeErrorReason(world, basePos, "Incorrect Portal Frame");
 			return null;
 		}
 
 		
-		if (totalWidth != actualHeight) {
-			storeErrorReason(world, basePos, "Incorrect Portal Frame");
-			return null;
-		}
 
 		
 		for (int h = 1; h < maxHeight; h++) {
