@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.createteleporters.CreateteleportersMod;
 import net.createteleporters.block.entity.CustomPortalBaseBlockEntity;
+import net.createteleporters.init.CreateteleportersModBlocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -34,21 +35,28 @@ public class CustomPortalBaseRenderer implements BlockEntityRenderer<CustomPorta
 	public void render(CustomPortalBaseBlockEntity blockEntity, float partialTick, PoseStack poseStack,
 			MultiBufferSource buffers, int packedLight, int packedOverlay) {
 		CompoundTag data = blockEntity.getPersistentData();
-		if (!data.getBoolean("portalVisualActive"))
-			return;
-
 		int min = data.getInt("portalMinExtent") + 1;
 		int max = data.getInt("portalMaxExtent");
 		int top = data.getInt("portalHeight");
 		if (max <= min || top <= 1)
 			return;
+		String rotation = data.getString("rotation");
+		boolean northSouth = "north".equals(rotation) || "south".equals(rotation);
+		boolean hasPortalBlocks = false;
+		for (int h = min; h < max && !hasPortalBlocks; h++) for (int y = 1; y < top; y++) {
+			var pos = northSouth
+				? blockEntity.getBlockPos().offset(h, y, 0) : blockEntity.getBlockPos().offset(0, y, h);
+			if (blockEntity.getLevel().getBlockState(pos).is(CreateteleportersModBlocks.QUANTUM_PORTAL_BLOCK.get())) {
+				hasPortalBlocks = true;
+				break;
+			}
+		}
+		if (!hasPortalBlocks) return;
 		float outerMin = min - BORDER_OVERLAP;
 		float outerMax = max + BORDER_OVERLAP;
 		float bottom = 1 - BORDER_OVERLAP;
 		float upper = top + BORDER_OVERLAP;
 
-		String rotation = data.getString("rotation");
-		boolean northSouth = "north".equals(rotation) || "south".equals(rotation);
 		DyeColor dye = DyeColor.byName(data.getString("portalColor"), DyeColor.PURPLE);
 		int rgb = dye.getTextureDiffuseColor();
 		int red = rgb >> 16 & 255;
@@ -62,7 +70,7 @@ public class CustomPortalBaseRenderer implements BlockEntityRenderer<CustomPorta
 
 		poseStack.pushPose();
 		PoseStack.Pose pose = poseStack.last();
-		if (CustomPortalSurfaceClient.isEnabled())
+		if (data.getBoolean("portalVisualActive") && CustomPortalSurfaceClient.isEnabled())
 			LiquidPortalMesh.render(blockEntity, pose, buffers, partialTick);
 		VertexConsumer rim = buffers.getBuffer(RenderType.entityTranslucentEmissive(atlas, false));
 		for (int i = 0; i < SEGMENTS; i++) {

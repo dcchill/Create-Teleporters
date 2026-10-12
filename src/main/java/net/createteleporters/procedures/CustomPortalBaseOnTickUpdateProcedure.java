@@ -192,6 +192,9 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				} else {
 					portalArea = new AABB(x + interiorMin, y + 1, z, x + interiorMax + 1, y + portalInnerHeight + 1, z + 1);
 				}
+				var portalEntities = SableAeronauticsIntegration.getEntities(world, portalArea, e -> true);
+				if (linkedBE instanceof CustomPortalBaseBlockEntity controller)
+					controller.updateEntryRipple(portalEntities, portalArea, "north".equals(rotation) || "south".equals(rotation));
 
 				
 				String targetDim;
@@ -233,9 +236,6 @@ public class CustomPortalBaseOnTickUpdateProcedure {
 				}
 				int effectColor = DyeColor.byName(QuantumPortalBlockBlock.getStoredPortalColorName(
 					world.getBlockEntity(basePos)), DyeColor.PURPLE).getTextureDiffuseColor();
-				var portalEntities = SableAeronauticsIntegration.getEntities(world, portalArea, e -> true);
-				if (linkedBE instanceof CustomPortalBaseBlockEntity controller)
-					controller.updateEntryRipple(portalEntities, portalArea, "north".equals(rotation) || "south".equals(rotation));
 
 				
 				

@@ -14,7 +14,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -24,7 +23,7 @@ import net.neoforged.neoforge.event.level.LevelEvent;
 @EventBusSubscriber(modid = CreateteleportersMod.MODID, value = Dist.CLIENT)
 public final class CustomPortalSurfaceClient {
 	private static final Set<CustomPortalBaseBlockEntity> CONTROLLERS = new HashSet<>();
-	private static volatile Map<LevelLightEngine, WorldSurface> surfaces = Map.of();
+	private static volatile Map<Level, WorldSurface> surfaces = Map.of();
 	private static boolean dirty;
 	private static boolean enabled;
 
@@ -45,7 +44,8 @@ public final class CustomPortalSurfaceClient {
 	}
 
 	static BlockPos owner(BlockAndTintGetter world, BlockPos pos) {
-		WorldSurface surface = surfaces.get(world.getLightEngine());
+		Level level = world instanceof Level directLevel ? directLevel : Minecraft.getInstance().level;
+		WorldSurface surface = level == null ? null : surfaces.get(level);
 		return surface == null ? null : surface.owners.get(pos);
 	}
 
@@ -53,8 +53,8 @@ public final class CustomPortalSurfaceClient {
 	public static void unload(LevelEvent.Unload event) {
 		if (!(event.getLevel() instanceof Level world) || !world.isClientSide()) return;
 		CONTROLLERS.removeIf(controller -> controller.getLevel() == world);
-		Map<LevelLightEngine, WorldSurface> remaining = new HashMap<>(surfaces);
-		remaining.remove(world.getLightEngine());
+		Map<Level, WorldSurface> remaining = new HashMap<>(surfaces);
+		remaining.remove(world);
 		surfaces = Map.copyOf(remaining);
 		dirty = true;
 	}
@@ -91,13 +91,13 @@ public final class CustomPortalSurfaceClient {
 				owners.put(pos, base);
 			}
 		}
-		Map<LevelLightEngine, WorldSurface> next = new HashMap<>();
-		byWorld.forEach((world, owners) -> next.put(world.getLightEngine(), new WorldSurface(world, Map.copyOf(owners))));
-		Map<LevelLightEngine, WorldSurface> previous = surfaces;
+		Map<Level, WorldSurface> next = new HashMap<>();
+		byWorld.forEach((world, owners) -> next.put(world, new WorldSurface(world, Map.copyOf(owners))));
+		Map<Level, WorldSurface> previous = surfaces;
 		surfaces = Map.copyOf(next);
-		Set<LevelLightEngine> worlds = new HashSet<>(previous.keySet());
+		Set<Level> worlds = new HashSet<>(previous.keySet());
 		worlds.addAll(next.keySet());
-		for (LevelLightEngine key : worlds) {
+		for (Level key : worlds) {
 			WorldSurface before = previous.get(key), after = next.get(key);
 			Map<BlockPos, BlockPos> oldOwners = before == null ? Map.of() : before.owners;
 			Map<BlockPos, BlockPos> newOwners = after == null ? Map.of() : after.owners;

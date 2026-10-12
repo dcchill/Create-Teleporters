@@ -3,6 +3,7 @@ package net.createteleporters.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.createteleporters.CreateteleportersMod;
+import net.createteleporters.configuration.CTPClientConfiguration;
 import net.createteleporters.network.CustomPortalEffectPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -109,6 +110,7 @@ public final class CustomPortalEffects {
 
 	@SubscribeEvent
 	public static void camera(ViewportEvent.ComputeCameraAngles event) {
+		if (!CTPClientConfiguration.PORTAL_CAMERA_SHAKE.get()) return;
 		float strength = intensity((float) event.getPartialTick())
 			* Minecraft.getInstance().options.screenEffectScale().get().floatValue();
 		if (strength <= 0.001f)
