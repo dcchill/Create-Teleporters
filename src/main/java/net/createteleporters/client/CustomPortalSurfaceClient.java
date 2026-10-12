@@ -68,6 +68,7 @@ public final class CustomPortalSurfaceClient {
 			return;
 		}
 		boolean currentEnabled = isEnabled();
+		boolean justEnabled = currentEnabled && !enabled;
 		if (currentEnabled != enabled) dirty = true;
 		if (!dirty) return;
 		enabled = currentEnabled;
@@ -84,6 +85,7 @@ public final class CustomPortalSurfaceClient {
 			if (!data.getBoolean("portalVisualActive") || data.getBoolean("immersivePortalCreated")
 					|| max <= min || max - min > 21 || top <= 1 || top > 22
 					|| !northSouth && !"east".equals(rotation) && !"west".equals(rotation)) continue;
+			if (justEnabled) data.putLong("portalOpeningTime", minecraft.level.getGameTime());
 			BlockPos base = controller.getBlockPos();
 			Map<BlockPos, BlockPos> owners = byWorld.computeIfAbsent(controller.getLevel(), world -> new HashMap<>());
 			for (int h = min; h < max; h++) for (int y = 1; y < top; y++) {

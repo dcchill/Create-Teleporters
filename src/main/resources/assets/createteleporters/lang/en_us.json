@@ -124,17 +124,18 @@
   "createteleporters.ponder.item_teleporter_setup.header": "Setting Up an Item Teleporter",
   "createteleporters.ponder.item_teleporter_setup.text_1": "Aim at a loaded destination block and right-click with a TP Link to save its position. Keep the destination in the same dimension and within the configured Item Teleporter range.",
   "createteleporters.ponder.item_teleporter_setup.text_2": "Open the Item Teleporter. Put the saved TP Link in the link slot and the items to send in the other slot.",
-  "createteleporters.ponder.item_teleporter_setup.text_3": "The contents of the item slot are sent as a stack. They arrive as dropped items, so prepare a collection point at the destination.",
+  "createteleporters.ponder.item_teleporter_setup.text_3": "Take a stack from storage and put it in the item slot. Items arrive above the saved block: a hopper can collect them into a chest.",
   "createteleporters.ponder.item_teleporter_transfer.header": "Sending Items with Redstone",
   "createteleporters.ponder.item_teleporter_transfer.text_1": "Use a powered Mechanical Pump to supply Telejuice. The fuel cost scales with the item count: a stack of 64 costs 100 mB.",
   "createteleporters.ponder.item_teleporter_transfer.text_2": "Apply a redstone pulse to send the loaded stack. The teleporter needs enough fuel and an in-range destination.",
-  "createteleporters.ponder.item_teleporter_transfer.text_3": "The item slot is now empty and the stack has arrived. Reload the item slot and pulse again for another delivery; no receiving teleporter is needed.",
+  "createteleporters.ponder.item_teleporter_transfer.text_3": "The hopper collects the delivered stack into the chest. Reload the item slot and pulse again; no receiving teleporter is needed.",
   "createteleporters.ponder.block_teleporter_setup.header": "Setting Up a Block Teleporter",
   "createteleporters.ponder.block_teleporter_setup.text_1": "The Block Teleporter moves the single block directly in front of its output face. Orient it toward the block you want to move.",
   "createteleporters.ponder.block_teleporter_setup.text_2": "Right-click with an Advanced TP Link while aiming at a loaded destination block. The moved block will appear in the space above that block, which must be air. Choose a destination in the same dimension.",
   "createteleporters.ponder.block_teleporter_setup.text_3": "Open the teleporter and insert the saved Advanced TP Link into its slot. Protected blocks such as bedrock and portal controllers cannot be moved.",
   "createteleporters.ponder.block_teleporter_transfer.header": "Moving Blocks with Redstone",
   "createteleporters.ponder.block_teleporter_transfer.text_1": "Supply Telejuice with a powered Mechanical Pump. Moving one block consumes 1,000 mB, or one bucket.",
-  "createteleporters.ponder.block_teleporter_transfer.text_2": "Apply redstone power to move the block in front. The destination must be empty and the teleporter must contain its link and enough fuel.",
-  "createteleporters.ponder.block_teleporter_transfer.text_3": "The source block has moved to the destination. Clear the destination and place another source block before the next transfer. While powered, the teleporter keeps checking for another valid move."
+  "createteleporters.ponder.block_teleporter_transfer.text_2": "An occupied destination stops the transfer. Clear the space above the saved block first.",
+  "createteleporters.ponder.block_teleporter_transfer.text_3": "Apply redstone power to move the block in front. The destination must be empty and the teleporter must contain its link and enough fuel.",
+  "createteleporters.ponder.block_teleporter_transfer.text_4": "The source block has moved to the destination. Clear the destination and place another source block before the next transfer. While powered, the teleporter keeps checking for another valid move."
 }

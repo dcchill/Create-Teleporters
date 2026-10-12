@@ -37,7 +37,12 @@ public class CreateTeleportersPonderScenes {
 		builder.idle(30);
 		
 		
-		builder.world().showSection(util.select().fromTo(1, 1, 2, 3, 1, 2), Direction.UP);
+		builder.world().showSection(util.select().position(2, 1, 2), Direction.DOWN);
+		builder.idle(12);
+		builder.world().showSection(util.select().position(1, 1, 2), Direction.EAST);
+		builder.idle(8);
+		builder.world().showSection(util.select().position(3, 1, 2), Direction.WEST);
+		builder.overlay().showOutline(PonderPalette.BLUE, "controller", util.select().position(2, 1, 2), 80);
 		builder.idle(30);
 		
 		builder.overlay().showText(100)
@@ -49,6 +54,8 @@ public class CreateTeleportersPonderScenes {
 			.placeNearTarget();
 		builder.idle(120);
 		
+		builder.overlay().showControls(new Vec3(2.5, 2, 2.5), Pointing.DOWN, 60)
+			.rightClick().withItem(new ItemStack(CreateteleportersModItems.ADV_TPLINK.get()));
 		builder.overlay().showText(100)
 			.text("Set both controllers to Portal to Portal mode.\n" +
 			      "Right-click each controller with the same Advanced TP Link\n" +
@@ -59,7 +66,9 @@ public class CreateTeleportersPonderScenes {
 		builder.idle(100);
 		
 		builder.world().showSection(util.select().fromTo(0, 1, 2, 0, 5, 2), Direction.DOWN);
+		builder.idle(12);
 		builder.world().showSection(util.select().fromTo(4, 1, 2, 4, 5, 2), Direction.DOWN);
+		builder.idle(12);
 		builder.world().showSection(util.select().fromTo(1, 5, 2, 3, 5, 2), Direction.DOWN);
 		builder.idle(80);
 	}
@@ -74,10 +83,17 @@ public class CreateTeleportersPonderScenes {
 		
 		builder.world().showSection(util.select().fromTo(0, 1, 3, 4, 1, 3), Direction.UP);
 		builder.idle(20);
-		builder.world().showSection(util.select().fromTo(0, 2, 3, 0, 4, 3), Direction.DOWN);
-		builder.world().showSection(util.select().fromTo(4, 2, 3, 4, 4, 3), Direction.DOWN);
+		for (int y = 2; y <= 4; y++) {
+			builder.world().showSection(util.select().position(0, y, 3), Direction.DOWN);
+			builder.world().showSection(util.select().position(4, y, 3), Direction.DOWN);
+			builder.idle(10);
+		}
 		builder.idle(20);
-		builder.world().showSection(util.select().fromTo(0, 5, 3, 4, 5, 3), Direction.DOWN);
+		for (int x = 0; x <= 4; x++) {
+			builder.world().showSection(util.select().position(x, 5, 3), Direction.DOWN);
+			builder.idle(6);
+		}
+		builder.effects().indicateSuccess(util.grid().at(2, 5, 3));
 		builder.idle(20);
 		
 		builder.overlay().showText(100)
@@ -91,6 +107,8 @@ public class CreateTeleportersPonderScenes {
 		builder.idle(100);
 		
 		builder.overlay().showOutline(PonderPalette.GREEN, "opening", util.select().fromTo(1, 2, 3, 3, 4, 3), 100);
+		builder.overlay().showLine(PonderPalette.BLUE, new Vec3(1, 2, 3), new Vec3(4, 2, 3), 100);
+		builder.overlay().showLine(PonderPalette.BLUE, new Vec3(4, 2, 3), new Vec3(4, 5, 3), 100);
 		builder.overlay().showText(100)
 			.text("Ensure the interior of the frame is empty of blocks and fluids.\n" +
 			      "The portal will fill this space automatically\n" +
@@ -140,7 +158,13 @@ public class CreateTeleportersPonderScenes {
 			.pointAt(new Vec3(2.5, 1.5, 3.5))
 			.placeNearTarget();
 		builder.idle(120);
-		builder.world().restoreBlocks(util.select().fromTo(1, 2, 3, 3, 4, 3));
+		PonderTeleportEffects.charge(builder, new Vec3(2.5, 1.5, 3.5));
+		builder.idle(20);
+		for (int y = 2; y <= 4; y++) {
+			builder.world().restoreBlocks(util.select().fromTo(1, y, 3, 3, y, 3));
+			PonderTeleportEffects.flash(builder, new Vec3(2.5, y + 0.5, 3.5));
+			builder.idle(8);
+		}
 		builder.world().modifyBlockEntity(util.grid().at(2, 1, 3), CustomPortalBaseBlockEntity.class, base -> {
 			var data = base.getPersistentData();
 			data.putBoolean("portalVisualActive", true);
@@ -157,9 +181,10 @@ public class CreateTeleportersPonderScenes {
 			Pig pig = new Pig(EntityType.PIG, level);
 			pig.setNoAi(true);
 			pig.setNoGravity(true);
-			pig.moveTo(2.5, 2, 3.5, 180, 0);
+			pig.moveTo(2.5, 1, 4.5, 180, 0);
 			return pig;
 		});
+		PonderTeleportEffects.walk(builder, passenger, new Vec3(2.5, 1, 4.5), new Vec3(2.5, 2, 3.5));
 		PonderTeleportEffects.charge(builder, new Vec3(2.5, 2.4, 3.5));
 		builder.idle(20);
 		PonderTeleportEffects.flash(builder, new Vec3(2.5, 2.4, 3.5));
@@ -179,6 +204,8 @@ public class CreateTeleportersPonderScenes {
 			.text("Open the controller and select Coordinates mode to travel to a saved location without a second portal.")
 			.attachKeyFrame().pointAt(new Vec3(2.5, 1.5, 3.5)).placeNearTarget();
 		builder.idle(120);
+		builder.overlay().showOutline(PonderPalette.GREEN, "destination", util.select().position(4, 0, 0), 120);
+		builder.overlay().showOutline(PonderPalette.BLUE, "clearance", util.select().fromTo(4, 1, 0, 4, 2, 0), 120);
 		builder.overlay().showControls(new Vec3(4.5, 1, 0.5), Pointing.DOWN, 80)
 			.rightClick().withItem(new ItemStack(CreateteleportersModItems.ADV_TPLINK.get()));
 		builder.overlay().showText(120)
@@ -195,14 +222,15 @@ public class CreateTeleportersPonderScenes {
 			Pig pig = new Pig(EntityType.PIG, level);
 			pig.setNoAi(true);
 			pig.setNoGravity(true);
-			pig.moveTo(2.5, 2, 3.5, 180, 0);
+			pig.moveTo(2.5, 1, 4.5, 180, 0);
 			return pig;
 		});
+		PonderTeleportEffects.walk(builder, passenger, new Vec3(2.5, 1, 4.5), new Vec3(2.5, 2, 3.5));
 		PonderTeleportEffects.charge(builder, new Vec3(2.5, 2.4, 3.5));
 		builder.idle(20);
 		PonderTeleportEffects.flash(builder, new Vec3(2.5, 2.4, 3.5));
 		builder.world().modifyEntity(passenger, entity -> entity.setInvisible(true));
-		builder.idle(8);
+		PonderTeleportEffects.trail(builder, new Vec3(2.5, 2.4, 3.5), new Vec3(4.5, 1.4, 0.5));
 		PonderTeleportEffects.flash(builder, new Vec3(4.5, 1.4, 0.5));
 		builder.world().modifyEntity(passenger, entity -> {
 			entity.moveTo(4.5, 1, 0.5, 180, 0);
