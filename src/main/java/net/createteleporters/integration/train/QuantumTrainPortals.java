@@ -9,6 +9,8 @@ import com.simibubi.create.content.trains.track.TrackBlockEntity;
 import com.simibubi.create.content.trains.track.TrackPropagator;
 import com.simibubi.create.content.trains.track.TrackShape;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import net.createteleporters.CreateteleportersMod;
 import net.createteleporters.init.CreateteleportersModBlocks;
 import net.createteleporters.integration.CreateTrainPortalIntegration;
@@ -16,6 +18,7 @@ import net.createteleporters.util.CustomPortalTeleportMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -25,6 +28,7 @@ public final class QuantumTrainPortals {
 	private static final String COUNTERPART = "createteleportersPortalCounterpart";
 	private static final String BASE = "CTPTrainBase";
 	private static final String TARGET_BASE = "CTPTrainTargetBase";
+	private static volatile Set<TrackNodeLocation> threadedEntrances = Set.of();
 	private QuantumTrainPortals() { }
 
 	public static void registerConnection(ServerLevel source, BlockPos sourceTrack, BlockPos sourceBase,
@@ -190,9 +194,24 @@ public final class QuantumTrainPortals {
 		if (using(train, node)) return true;
 		var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
 		if (server == null) return true;
+		if (!server.isSameThread()) return threadedEntrances.contains(node);
+		return activeEndpoint(server, node);
+	}
+	public static void prepareThreadedEntrances(MinecraftServer server) {
+		Set<TrackNodeLocation> entrances = new HashSet<>();
+		var graphs = new HashSet<com.simibubi.create.content.trains.graph.TrackGraph>();
+		for (Train train : Create.RAILWAYS.trains.values()) if (train.graph != null) graphs.add(train.graph);
+		for (var graph : graphs) for (TrackNodeLocation node : graph.getNodes()) {
+			if (((PortalNode) node).ctp$getCounterpart() != null && activeEndpoint(server, node)) entrances.add(node);
+		}
+		// Level.getBlockEntity returns null off-thread; publish validated entrances before the train worker starts.
+		threadedEntrances = Set.copyOf(entrances);
+	}
+	private static boolean activeEndpoint(MinecraftServer server, TrackNodeLocation node) {
 		ServerLevel level = server.getLevel(node.dimension);
 		if (level == null) return false;
 		for (BlockPos pos : node.allAdjacent()) {
+			if (!level.hasChunkAt(pos)) continue;
 			if (level.getBlockEntity(pos) instanceof TrackBlockEntity track && track.getPersistentData().contains(BASE)) return active(track);
 		}
 		return false;

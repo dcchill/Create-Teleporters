@@ -14,11 +14,14 @@
     "PortalCarriageEntityMixin",
     "PortalCarriageSyncMixin",
     "PortalTrainMixin",
-    "PortalControlsContextAccessor"
+    "PortalControlsContextAccessor",
+    "ElectroEnergeticsPortalMixin",
+    "ThreadedTrainPortalsMixin"
   ],
   "client": [
     "PortalCubeParticleMixin",
     "PortalCarriageRenderMixin",
+    "PortalCarriageVisualMixin",
     "PortalCouplingMixin",
     "PortalDriverClientMixin"
   ],

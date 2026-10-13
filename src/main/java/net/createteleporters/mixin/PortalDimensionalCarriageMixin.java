@@ -41,6 +41,16 @@ public abstract class PortalDimensionalCarriageMixin {
 	@Shadow public TrackNodeLocation pivot;
 	@Shadow public WeakReference<CarriageContraptionEntity> entity;
 	@Unique private CompoundTag ctp$driver;
+	@Inject(method = "updatePassengerLoadout", at = @At("HEAD"), cancellable = true)
+	private void ctp$transferPassengersOnServer(CallbackInfo ci) {
+		var carriageEntity = entity.get();
+		if (carriageEntity == null || !(carriageEntity.level() instanceof ServerLevel level)) return;
+		var server = level.getServer();
+		if (server.isSameThread()) return;
+		// Dismounting queries chunks; a train worker cannot wait on the server that is waiting for it.
+		server.execute(((Carriage.DimensionalCarriageEntity) (Object) this)::updatePassengerLoadout);
+		ci.cancel();
+	}
 	@Inject(method = "updateRenderedCutoff", at = @At("HEAD"))
 	private void ctp$trainRipple(CallbackInfo ci) {
 		CarriageContraptionEntity train = entity.get();
